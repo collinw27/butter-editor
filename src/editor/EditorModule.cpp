@@ -11,6 +11,10 @@ EditorModule::EditorModule(Editor &editor, sf::IntRect bounds) :
     visible_rect.setOutlineThickness(2);
 }
 
+void EditorModule::update()
+{
+}
+
 void EditorModule::draw(sf::RenderWindow &window)
 {
     window.draw(visible_rect);

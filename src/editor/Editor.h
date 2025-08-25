@@ -6,7 +6,7 @@
 
 #include "editor/EditorModule.h"
 #include "editor/config/ConfigModule.h"
-#include "editor/config/TimelineModule.h"
+#include "editor/timeline/TimelineModule.h"
 #include "editor/DragMouse.h"
 
 class Editor
@@ -23,6 +23,7 @@ public:
 
     Editor();
     ~Editor();
+    void update();
     void draw(sf::RenderWindow& window);
 
     void on_mouse_moved(sf::Vector2i position);

@@ -14,6 +14,14 @@ Editor::~Editor()
     delete drag_mouse_event;
 }
 
+void Editor::update()
+{
+    for (auto module : modules)
+    {
+        module->update();
+    }
+}
+
 void Editor::draw(sf::RenderWindow& window)
 {
     for (auto module : modules)

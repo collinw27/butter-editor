@@ -22,9 +22,15 @@ protected:
 public:
 
     EditorModule(Editor &editor, sf::IntRect bounds);
+    virtual void update();
     virtual void draw(sf::RenderWindow &window);
 
     void set_highlight(bool hover, bool drag);
+
+    // Allow custom behavior on mouse inputs
+    // These functions will be triggered even when the mouse is outside the module bounds
+    // Because of this, `focused` should be checked in cases where an event should only
+    // trigger when the cursor is in this module
     
     virtual void on_mouse_moved(sf::Vector2i position, bool focused);
     virtual void on_mouse_pressed(sf::Vector2i position, bool focused);

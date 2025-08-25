@@ -9,10 +9,12 @@ extern "C" {
 
 #include "editor/Editor.h"
 #include "utility/ResourceManager.h"
+#include "utility/Logger.h"
 
 int main()
 {
-    ResourceManager *resourceManager = new ResourceManager();
+    ResourceManager *resource_manager = new ResourceManager();
+    Logger *logger = new Logger();
 
     sf::RenderWindow window(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close);
 
@@ -46,6 +48,7 @@ int main()
             }
         }
 
+        editor->update();
         window.clear();
         editor->draw(window);
         window.display();
