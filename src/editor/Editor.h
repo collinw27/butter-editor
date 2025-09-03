@@ -11,6 +11,8 @@
 
 class Editor
 {
+    sf::RenderWindow *window;
+
     EditorModule *preview_module;
     EditorModule *config_module;
     EditorModule *timeline_module;
@@ -23,7 +25,7 @@ public:
 
     Editor();
     ~Editor();
-    void update();
+    void run();
     void draw(sf::RenderWindow& window);
 
     void on_mouse_moved(sf::Vector2i position);

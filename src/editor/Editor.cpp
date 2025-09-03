@@ -1,7 +1,11 @@
 #include "editor/Editor.h"
 
+#include "utility/Input.h"
+
 Editor::Editor()
 {
+    window = new sf::RenderWindow(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close);
+
     preview_module = new EditorModule(*this, sf::IntRect({0, 0}, {640, 360}));
     config_module = new ConfigModule(*this);
     timeline_module = new TimelineModule(*this);
@@ -11,14 +15,57 @@ Editor::Editor()
 
 Editor::~Editor()
 {
+    delete window;
+    delete preview_module;
+    delete config_module;
+    delete timeline_module;
     delete drag_mouse_event;
 }
 
-void Editor::update()
+void Editor::run()
 {
-    for (auto module : modules)
+    while (window->isOpen())
     {
-        module->update();
+        Input::singleton()->clear_keys();
+
+        while (const std::optional event = window->pollEvent())
+        {
+            if (event->is<sf::Event::Closed>())
+            {
+                window->close();
+            }
+            else if (const auto *mouse_moved = event->getIf<sf::Event::MouseMoved>())
+            {
+                on_mouse_moved(mouse_moved->position);
+            }
+            else if (const auto *mouse_clicked = event->getIf<sf::Event::MouseButtonPressed>())
+            {
+                if (mouse_clicked->button == sf::Mouse::Button::Left)
+                {
+                    on_mouse_pressed();
+                }
+            }
+            else if (const auto *mouse_clicked = event->getIf<sf::Event::MouseButtonReleased>())
+            {
+                if (mouse_clicked->button == sf::Mouse::Button::Left)
+                {
+                    on_mouse_released();
+                }
+            }
+            else if (const auto *key_pressed = event->getIf<sf::Event::KeyPressed>())
+            {
+                Input::singleton()->add_key_press(key_pressed->code);
+            }
+        }
+
+        for (auto module : modules)
+        {
+            module->update();
+        }
+
+        window->clear();
+        draw(*window);
+        window->display();
     }
 }
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "editor/Editor.h"
+#include "utility/Input.h"
 #include "editor/config/DragMedia.h"
 
 TimelineModule::TimelineModule(Editor& editor) :
@@ -18,6 +19,19 @@ TimelineModule::TimelineModule(Editor& editor) :
 
 void TimelineModule::update()
 {
+    // Test scrolling the timeline
+
+    if (Input::singleton()->check_key_press(sf::Keyboard::Key::Right))
+    {
+        h_scroll -= 5.f;
+        clip_root->set_position(sf::Vector2f(h_scroll, clip_root->get_position().y));
+    }
+    else if (Input::singleton()->check_key_press(sf::Keyboard::Key::Left))
+    {
+        h_scroll += 5.f;
+        clip_root->set_position(sf::Vector2f(h_scroll, clip_root->get_position().y));
+    }
+
     for (auto clip : deleted_clips)
     {
         media_clips.erase(std::find(media_clips.begin(), media_clips.end(), clip));

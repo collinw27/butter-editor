@@ -19,12 +19,12 @@ class TimelineModule : public EditorModule
 
     // Lengths and times in the editor are measured by frame number
     // For now, the project will assume a framerate of 60 FPS
-    // At the maximum zoom, 1 frame = 100 pixels wide
-    // `h_zoom` is 100/frame_width
+    // At the maximum zoom (10), 1 frame = 100 pixels wide
+    // `h_zoom` is frame_width/10
     // `h_scroll` is the frame # on the very left
 
     int total_length = 0;
-    float h_zoom = 10.f;
+    float h_zoom = 1.f;
     float h_scroll = 0.f;
 
 public:

@@ -10,47 +10,19 @@ extern "C" {
 #include "editor/Editor.h"
 #include "utility/ResourceManager.h"
 #include "utility/Logger.h"
+#include "utility/Input.h"
 
 int main()
 {
     ResourceManager *resource_manager = new ResourceManager();
     Logger *logger = new Logger();
-
-    sf::RenderWindow window(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close);
+    Input *input_manager = new Input();
 
     Editor* editor = new Editor();
+    editor->run();
 
-    while (window.isOpen())
-    {
-        while (const std::optional event = window.pollEvent())
-        {
-            if (event->is<sf::Event::Closed>())
-            {
-                window.close();
-            }
-            else if (const auto *mouse_moved = event->getIf<sf::Event::MouseMoved>())
-            {
-                editor->on_mouse_moved(mouse_moved->position);
-            }
-            else if (const auto *mouse_clicked = event->getIf<sf::Event::MouseButtonPressed>())
-            {
-                if (mouse_clicked->button == sf::Mouse::Button::Left)
-                {
-                    editor->on_mouse_pressed();
-                }
-            }
-            else if (const auto *mouse_clicked = event->getIf<sf::Event::MouseButtonReleased>())
-            {
-                if (mouse_clicked->button == sf::Mouse::Button::Left)
-                {
-                    editor->on_mouse_released();
-                }
-            }
-        }
-
-        editor->update();
-        window.clear();
-        editor->draw(window);
-        window.display();
-    }
+    delete editor;
+    delete resource_manager;
+    delete logger;
+    delete input_manager;
 }
