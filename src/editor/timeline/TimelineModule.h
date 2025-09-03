@@ -4,21 +4,28 @@
 #include <string>
 #include <vector>
 
+#include "graphics/Node.h"
+#include "graphics/RectNode.h"
 #include "editor/EditorModule.h"
 #include "editor/timeline/TimelineClip.h"
 
-// For the time being, the timeline will hold clips
-// of length 0.1 ranging from a range of 0-1 on the timeline
-// This will give a way of testing the UI implementation
-// and make implementing images/videos easier later on
-
 class TimelineModule : public EditorModule
 {
-
     sf::RectangleShape timeline_rect;
     std::vector<TimelineClip*> media_clips;
-    TimelineClip *selected_clip = nullptr;
     std::vector<TimelineClip*> deleted_clips;
+    TimelineClip *selected_clip = nullptr;
+    Node *clip_root;
+
+    // Lengths and times in the editor are measured by frame number
+    // For now, the project will assume a framerate of 60 FPS
+    // At the maximum zoom, 1 frame = 100 pixels wide
+    // `h_zoom` is 100/frame_width
+    // `h_scroll` is the frame # on the very left
+
+    int total_length = 0;
+    float h_zoom = 10.f;
+    float h_scroll = 0.f;
 
 public:
 
@@ -29,7 +36,6 @@ public:
     virtual void on_mouse_pressed(sf::Vector2i position, bool focused) override;
     virtual void on_mouse_released(sf::Vector2i position, bool focused, DragMouse *drag_mouse_event) override;
 
-    sf::FloatRect get_clip_bounds(float start_time, float length);
     void remove_clip(TimelineClip *clip);
 };
 

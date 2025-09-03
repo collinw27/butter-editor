@@ -3,19 +3,19 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "graphics/RectNode.h"
+
 class TimelineModule;
 
 class TimelineClip
 {
-    TimelineModule *parent;
-
-    float start_time;
-    float end_time;
-    sf::RectangleShape rect;
+    int start_time;
+    int end_time;
+    RectNode *rect;
 
 public:
 
-    TimelineClip(TimelineModule *parent, sf::Color color, float start_time, float length);
+    TimelineClip(Node *root_node, sf::Color color, int start_time, int length);
 
     void draw(sf::RenderWindow &window);
     void select();

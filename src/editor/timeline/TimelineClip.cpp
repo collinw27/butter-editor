@@ -2,37 +2,36 @@
 
 #include "editor/timeline/TimelineModule.h"
 
-TimelineClip::TimelineClip(TimelineModule *parent, sf::Color color, float start, float length)
+TimelineClip::TimelineClip(Node *root_node, sf::Color color, int start, int length)
 {
     start_time = start;
     end_time = start_time + length;
-    this->parent = parent;
 
-    sf::FloatRect bounds = parent->get_clip_bounds(start, length);
-    rect = sf::RectangleShape(bounds.size);
-    rect.setPosition(bounds.position);
-    rect.setFillColor(color);
-    rect.setOutlineColor(sf::Color::Yellow);
+    rect = new RectNode(root_node, color, sf::FloatRect(
+        sf::Vector2f(start_time * 10.f, 0.f),
+        sf::Vector2f(length * 10.f, 80.f)
+    ));
+    rect->set_outline_color(sf::Color::Yellow);
 }
 
 void TimelineClip::draw(sf::RenderWindow &window)
 {
-    window.draw(rect);
+    rect->draw(window);
 }
 
 void TimelineClip::select()
 {
-    rect.setOutlineThickness(3);
+    rect->set_outline_thickness(3);
 }
 
 void TimelineClip::deselect()
 {
-    rect.setOutlineThickness(0);
+    rect->set_outline_thickness(0);
 }
 
 bool TimelineClip::was_clicked(sf::Vector2i cursor_pos)
 {
-    return rect.getGlobalBounds().contains(static_cast<sf::Vector2f>(cursor_pos));
+    return rect->contains(static_cast<sf::Vector2f>(cursor_pos));
 }
 
 float TimelineClip::get_start()
@@ -53,15 +52,13 @@ float TimelineClip::get_length()
 void TimelineClip::trim_start(float new_start)
 {
     start_time = new_start;
-    sf::FloatRect bounds = parent->get_clip_bounds(start_time, end_time - start_time);
-    rect.setPosition(bounds.position);
-    rect.setSize(bounds.size);
+    rect->set_position(sf::Vector2f(start_time * 10.f, 0.f));
+    rect->set_size(sf::Vector2f((end_time - start_time) * 10.f, 80.f));
 }
 
 void TimelineClip::trim_end(float new_end)
 {
     end_time = new_end;
-    sf::FloatRect bounds = parent->get_clip_bounds(start_time, end_time - start_time);
-    rect.setPosition(bounds.position);
-    rect.setSize(bounds.size);
+    rect->set_position(sf::Vector2f(start_time * 10.f, 0.f));
+    rect->set_size(sf::Vector2f((end_time - start_time) * 10.f, 80.f));
 }

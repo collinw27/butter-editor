@@ -11,6 +11,8 @@ class EditorModule
 {
 protected:
 
+    // Colors
+
     const sf::Color C_DEFAULT{50, 50, 50};
     const sf::Color C_HOVER{80, 80, 80};
     const sf::Color C_DRAG{84, 113, 255};
@@ -19,13 +21,17 @@ protected:
     sf::IntRect bounds;
     sf::RectangleShape visible_rect;
 
+    bool mouse_hover;
+    bool mouse_drag;
+
 public:
 
     EditorModule(Editor &editor, sf::IntRect bounds);
     virtual void update();
     virtual void draw(sf::RenderWindow &window);
 
-    void set_highlight(bool hover, bool drag);
+    void set_hover_highlight(bool hover);
+    void set_drag_highlight(bool drag);
 
     // Allow custom behavior on mouse inputs
     // These functions will be triggered even when the mouse is outside the module bounds

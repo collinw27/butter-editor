@@ -20,9 +20,16 @@ void EditorModule::draw(sf::RenderWindow &window)
     window.draw(visible_rect);
 }
 
-void EditorModule::set_highlight(bool hover, bool drag)
+void EditorModule::set_hover_highlight(bool hover)
 {
-    visible_rect.setOutlineColor(hover ? (drag ? C_DRAG : C_HOVER) : C_DEFAULT);
+    mouse_hover = hover;
+    visible_rect.setOutlineColor(mouse_hover ? (mouse_drag ? C_DRAG : C_HOVER) : C_DEFAULT);
+}
+
+void EditorModule::set_drag_highlight(bool drag)
+{
+    mouse_drag = drag;
+    visible_rect.setOutlineColor(mouse_hover ? (mouse_drag ? C_DRAG : C_HOVER) : C_DEFAULT);
 }
 
 void EditorModule::on_mouse_moved(sf::Vector2i position, bool focused)

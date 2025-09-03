@@ -11,6 +11,9 @@ TimelineModule::TimelineModule(Editor& editor) :
     timeline_rect = sf::RectangleShape(sf::Vector2f(bounds.size) - sf::Vector2f({10, 10}));
     timeline_rect.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f({5, 5}));
     timeline_rect.setFillColor(sf::Color::Black);
+
+    clip_root = new Node(nullptr);
+    clip_root->set_position(sf::Vector2f(0, 370));
 }
 
 void TimelineModule::update()
@@ -78,17 +81,16 @@ void TimelineModule::on_mouse_released(sf::Vector2i position, bool focused, Drag
         DragMedia *drag_media_event = dynamic_cast<DragMedia*>(drag_mouse_event);
         if (drag_media_event != nullptr)
         {
-            float start_time = (position.x - bounds.position.x) / float(bounds.size.x);
-            float end_time = start_time + 0.1;
-            if (start_time > 0.0 && start_time < 0.9)
+            int start_time = static_cast<int>((position.x - bounds.position.x) / 10.f);
+            int end_time = start_time + 10;
+            if (start_time > 0.0)
             {
-                auto clip = new TimelineClip(this, drag_media_event->get_color(), start_time, 0.1);
+                auto clip = new TimelineClip(clip_root, drag_media_event->get_color(), start_time, 10);
                 media_clips.push_back(clip);
             }
 
             // Store all clips that are cut into
             // 3 choices: trim start, trim end, fully delete
-
             
             for (auto clip : media_clips)
             {
@@ -107,14 +109,6 @@ void TimelineModule::on_mouse_released(sf::Vector2i position, bool focused, Drag
             }
         }
     }
-}
-
-sf::FloatRect TimelineModule::get_clip_bounds(float start_time, float length)
-{
-    return sf::FloatRect(sf::Vector2f({bounds.position.x + bounds.size.x * start_time,
-        bounds.position.y + 10.f}), 
-        sf::Vector2f({float(bounds.size.x) * length, 80.0f})
-    );
 }
 
 void TimelineModule::remove_clip(TimelineClip *clip)

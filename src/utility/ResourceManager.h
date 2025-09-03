@@ -20,7 +20,6 @@ public:
 
     std::string get_path(const std::string &path);
     std::string get_path(const std::filesystem::path &path);
-
     const sf::Font &get_font();
 };
 

@@ -23,8 +23,9 @@ file(
     "src/main.cpp"
     "src/editor/*.cpp"
     "src/editor/**/*.cpp"
+    "src/graphics/*.cpp"
     "src/utility/*.cpp"
-)
+    )
 
 add_executable(Butter ${butter_SRC})
 
