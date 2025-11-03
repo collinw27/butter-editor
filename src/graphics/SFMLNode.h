@@ -12,6 +12,7 @@ protected:
     sf::Transformable *base_shape;
 
     virtual void sync_position() override;
+    virtual void sync_scale() override;
 
     // Protected constructor prevents initialization
     // (Since there's no specific shape tied to this class)

@@ -1,3 +1,4 @@
+
 #include <SFML/Graphics.hpp>
 extern "C" {
     #include <libavcodec/avcodec.h>
@@ -25,4 +26,6 @@ int main()
     delete resource_manager;
     delete logger;
     delete input_manager;
+
+    return 0;
 }

@@ -29,6 +29,11 @@ void Input::add_key_press(sf::Keyboard::Key key)
     key_presses.push_back(key);
 }
 
+bool Input::check_key(sf::Keyboard::Key key)
+{
+    return sf::Keyboard::isKeyPressed(key);
+}
+
 bool Input::check_key_press(sf::Keyboard::Key key)
 {
     return std::find(key_presses.begin(), key_presses.end(), key) != key_presses.end();

@@ -5,9 +5,12 @@ RectNode::RectNode(Node* parent, sf::Color color, sf::FloatRect rect)
 {
     base_shape = new sf::RectangleShape(rect.size);
     shape = dynamic_cast<sf::RectangleShape*>(base_shape);
-    position = rect.position;
     shape->setFillColor(color);
-    sync_position();
+    set_position(rect.position);
+
+    // Must be called here so virtual functions work
+
+    update_all();
 }
 
 void RectNode::draw(sf::RenderWindow &window)

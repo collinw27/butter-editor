@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include <sstream>
+#include <cstdarg>
+
+#include <SFML/Graphics.hpp>
 
 using ss = std::stringstream;
 
@@ -16,7 +19,9 @@ public:
     Logger();
     ~Logger();
 
-    void log(std::stringstream text);
+    void log(ss text);
+
+    static ss str(sf::Vector2f vec);
 };
 
 #endif

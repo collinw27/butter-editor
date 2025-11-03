@@ -6,6 +6,8 @@
 #include "utility/Input.h"
 #include "editor/config/DragMedia.h"
 
+constexpr int CLIP_HOFFSET = 12;
+
 TimelineModule::TimelineModule(Editor& editor) :
     EditorModule{editor, sf::IntRect({0, 360}, {1280, 720-360})}
 {
@@ -14,23 +16,42 @@ TimelineModule::TimelineModule(Editor& editor) :
     timeline_rect.setFillColor(sf::Color::Black);
 
     clip_root = new Node(nullptr);
-    clip_root->set_position(sf::Vector2f(0, 370));
+    clip_root->set_position(sf::Vector2f(CLIP_HOFFSET, 370));
 }
 
 void TimelineModule::update()
 {
     // Test scrolling the timeline
 
+    bool do_timeline_update = false;
     if (Input::singleton()->check_key_press(sf::Keyboard::Key::Right))
     {
         h_scroll -= 5.f;
-        clip_root->set_position(sf::Vector2f(h_scroll, clip_root->get_position().y));
+        do_timeline_update = true;
     }
     else if (Input::singleton()->check_key_press(sf::Keyboard::Key::Left))
     {
         h_scroll += 5.f;
-        clip_root->set_position(sf::Vector2f(h_scroll, clip_root->get_position().y));
+        do_timeline_update = true;
     }
+    else if (Input::singleton()->check_key_press(sf::Keyboard::Key::Up))
+    {
+        h_zoom *= 2.f;
+        do_timeline_update = true;
+    }
+    else if (Input::singleton()->check_key_press(sf::Keyboard::Key::Down))
+    {
+        h_zoom *= 0.5f;
+        do_timeline_update = true;
+    }
+    if (do_timeline_update)
+    {
+        float real_scroll = h_scroll * h_zoom;
+        clip_root->set_position_axis(Axis::X, CLIP_HOFFSET + h_scroll * h_zoom);
+        clip_root->set_scale_axis(Axis::X, h_zoom);
+    }
+
+    // Free any clips that were staged to be deleted at the end of the update
 
     for (auto clip : deleted_clips)
     {
@@ -95,7 +116,7 @@ void TimelineModule::on_mouse_released(sf::Vector2i position, bool focused, Drag
         DragMedia *drag_media_event = dynamic_cast<DragMedia*>(drag_mouse_event);
         if (drag_media_event != nullptr)
         {
-            int start_time = static_cast<int>((position.x - bounds.position.x) / 10.f);
+            int start_time = static_cast<int>((position.x - bounds.position.x - CLIP_HOFFSET) / 10.f);
             int end_time = start_time + 10;
             if (start_time > 0.0)
             {

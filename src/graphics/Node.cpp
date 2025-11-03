@@ -4,22 +4,15 @@
 
 #include "utility/Exceptions.h"
 
-void Node::sync_position()
-{
-}
-
-void Node::sync_all()
-{
-    sync_position();
-}
-
 Node::Node(Node* parent)
 {
+    scale = sf::Vector2f(1, 1);
+    g_scale = scale;
     if (parent != nullptr)
     {
         parent->add_child(this);
     }
-    sync_position();
+    update_all();
 }
 
 void Node::draw(sf::RenderWindow &window)
@@ -54,46 +47,104 @@ void Node::free()
     }
 }
 
+Node *Node::get_parent()
+{
+    return parent;
+}
+
+void Node::update_position()
+{
+    if (parent != nullptr)
+    {
+        g_position = parent->g_position + parent->g_scale.componentWiseMul(position);
+    }
+    else
+    {
+        g_position = position;
+    }
+    sync_position();
+    for (auto child : children)
+    {
+        child->update_position();
+    }
+}
+
+void Node::update_scale()
+{
+    if (parent != nullptr)
+    {
+        g_scale = parent->g_scale.componentWiseMul(scale);
+    }
+    else
+    {
+        g_scale = scale;
+    }
+    sync_scale();
+    for (auto child : children)
+    {
+        child->update_position();
+        child->update_scale();
+    }
+}
+
+void Node::update_all()
+{
+    update_position();
+    update_scale();
+}
+
+void Node::sync_position()
+{
+}
+
+void Node::sync_scale()
+{
+}
+
 sf::Vector2f Node::get_position()
 {
     return position;
 }
 
-sf::Vector2f Node::get_global_position()
-{
-    if (parent != nullptr)
-    {
-        return parent->get_position() + position;
-    }
-    else
-    {
-        return position;
-    }
-}
-
 void Node::set_position(sf::Vector2f position)
 {
     this->position = position;
-    sync_position();
-    for (auto child : children)
-    {
-        child->sync_position();
-    }
+    update_position();
 }
 
-void Node::set_global_position(sf::Vector2f position)
+void Node::set_position_axis(Axis axis, float position)
 {
-    if (parent != nullptr)
+    if (axis == Axis::X)
     {
-        this->position = position - parent->get_position();
+        this->position.x = position;
     }
     else
     {
-        this->position = position;
+        this->position.y = position;
     }
-    sync_position();
-    for (auto child : children)
+    update_position();
+}
+
+sf::Vector2f Node::get_scale()
+{
+    return scale;
+}
+
+void Node::set_scale(sf::Vector2f scale)
+{
+    this->scale = scale;
+    update_scale();
+}
+
+void Node::set_scale_axis(Axis axis, float scale)
+{
+    if (axis == Axis::X)
     {
-        child->sync_position();
+        this->scale.x = scale;
     }
+    else
+    {
+        this->scale.y = scale;
+    }
+    update_scale();
 }
