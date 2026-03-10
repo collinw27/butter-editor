@@ -11,7 +11,7 @@ public:
     {
     }
 
-    void print()
+    void print() const
     {
         std::cout << "[ERROR] " << error_string << std::endl;
     }

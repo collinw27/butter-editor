@@ -17,12 +17,12 @@ Logger::~Logger()
     Logger::singleton_object = nullptr;
 }
 
-void Logger::log(ss text)
+void Logger::log(std::stringstream text)
 {
     std::cout << text.str() << std::endl;
 }
 
-ss Logger::str(sf::Vector2f vec)
+std::stringstream Logger::str(sf::Vector2f vec)
 {
-    return ss() << "(" << vec.x << ", " << vec.y << ")";
+    return std::stringstream{} << "(" << vec.x << ", " << vec.y << ")";
 }

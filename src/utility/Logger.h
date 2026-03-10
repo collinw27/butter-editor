@@ -7,8 +7,6 @@
 
 #include <SFML/Graphics.hpp>
 
-using ss = std::stringstream;
-
 class Logger
 {
     static Logger *singleton_object;
@@ -19,9 +17,9 @@ public:
     Logger();
     ~Logger();
 
-    void log(ss text);
+    void log(std::stringstream text);
 
-    static ss str(sf::Vector2f vec);
+    static std::stringstream str(sf::Vector2f vec);
 };
 
 #endif

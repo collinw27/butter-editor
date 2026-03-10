@@ -1,14 +1,21 @@
 #include "editor/Editor.h"
 
+#include "editor/DragDivider.h"
 #include "utility/Input.h"
+#include "utility/Logger.h"
+
+constexpr int MODULE_MARGIN = 100;
 
 Editor::Editor()
 {
-    window = new sf::RenderWindow(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close);
+    window = new sf::RenderWindow(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close | sf::Style::Resize | sf::Style::Titlebar);
+    window_size = sf::Vector2i(window->getSize());
 
-    preview_module = new EditorModule(*this, sf::IntRect({0, 0}, {640, 360}));
-    config_module = new ConfigModule(*this);
-    timeline_module = new TimelineModule(*this);
+    y_divider = 360;
+    x_divider = 640;
+    preview_module = new EditorModule(*this, sf::IntRect({0, 0}, {x_divider, y_divider}));
+    config_module = new EditorModule(*this, sf::IntRect({x_divider, 0}, {window_size.x - x_divider, y_divider}));
+    timeline_module = new EditorModule(*this, sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider}));
 
     modules.insert(modules.end(), {preview_module, config_module, timeline_module});
 }
@@ -19,7 +26,6 @@ Editor::~Editor()
     delete preview_module;
     delete config_module;
     delete timeline_module;
-    delete drag_mouse_event;
 }
 
 void Editor::run()
@@ -33,6 +39,10 @@ void Editor::run()
             if (event->is<sf::Event::Closed>())
             {
                 window->close();
+            }
+            else if (const auto *resized = event->getIf<sf::Event::Resized>())
+            {
+                on_resized(sf::Vector2i(resized->size));
             }
             else if (const auto *mouse_moved = event->getIf<sf::Event::MouseMoved>())
             {
@@ -69,16 +79,28 @@ void Editor::run()
     }
 }
 
+void Editor::set_cursor(sf::Cursor::Type cursor_type)
+{
+    window->setMouseCursor(sf::Cursor{cursor_type});
+}
+
 void Editor::draw(sf::RenderWindow& window)
 {
     for (auto module : modules)
     {
         module->draw(window);
     }
-    if (drag_mouse_event)
-    {
-        drag_mouse_event->draw(window);
-    }
+}
+
+void Editor::on_resized(sf::Vector2i new_size)
+{
+    x_divider = (int)( ((float)x_divider / window_size.x) * new_size.x);
+    y_divider = (int)( ((float)y_divider / window_size.y) * new_size.y);
+    x_divider = std::max(MODULE_MARGIN, std::min(new_size.x - MODULE_MARGIN, x_divider));
+    y_divider = std::max(MODULE_MARGIN, std::min(new_size.y - MODULE_MARGIN, y_divider));
+    window->setView(sf::View(sf::FloatRect(sf::Vector2f(), sf::Vector2f(new_size))));
+    window_size = new_size;
+    resize_modules();
 }
 
 void Editor::on_mouse_moved(sf::Vector2i position)
@@ -86,32 +108,55 @@ void Editor::on_mouse_moved(sf::Vector2i position)
     mouse_position = position;
     for (auto module : modules)
     {
-        bool mouse_overlaps = module->get_rect().contains(mouse_position);
+        bool mouse_overlaps = module->get_bounds().contains(mouse_position);
         module->set_hover_highlight(mouse_overlaps);
-        module->set_drag_highlight(drag_mouse_event != nullptr);
-        module->on_mouse_moved(mouse_position, mouse_overlaps);
     }
-    if (drag_mouse_event)
+
+    // Scale sub-windows if dividers were moved
+
+    if (drag_mouse_event != nullptr)
     {
-        drag_mouse_event->on_move(mouse_position);
+        DragDivider *drag_divider_event = dynamic_cast<DragDivider*>(drag_mouse_event);
+        if (drag_divider_event != nullptr)
+        {
+            if (drag_divider_event->is_vertical() && mouse_position.y > MODULE_MARGIN && mouse_position.y < (window_size.y - MODULE_MARGIN))
+            {
+                y_divider = mouse_position.y;
+                resize_modules();
+            }
+            if (!drag_divider_event->is_vertical() && mouse_position.x > MODULE_MARGIN && mouse_position.x < (window_size.x - MODULE_MARGIN))
+            {
+                x_divider = mouse_position.x;
+                resize_modules();
+            }
+        }
+    }
+
+    // Set appropriate cursor type when not dragging
+
+    else
+    {
+        if (abs(mouse_position.y - y_divider) < 6)
+            set_cursor(sf::Cursor::Type::SizeVertical);
+        else if (mouse_position.y < y_divider && abs(mouse_position.x - x_divider) < 6)
+            set_cursor(sf::Cursor::Type::SizeHorizontal);
+        else
+            set_cursor(sf::Cursor::Type::Arrow);
     }
 }
 
 void Editor::on_mouse_pressed()
 {
-    for (auto module : modules)
-    {
-        module->on_mouse_pressed(mouse_position, module->get_rect().contains(mouse_position));
-    }
+    // Start scaling dividers if they were clicked
+
+    if (abs(mouse_position.y - y_divider) < 6)
+        drag_mouse_event = new DragDivider(mouse_position, true);
+    else if (mouse_position.y < y_divider && abs(mouse_position.x - x_divider) < 6)
+        drag_mouse_event = new DragDivider(mouse_position, false);
 }
 
 void Editor::on_mouse_released()
 {
-    for (auto module : modules)
-    {
-        module->set_drag_highlight(false);
-        module->on_mouse_released(mouse_position, module->get_rect().contains(mouse_position), drag_mouse_event);
-    }
     delete drag_mouse_event;
     drag_mouse_event = nullptr;
 }
@@ -121,8 +166,9 @@ sf::Vector2i Editor::get_mouse_position()
     return mouse_position;
 }
 
-void Editor::new_mouse_event(DragMouse *new_event)
+void Editor::resize_modules()
 {
-    delete drag_mouse_event;
-    drag_mouse_event = new_event;
+    preview_module->set_bounds(sf::IntRect({0, 0}, {x_divider, y_divider}));
+    config_module->set_bounds(sf::IntRect({x_divider, 0}, {window_size.x - x_divider, y_divider}));
+    timeline_module->set_bounds(sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider}));
 }

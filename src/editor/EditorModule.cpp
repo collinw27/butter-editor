@@ -23,28 +23,17 @@ void EditorModule::draw(sf::RenderWindow &window)
 void EditorModule::set_hover_highlight(bool hover)
 {
     mouse_hover = hover;
-    visible_rect.setOutlineColor(mouse_hover ? (mouse_drag ? C_DRAG : C_HOVER) : C_DEFAULT);
+    visible_rect.setOutlineColor(mouse_hover ? C_HOVER : C_DEFAULT);
 }
 
-void EditorModule::set_drag_highlight(bool drag)
+void EditorModule::set_bounds(const sf::IntRect& bounds)
 {
-    mouse_drag = drag;
-    visible_rect.setOutlineColor(mouse_hover ? (mouse_drag ? C_DRAG : C_HOVER) : C_DEFAULT);
+    this->bounds = sf::IntRect{bounds.position + sf::Vector2i(5, 5), bounds.size - sf::Vector2i(10, 10)};
+    visible_rect.setSize(sf::Vector2f(this->bounds.size));
+    visible_rect.setPosition(sf::Vector2f(this->bounds.position));
 }
 
-void EditorModule::on_mouse_moved(sf::Vector2i position, bool focused)
-{
-}
-
-void EditorModule::on_mouse_pressed(sf::Vector2i position, bool focused)
-{
-}
-
-void EditorModule::on_mouse_released(sf::Vector2i position, bool focused, DragMouse *drag_mouse_event)
-{
-}
-
-sf::IntRect EditorModule::get_rect()
+sf::IntRect EditorModule::get_bounds()
 {
     return bounds;
 }

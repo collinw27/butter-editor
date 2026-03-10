@@ -12,20 +12,28 @@ extern "C" {
 #include "utility/ResourceManager.h"
 #include "utility/Logger.h"
 #include "utility/Input.h"
+#include "utility/Exceptions.h"
 
 int main()
 {
-    ResourceManager *resource_manager = new ResourceManager();
-    Logger *logger = new Logger();
-    Input *input_manager = new Input();
+    try
+    {
+        ResourceManager *resource_manager = new ResourceManager();
+        Logger *logger = new Logger();
+        Input *input_manager = new Input();
+        Editor* editor = new Editor();
 
-    Editor* editor = new Editor();
-    editor->run();
-
-    delete editor;
-    delete resource_manager;
-    delete logger;
-    delete input_manager;
+        editor->run();
+        
+        delete editor;
+        delete resource_manager;
+        delete logger;
+        delete input_manager;
+    }
+    catch(const ButterException& e)
+    {
+        e.print();
+    }
 
     return 0;
 }
