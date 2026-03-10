@@ -9,11 +9,11 @@
 
 class Logger
 {
-    static Logger *singleton_object;
+    static Logger* singleton_object;
 
 public:
 
-    static Logger *singleton();
+    static Logger* singleton();
     Logger();
     ~Logger();
 

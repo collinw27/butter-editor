@@ -6,7 +6,7 @@ class ButterException
 
 public:
 
-    ButterException(const std::string &error_string) :
+    ButterException(const std::string& error_string) :
         error_string{error_string}
     {
     }

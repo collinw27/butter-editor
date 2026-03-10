@@ -5,20 +5,27 @@
 #include <vector>
 
 #include "editor/EditorModule.h"
+#include "editor/CommandBar.h"
 #include "editor/DragMouse.h"
 
 class Editor
 {
-    sf::RenderWindow *window;
+    sf::RenderWindow* window;
 
-    EditorModule *preview_module;
-    EditorModule *config_module;
-    EditorModule *timeline_module;
+    EditorModule* preview_module;
+    EditorModule* config_module;
+    EditorModule* timeline_module;
     std::vector<EditorModule*> modules;
+    CommandBar* command_bar;
 
     sf::Vector2i window_size;
     sf::Vector2i mouse_position;
     DragMouse* drag_mouse_event = nullptr;
+    bool using_terminal = false;
+
+    // Used for darkening the upper section when typing command
+
+    sf::RectangleShape top_cover;
 
     // For now, the editor is divided into 3 windows
     // This may have more customization in the far future, but for now,

@@ -1,8 +1,8 @@
 #include "utility/Logger.h"
 
-Logger *Logger::singleton_object = nullptr;
+Logger* Logger::singleton_object = nullptr;
 
-Logger *Logger::singleton()
+Logger* Logger::singleton()
 {
     return singleton_object;
 }

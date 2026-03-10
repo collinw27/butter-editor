@@ -4,9 +4,9 @@
 
 #include "utility/Exceptions.h"
 
-ResourceManager *ResourceManager::singleton_object = nullptr;
+ResourceManager* ResourceManager::singleton_object = nullptr;
 
-ResourceManager *ResourceManager::singleton()
+ResourceManager* ResourceManager::singleton()
 {
     return singleton_object;
 }
@@ -29,6 +29,10 @@ ResourceManager::ResourceManager()
     {
         throw ButterException("Could not locate Arial.ttf!");
     }
+    if (!mono_font.openFromFile(root_dir/"font/Consolas.ttf"))
+    {
+        throw ButterException("Could not locate Consolas.ttf!");
+    }
 }
 
 ResourceManager::~ResourceManager()
@@ -36,17 +40,22 @@ ResourceManager::~ResourceManager()
     ResourceManager::singleton_object = nullptr;
 }
 
-std::string ResourceManager::get_path(const std::string &path = "")
+std::string ResourceManager::get_path(const std::string& path = "")
 {
     return (root_dir/path).string();
 }
 
-std::string ResourceManager::get_path(const std::filesystem::path &path)
+std::string ResourceManager::get_path(const std::filesystem::path& path)
 {
     return (root_dir/path).string();
 }
 
-const sf::Font &ResourceManager::get_font()
+const sf::Font& ResourceManager::get_font()
 {
     return main_font;
+}
+
+const sf::Font& ResourceManager::get_mono()
+{
+    return mono_font;
 }

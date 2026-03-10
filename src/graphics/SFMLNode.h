@@ -9,7 +9,7 @@ class SFMLNode : public Node
 {
 protected:
 
-    sf::Transformable *base_shape;
+    sf::Transformable* base_shape;
 
     virtual void sync_position() override;
     virtual void sync_scale() override;

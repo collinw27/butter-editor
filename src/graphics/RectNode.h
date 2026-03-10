@@ -5,7 +5,7 @@
 
 class RectNode : public SFMLNode
 {
-    sf::RectangleShape *shape;
+    sf::RectangleShape* shape;
 
 public:
 

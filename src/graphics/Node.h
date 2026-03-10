@@ -17,7 +17,7 @@ enum class Axis
 
 class Node
 {
-    Node *parent = nullptr;
+    Node* parent = nullptr;
     std::vector<Node*> children;
 
 protected:
@@ -42,7 +42,7 @@ public:
     void add_child(Node* child);
     void remove_child(Node* child);
     void free();
-    Node *get_parent();
+    Node* get_parent();
 
 protected:
 

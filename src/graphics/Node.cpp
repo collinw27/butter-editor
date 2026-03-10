@@ -47,7 +47,7 @@ void Node::free()
     }
 }
 
-Node *Node::get_parent()
+Node* Node::get_parent()
 {
     return parent;
 }
