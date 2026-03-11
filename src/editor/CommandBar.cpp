@@ -7,7 +7,7 @@
 #include "utility/ResourceManager.h"
 #include "utility/Logger.h"
 
-constexpr int CHAR_LIMIT = 10;
+constexpr int CHAR_LIMIT = 1024;
 
 CommandBar::CommandBar(Editor &editor, sf::IntRect bounds) :
     editor{editor}, bounds{bounds}, 
