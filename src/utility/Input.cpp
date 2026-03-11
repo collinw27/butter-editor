@@ -48,17 +48,32 @@ bool Input::check_key(sf::Keyboard::Key key, KeyMod mod)
 
 bool Input::check_key_press(sf::Keyboard::Key key, KeyMod mod)
 {
-    if ((int)mod & (int)KeyMod::CTRL
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl)
-    ) return false;
-    if ((int)mod & (int)KeyMod::SHIFT
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RShift)
-    ) return false;
-    if ((int)mod & (int)KeyMod::ALT
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LAlt)
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RAlt)
-    ) return false;
+    if ((int)mod & (int)KeyMod::CTRL && !check_ctrl()) return false;
+    if ((int)mod & (int)KeyMod::SHIFT && !check_shift()) return false;
+    if ((int)mod & (int)KeyMod::ALT && !check_alt()) return false;
     return std::find(key_presses.begin(), key_presses.end(), key) != key_presses.end();
+}
+
+bool Input::check_ctrl()
+{
+    return (
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)
+        || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl)
+    );
+}
+
+bool Input::check_shift()
+{
+    return (
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)
+        || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RShift)
+    );
+}
+
+bool Input::check_alt()
+{
+    return (
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LAlt)
+        || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RAlt)
+    );
 }

@@ -23,6 +23,9 @@ class Editor
     DragMouse* drag_mouse_event = nullptr;
     bool using_terminal = false;
 
+    sf::Clock clock;
+    float delta_time = 0.1f;
+
     // Used for darkening the upper section when typing command
 
     sf::RectangleShape top_cover;
@@ -41,6 +44,7 @@ public:
     void run();
 
     void set_cursor(sf::Cursor::Type cursor_type);
+    float get_delta_time();
 
 private:
 

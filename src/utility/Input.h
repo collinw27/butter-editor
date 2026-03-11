@@ -4,6 +4,10 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 
+// Testing this out for potential use
+
+#define SF_KEY sf::Keyboard::Key
+
 enum class KeyMod
 {
     NONE    = 0,
@@ -16,8 +20,8 @@ class Input
 {
     static Input* singleton_object;
 
-    std::vector<sf::Keyboard::Key> key_holds;
-    std::vector<sf::Keyboard::Key> key_presses;
+    std::vector<SF_KEY> key_holds;
+    std::vector<SF_KEY> key_presses;
 
 public:
 
@@ -26,10 +30,13 @@ public:
     ~Input();
 
     void clear_keys();
-    void add_key_press(sf::Keyboard::Key key);
+    void add_key_press(SF_KEY key);
 
-    bool check_key(sf::Keyboard::Key key, KeyMod mod = KeyMod::NONE);
-    bool check_key_press(sf::Keyboard::Key key, KeyMod mod = KeyMod::NONE);
+    bool check_key(SF_KEY key, KeyMod mod = KeyMod::NONE);
+    bool check_key_press(SF_KEY key, KeyMod mod = KeyMod::NONE);
+    bool check_ctrl();
+    bool check_shift();
+    bool check_alt();
 };
 
 #endif

@@ -12,6 +12,7 @@ Editor::Editor()
     window = new sf::RenderWindow(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close | sf::Style::Resize | sf::Style::Titlebar);
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));
+    window->setFramerateLimit(150);
 
     y_divider = 360;
     x_divider = 640;
@@ -20,10 +21,13 @@ Editor::Editor()
     timeline_module = new EditorModule(*this, sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider - CMD_HEIGHT}));
     command_bar = new CommandBar(*this, sf::IntRect({0, window_size.y - CMD_HEIGHT}, {window_size.x, CMD_HEIGHT}));
 
-    top_cover = sf::RectangleShape(sf::Vector2f(window_size - sf::Vector2i(0, CMD_HEIGHT)));
+    top_cover = sf::RectangleShape(sf::Vector2f(window_size));
     top_cover.setFillColor(sf::Color(0, 0, 0, 80));
 
     modules.insert(modules.end(), {preview_module, config_module, timeline_module});
+
+    clock = sf::Clock();
+    clock.start();
 }
 
 Editor::~Editor()
@@ -40,6 +44,8 @@ void Editor::run()
     {
         Input::singleton()->clear_keys();
         std::string keyboard_string = "";
+
+        // Handle all events
 
         while (const std::optional event = window->pollEvent())
         {
@@ -78,8 +84,10 @@ void Editor::run()
                 keyboard_string += text_entered->unicode;
             }
         }
-        if (using_terminal)
-            command_bar->update(keyboard_string);
+        
+        // Handle delta time
+
+        delta_time = clock.restart().asSeconds();
 
         // CTRL+P: Toggle mini terminal
         // Escape tries to clear text, and exits if nothing was there
@@ -97,7 +105,7 @@ void Editor::run()
         }
         if (using_terminal)
         {
-            command_bar->update();
+            command_bar->update(keyboard_string);
         }
         else
         {
@@ -118,15 +126,20 @@ void Editor::set_cursor(sf::Cursor::Type cursor_type)
     window->setMouseCursor(sf::Cursor{cursor_type});
 }
 
+float Editor::get_delta_time()
+{
+    return delta_time;
+}
+
 void Editor::draw(sf::RenderWindow& window)
 {
     for (auto module : modules)
     {
         module->draw(window);
     }
-    command_bar->draw(window);
     if (using_terminal)
         window.draw(top_cover);
+    command_bar->draw(window);
 }
 
 void Editor::on_resized(sf::Vector2i new_size)
@@ -151,8 +164,8 @@ void Editor::on_mouse_moved(sf::Vector2i position)
 
     // Scale sub-windows if dividers were moved
 
-    if (using_terminal);
-
+    if (using_terminal)
+        set_cursor(sf::Cursor::Type::Arrow);
     else if (drag_mouse_event != nullptr)
     {
         DragDivider* drag_divider_event = dynamic_cast<DragDivider*>(drag_mouse_event);
@@ -215,5 +228,5 @@ void Editor::resize_modules()
     timeline_module->set_bounds(sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider - CMD_HEIGHT}));
     command_bar->set_bounds(sf::IntRect({0, window_size.y - CMD_HEIGHT}, {window_size.x, CMD_HEIGHT}));
 
-    top_cover.setSize(sf::Vector2f(window_size - sf::Vector2i(0, CMD_HEIGHT)));
+    top_cover.setSize(sf::Vector2f(window_size));
 }
