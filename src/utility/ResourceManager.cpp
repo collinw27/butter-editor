@@ -4,58 +4,54 @@
 
 #include "utility/Exceptions.h"
 
-ResourceManager* ResourceManager::singleton_object = nullptr;
+ResourceManagerSingleton* ResourceManagerSingleton::singleton_object = nullptr;
 
-ResourceManager* ResourceManager::singleton()
+ResourceManagerSingleton& ResourceManager()
 {
-    return singleton_object;
+    return *ResourceManagerSingleton::singleton_object;
 }
 
-ResourceManager::ResourceManager()
+ResourceManagerSingleton::ResourceManagerSingleton()
 {
-    ResourceManager::singleton_object = this;
+    if (ResourceManagerSingleton::singleton_object != nullptr)
+        throw new ButterException("Reinitialization of singleton");
+    ResourceManagerSingleton::singleton_object = this;
     
     std::ifstream file{"respath.txt"};
     if (!file.is_open())
-    {
         throw ButterException("Could not locate respath.txt!");
-    }
 
     std::string filepath;
     std::getline(file, filepath);
     root_dir = filepath;
 
     if (!main_font.openFromFile(root_dir/"font/Arial.ttf"))
-    {
         throw ButterException("Could not locate Arial.ttf!");
-    }
     if (!mono_font.openFromFile(root_dir/"font/Consolas.ttf"))
-    {
         throw ButterException("Could not locate Consolas.ttf!");
-    }
 }
 
-ResourceManager::~ResourceManager()
+ResourceManagerSingleton::~ResourceManagerSingleton()
 {
-    ResourceManager::singleton_object = nullptr;
+    ResourceManagerSingleton::singleton_object = nullptr;
 }
 
-std::string ResourceManager::get_path(const std::string& path = "")
-{
-    return (root_dir/path).string();
-}
-
-std::string ResourceManager::get_path(const std::filesystem::path& path)
+std::string ResourceManagerSingleton::get_path(const std::string& path = "")
 {
     return (root_dir/path).string();
 }
 
-const sf::Font& ResourceManager::get_font()
+std::string ResourceManagerSingleton::get_path(const std::filesystem::path& path)
+{
+    return (root_dir/path).string();
+}
+
+const sf::Font& ResourceManagerSingleton::get_font()
 {
     return main_font;
 }
 
-const sf::Font& ResourceManager::get_mono()
+const sf::Font& ResourceManagerSingleton::get_mono()
 {
     return mono_font;
 }

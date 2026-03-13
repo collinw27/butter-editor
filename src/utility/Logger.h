@@ -7,19 +7,24 @@
 
 #include <SFML/Graphics.hpp>
 
-class Logger
+class LoggerSingleton;
+
+LoggerSingleton& Logger();
+
+class LoggerSingleton
 {
-    static Logger* singleton_object;
+    static LoggerSingleton* singleton_object;
 
 public:
 
-    static Logger* singleton();
-    Logger();
-    ~Logger();
+    LoggerSingleton();
+    ~LoggerSingleton();
 
     void log(std::stringstream text);
 
-    static std::stringstream str(sf::Vector2f vec);
+    std::stringstream str(sf::Vector2f vec);
+
+    friend LoggerSingleton& Logger();
 };
 
 #endif

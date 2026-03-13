@@ -18,9 +18,9 @@ int main()
 {
     try
     {
-        ResourceManager* resource_manager = new ResourceManager();
-        Logger* logger = new Logger();
-        Input* input_manager = new Input();
+        ResourceManagerSingleton* resource_manager = new ResourceManagerSingleton();
+        LoggerSingleton* logger = new LoggerSingleton();
+        InputSingleton* input_manager = new InputSingleton();
         Editor* editor = new Editor();
 
         editor->run();

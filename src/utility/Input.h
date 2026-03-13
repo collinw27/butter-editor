@@ -1,5 +1,5 @@
-#ifndef INPUT_MANAGER_H
-#define INPUT_MANAGER_H
+#ifndef InputSingleton_MANAGER_H
+#define InputSingleton_MANAGER_H
 
 #include <vector>
 #include <SFML/Graphics.hpp>
@@ -16,18 +16,21 @@ enum class KeyMod
     ALT     = 1 << 2
 };
 
-class Input
+class InputSingleton;
+
+InputSingleton& Input();
+
+class InputSingleton
 {
-    static Input* singleton_object;
+    static InputSingleton* singleton_object;
 
     std::vector<SF_KEY> key_holds;
     std::vector<SF_KEY> key_presses;
 
 public:
 
-    static Input* singleton();
-    Input();
-    ~Input();
+    InputSingleton();
+    ~InputSingleton();
 
     void clear_keys();
     void add_key_press(SF_KEY key);
@@ -37,6 +40,10 @@ public:
     bool check_ctrl();
     bool check_shift();
     bool check_alt();
+
+    // Singleton returned by external function to make code cleaner
+
+    friend InputSingleton& Input();
 };
 
 #endif

@@ -11,8 +11,8 @@ constexpr int CHAR_LIMIT = 1024;
 
 CommandBar::CommandBar(Editor &editor, sf::IntRect bounds) :
     editor{editor}, bounds{bounds}, 
-    status_text{ResourceManager::singleton()->get_mono(), "Untitled project  |  00h 00m 00s 000ms", 15u},
-    command_text{ResourceManager::singleton()->get_mono(), "> ", 15u}
+    status_text{ResourceManager().get_mono(), "Untitled project  |  00h 00m 00s 000ms", 15u},
+    command_text{ResourceManager().get_mono(), "> ", 15u}
 {
     command = "";
     status_text.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
@@ -29,24 +29,24 @@ void CommandBar::update(const std::string& typed_string)
 {
     // Check for special keys
 
-    bool pressed_l = Input::singleton()->check_key_press(SF_KEY::Left);
-    bool pressed_r = Input::singleton()->check_key_press(SF_KEY::Right);
-    bool pressed_home = Input::singleton()->check_key_press(SF_KEY::Home);
-    bool pressed_end = Input::singleton()->check_key_press(SF_KEY::End);
-    if (Input::singleton()->check_key_press(sf::Keyboard::Key::Backspace))
-        backspace(Input::singleton()->check_ctrl());
-    if (Input::singleton()->check_key_press(sf::Keyboard::Key::Delete))
-        delete_ahead(Input::singleton()->check_ctrl());
+    bool pressed_l = Input().check_key_press(SF_KEY::Left);
+    bool pressed_r = Input().check_key_press(SF_KEY::Right);
+    bool pressed_home = Input().check_key_press(SF_KEY::Home);
+    bool pressed_end = Input().check_key_press(SF_KEY::End);
+    if (Input().check_key_press(sf::Keyboard::Key::Backspace))
+        backspace(Input().check_ctrl());
+    if (Input().check_key_press(sf::Keyboard::Key::Delete))
+        delete_ahead(Input().check_ctrl());
     if (pressed_l || pressed_r)
-        move_cursor(pressed_r, (Input::singleton()->check_ctrl() ? MoveMode::WORD : MoveMode::ONE), Input::singleton()->check_shift());
+        move_cursor(pressed_r, (Input().check_ctrl() ? MoveMode::WORD : MoveMode::ONE), Input().check_shift());
     if (pressed_home || pressed_end)
-        move_cursor(pressed_end, MoveMode::ALL, Input::singleton()->check_shift());
-    if (Input::singleton()->check_key_press(SF_KEY::A, KeyMod::CTRL))
-        (Input::singleton()->check_shift() ? reset_selection() : select_all());
+        move_cursor(pressed_end, MoveMode::ALL, Input().check_shift());
+    if (Input().check_key_press(SF_KEY::A, KeyMod::CTRL))
+        (Input().check_shift() ? reset_selection() : select_all());
 
     // Now, create normal text
 
-    if (!Input::singleton()->check_ctrl())
+    if (!Input().check_ctrl())
         append(typed_string);
 
     // Update visuals
@@ -134,8 +134,8 @@ void CommandBar::append(const std::string& raw_text)
     }
 }
 
-// For more complex deletions, simulates selecting text to avoid code duplication
-// Don't tell anyone
+// Don't tell anyone, but for more complex deletions, it
+// reuses the selection routine to simulate selecting and deleting
 
 void CommandBar::backspace(bool delete_word)
 {
@@ -222,7 +222,7 @@ void CommandBar::move_cursor(bool forward, MoveMode mode, bool do_select)
         cursor_start = (forward ? command.length() : 0);
     }
 
-    // If this was a no-op, then no selection should remain
+    // Cancel selection if no characters are selected
     
     if (cursor_start == cursor_end)
         reset_selection();

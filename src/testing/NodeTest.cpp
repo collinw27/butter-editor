@@ -47,14 +47,14 @@ public:
     {
         while (window->isOpen())
         {
-            Input::singleton()->clear_keys();
+            Input().clear_keys();
 
             while (const std::optional event = window->pollEvent())
             {
                 if (event->is<sf::Event::Closed>())
                     window->close();
                 else if (const auto *key_pressed = event->getIf<sf::Event::KeyPressed>())
-                    Input::singleton()->add_key_press(key_pressed->code);
+                    Input().add_key_press(key_pressed->code);
             }
 
             update_shapes();
@@ -77,19 +77,19 @@ public:
     {
         // Enter switches between rects
 
-        if (Input::singleton()->check_key_press(sf::Keyboard::Key::Enter))
+        if (Input().check_key_press(sf::Keyboard::Key::Enter))
         {
             target = (target + 1) % 3;
-            Logger::singleton()->log(ss() << "Switched target: " << target);
+            Logger().log(std::stringstream{} << "Switched target: " << target);
         }
 
         // Arrow keys move position when SHIFT is not held
 
-        bool up = Input::singleton()->check_key_press(sf::Keyboard::Key::Up);
-        bool down = Input::singleton()->check_key_press(sf::Keyboard::Key::Down);
-        bool left = Input::singleton()->check_key_press(sf::Keyboard::Key::Left);
-        bool right = Input::singleton()->check_key_press(sf::Keyboard::Key::Right);
-        bool scaling = Input::singleton()->check_key(sf::Keyboard::Key::LShift);
+        bool up = Input().check_key_press(sf::Keyboard::Key::Up);
+        bool down = Input().check_key_press(sf::Keyboard::Key::Down);
+        bool left = Input().check_key_press(sf::Keyboard::Key::Left);
+        bool right = Input().check_key_press(sf::Keyboard::Key::Right);
+        bool scaling = Input().check_key(sf::Keyboard::Key::LShift);
         if (!scaling && (up || down || left || right))
         {
             RectNode *rect = nodes.at(target);
@@ -104,7 +104,7 @@ public:
             }
             rect->set_position(rect->get_position() + 10.f * delta);
 
-            Logger::singleton()->log(ss() << "Position = " << Logger::str(rect->get_position()).str());
+            Logger().log(std::stringstream{} << "Position = " << Logger().str(rect->get_position()).str());
         }
         if (scaling && (up || down || left || right))
         {
@@ -120,12 +120,12 @@ public:
             }
             rect->set_scale(rect->get_scale().componentWiseMul(delta));
 
-            Logger::singleton()->log(ss() << "Scale = " << Logger::str(rect->get_scale()).str());
+            Logger().log(std::stringstream{} << "Scale = " << Logger().str(rect->get_scale()).str());
         }
 
         // Reset if necessary
 
-        if (Input::singleton()->check_key_press(sf::Keyboard::Key::R))
+        if (Input().check_key_press(sf::Keyboard::Key::R))
         {
             for (auto rect : nodes)
             {
@@ -138,8 +138,8 @@ public:
 
 int main()
 {
-    Logger *logger = new Logger();
-    Input *input_manager = new Input();
+    LoggerSingleton *logger = new LoggerSingleton();
+    InputSingleton *input_manager = new InputSingleton();
 
     NodeTest* node_test = new NodeTest();
     node_test->run();

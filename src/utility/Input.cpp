@@ -1,35 +1,38 @@
 #include "utility/Input.h"
 
 #include <algorithm>
+#include "utility/Exceptions.h"
 
-Input* Input::singleton_object = nullptr;
+InputSingleton* InputSingleton::singleton_object = nullptr;
 
-Input* Input::singleton()
+InputSingleton& Input()
 {
-    return singleton_object;
+    return *InputSingleton::singleton_object;
 }
 
-Input::Input()
+InputSingleton::InputSingleton()
 {
-    Input::singleton_object = this;
+    if (InputSingleton::singleton_object != nullptr)
+        throw new ButterException("Reinitialization of singleton");
+    InputSingleton::singleton_object = this;
 }
 
-Input::~Input()
+InputSingleton::~InputSingleton()
 {
-    Input::singleton_object = nullptr;
+    InputSingleton::singleton_object = nullptr;
 }
 
-void Input::clear_keys()
+void InputSingleton::clear_keys()
 {
     key_presses.clear();
 }
 
-void Input::add_key_press(sf::Keyboard::Key key)
+void InputSingleton::add_key_press(sf::Keyboard::Key key)
 {
     key_presses.push_back(key);
 }
 
-bool Input::check_key(sf::Keyboard::Key key, KeyMod mod)
+bool InputSingleton::check_key(sf::Keyboard::Key key, KeyMod mod)
 {
     if ((int)mod & (int)KeyMod::CTRL
         && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)
@@ -46,7 +49,7 @@ bool Input::check_key(sf::Keyboard::Key key, KeyMod mod)
     return sf::Keyboard::isKeyPressed(key);
 }
 
-bool Input::check_key_press(sf::Keyboard::Key key, KeyMod mod)
+bool InputSingleton::check_key_press(sf::Keyboard::Key key, KeyMod mod)
 {
     if ((int)mod & (int)KeyMod::CTRL && !check_ctrl()) return false;
     if ((int)mod & (int)KeyMod::SHIFT && !check_shift()) return false;
@@ -54,7 +57,7 @@ bool Input::check_key_press(sf::Keyboard::Key key, KeyMod mod)
     return std::find(key_presses.begin(), key_presses.end(), key) != key_presses.end();
 }
 
-bool Input::check_ctrl()
+bool InputSingleton::check_ctrl()
 {
     return (
         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)
@@ -62,7 +65,7 @@ bool Input::check_ctrl()
     );
 }
 
-bool Input::check_shift()
+bool InputSingleton::check_shift()
 {
     return (
         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)
@@ -70,7 +73,7 @@ bool Input::check_shift()
     );
 }
 
-bool Input::check_alt()
+bool InputSingleton::check_alt()
 {
     return (
         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LAlt)

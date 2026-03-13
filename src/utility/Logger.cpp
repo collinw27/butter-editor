@@ -1,28 +1,28 @@
 #include "utility/Logger.h"
 
-Logger* Logger::singleton_object = nullptr;
+LoggerSingleton* LoggerSingleton::singleton_object = nullptr;
 
-Logger* Logger::singleton()
+LoggerSingleton& Logger()
 {
-    return singleton_object;
+    return *LoggerSingleton::singleton_object;
 }
 
-Logger::Logger()
+LoggerSingleton::LoggerSingleton()
 {
-    Logger::singleton_object = this;
+    LoggerSingleton::singleton_object = this;
 }
 
-Logger::~Logger()
+LoggerSingleton::~LoggerSingleton()
 {
-    Logger::singleton_object = nullptr;
+    LoggerSingleton::singleton_object = nullptr;
 }
 
-void Logger::log(std::stringstream text)
+void LoggerSingleton::log(std::stringstream text)
 {
     std::cout << text.str() << std::endl;
 }
 
-std::stringstream Logger::str(sf::Vector2f vec)
+std::stringstream LoggerSingleton::str(sf::Vector2f vec)
 {
     return std::stringstream{} << "(" << vec.x << ", " << vec.y << ")";
 }

@@ -42,7 +42,7 @@ void Editor::run()
 {
     while (window->isOpen())
     {
-        Input::singleton()->clear_keys();
+        Input().clear_keys();
         std::string keyboard_string = "";
 
         // Handle all events
@@ -77,7 +77,7 @@ void Editor::run()
             }
             else if (const auto* key_pressed = event->getIf<sf::Event::KeyPressed>())
             {
-                Input::singleton()->add_key_press(key_pressed->code);
+                Input().add_key_press(key_pressed->code);
             }
             else if (const auto* text_entered = event->getIf<sf::Event::TextEntered>())
             {
@@ -92,13 +92,13 @@ void Editor::run()
         // CTRL+P: Toggle mini terminal
         // Escape tries to clear text, and exits if nothing was there
 
-        if (using_terminal && Input::singleton()->check_key_press(sf::Keyboard::Key::Escape))
+        if (using_terminal && Input().check_key_press(sf::Keyboard::Key::Escape))
         {
             using_terminal = command_bar->attempt_clear();
             if (!using_terminal)
                 command_bar->set_typing(false);
         }
-        if (Input::singleton()->check_key_press(sf::Keyboard::Key::P, KeyMod::CTRL))
+        if (Input().check_key_press(sf::Keyboard::Key::P, KeyMod::CTRL))
         {
             using_terminal = !using_terminal;
             command_bar->set_typing(using_terminal);
