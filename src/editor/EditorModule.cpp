@@ -1,11 +1,11 @@
 #include "editor/EditorModule.h"
 
-EditorModule::EditorModule(Editor &editor, sf::IntRect bounds) :
-    editor{editor},
-    bounds{bounds.position + sf::Vector2i(5, 5), bounds.size - sf::Vector2i(10, 10)}
+// Bounds are not initialized until `set_bounds()` is called (by Editor)
+
+EditorModule::EditorModule(Editor &editor) :
+    editor{editor}
 {
-    visible_rect = sf::RectangleShape(sf::Vector2f(this->bounds.size));
-    visible_rect.setPosition(sf::Vector2f(this->bounds.position));
+    visible_rect = sf::RectangleShape(sf::Vector2f(1, 1));
     visible_rect.setFillColor(sf::Color::Transparent);
     visible_rect.setOutlineColor(sf::Color(50, 50, 50));
     visible_rect.setOutlineThickness(2);

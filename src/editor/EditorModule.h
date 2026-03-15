@@ -22,7 +22,7 @@ protected:
 
 public:
 
-    EditorModule(Editor& editor, sf::IntRect bounds);
+    EditorModule(Editor& editor);
     virtual void update();
     virtual void draw(sf::RenderWindow& window);
 

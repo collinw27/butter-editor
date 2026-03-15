@@ -13,7 +13,7 @@ InputSingleton& Input()
 InputSingleton::InputSingleton()
 {
     if (InputSingleton::singleton_object != nullptr)
-        throw new ButterException("Reinitialization of singleton");
+        throw ButterException("Reinitialization of singleton");
     InputSingleton::singleton_object = this;
 }
 

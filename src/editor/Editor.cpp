@@ -1,14 +1,21 @@
 #include "editor/Editor.h"
 
+#include <SFML/OpenGL.hpp>
+
 #include "editor/DragDivider.h"
 #include "utility/Input.h"
 #include "utility/Logger.h"
+#include "utility/FileManager.h"
+#include "utility/UserSettings.h"
 
 constexpr int MODULE_MARGIN = 100;
 constexpr int CMD_HEIGHT = 20;
 
 Editor::Editor()
 {
+    ui_scale_index = FileManager().get_user_settings().ui_scale_index;
+    ui_scale = 1.f + (float)ui_scale_index * 0.1f;
+
     window = new sf::RenderWindow(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close | sf::Style::Resize | sf::Style::Titlebar);
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));
@@ -16,15 +23,22 @@ Editor::Editor()
 
     y_divider = 360;
     x_divider = 640;
-    preview_module = new EditorModule(*this, sf::IntRect({0, 0}, {x_divider, y_divider}));
-    config_module = new EditorModule(*this, sf::IntRect({x_divider, 0}, {window_size.x - x_divider, y_divider}));
-    timeline_module = new EditorModule(*this, sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider - CMD_HEIGHT}));
-    command_bar = new CommandBar(*this, sf::IntRect({0, window_size.y - CMD_HEIGHT}, {window_size.x, CMD_HEIGHT}));
+
+    preview_module = new EditorModule(*this);
+    config_module = new EditorModule(*this);
+    timeline_module = new EditorModule(*this);
+    command_bar = new CommandBar(*this);
 
     top_cover = sf::RectangleShape(sf::Vector2f(window_size));
     top_cover.setFillColor(sf::Color(0, 0, 0, 80));
 
     modules.insert(modules.end(), {preview_module, config_module, timeline_module});
+
+    // `resize_modules()` must ALWAYS be called
+    // Module properties are dependent on calculations whose implementation
+    // are only provided in said function
+    
+    resize_modules();
 
     clock = sf::Clock();
     clock.start();
@@ -113,6 +127,24 @@ void Editor::run()
             {
                 module->update();
             }
+        }
+
+        // Ctrl + (technically =) or -: Modify window scale
+        // For now: limited between 70% and 200%
+
+        int old_scale_index = ui_scale_index;
+        if (Input().check_key_press(SF_KEY::Equal, KeyMod::CTRL))
+            ui_scale_index = std::min(ui_scale_index + 1, 10);
+        if (Input().check_key_press(SF_KEY::Hyphen, KeyMod::CTRL))
+            ui_scale_index = std::max(ui_scale_index - 1, -3);
+        if (old_scale_index != ui_scale_index)
+        {
+            ui_scale = 1.f + (float)ui_scale_index * 0.1f;
+            resize_modules();
+            UserSettings user_settings = FileManager().get_user_settings();
+            user_settings.ui_scale_index = ui_scale_index;
+            Logger().log(std::to_string(user_settings.ui_scale_index));
+            FileManager().update_user_settings(user_settings);
         }
 
         window->clear();
@@ -221,12 +253,17 @@ sf::Vector2i Editor::get_mouse_position()
     return mouse_position;
 }
 
+// Called on window resize, bounds movement, or UI scale change
+
 void Editor::resize_modules()
 {
+    int cmd_height = (int)(CMD_HEIGHT * ui_scale);
+
     preview_module->set_bounds(sf::IntRect({0, 0}, {x_divider, y_divider}));
     config_module->set_bounds(sf::IntRect({x_divider, 0}, {window_size.x - x_divider, y_divider}));
-    timeline_module->set_bounds(sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider - CMD_HEIGHT}));
-    command_bar->set_bounds(sf::IntRect({0, window_size.y - CMD_HEIGHT}, {window_size.x, CMD_HEIGHT}));
+    timeline_module->set_bounds(sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider - cmd_height}));
+    command_bar->set_bounds(sf::IntRect({0, window_size.y - cmd_height}, {window_size.x, cmd_height}));
+    command_bar->set_ui_scale(ui_scale);
 
     top_cover.setSize(sf::Vector2f(window_size));
 }

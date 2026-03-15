@@ -4,24 +4,22 @@
 #include "editor/Editor.h"
 #include "utility/Math.h"
 #include "utility/Input.h"
-#include "utility/ResourceManager.h"
+#include "utility/FileManager.h"
 #include "utility/Logger.h"
 
 constexpr int CHAR_LIMIT = 1024;
 
-CommandBar::CommandBar(Editor &editor, sf::IntRect bounds) :
-    editor{editor}, bounds{bounds}, 
-    status_text{ResourceManager().get_mono(), "Untitled project  |  00h 00m 00s 000ms", 15u},
-    command_text{ResourceManager().get_mono(), "> ", 15u}
+// Bounds & ui_scale are not initialized until respective setters are called (by Editor)
+
+CommandBar::CommandBar(Editor &editor) :
+    editor{editor}
 {
     command = "";
-    status_text.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
-    command_text.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
-
-    cursor_rect = sf::RectangleShape(sf::Vector2f(2, 22));
-    cursor_rect.setPosition(sf::Vector2f(bounds.position));
+    
+    status_text = new sf::Text(FileManager().get_mono(), "Untitled project  |  00h 00m 00s 000ms", 15u);
+    command_text = new sf::Text(FileManager().get_mono(), "> ", 15u);
+    cursor_rect = sf::RectangleShape(sf::Vector2f(1, 1));
     cursor_rect.setFillColor(sf::Color::White);
-
     selection_rect.setFillColor(sf::Color(90, 90, 90));
 }
 
@@ -51,16 +49,7 @@ void CommandBar::update(const std::string& typed_string)
 
     // Update visuals
 
-    int dummy = 1;
-    command_text.setString("> " + command);
-    float start_x = command_text.findCharacterPos(2 + cursor_start).x;
-    cursor_rect.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(start_x, -2));
-    if (cursor_end != -1)
-    {
-        float end_x = command_text.findCharacterPos(2 + cursor_end).x;
-        selection_rect.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(std::min(start_x, end_x), -2));
-        selection_rect.setSize(sf::Vector2f(std::max(start_x, end_x) - std::min(start_x, end_x), 22));
-    }
+    render_text();
     cursor_time += editor.get_delta_time();
 }
 
@@ -70,14 +59,31 @@ void CommandBar::draw(sf::RenderWindow& window)
     {
         if (cursor_end != -1)
             window.draw(selection_rect);
-        window.draw(command_text);
+        window.draw(*command_text);
         if ((int)std::floor(cursor_time / 0.7) % 2 == 0)
             window.draw(cursor_rect);
     }
     else
     {
-        window.draw(status_text);
+        window.draw(*status_text);
     }
+}
+
+void CommandBar::set_bounds(const sf::IntRect& bounds)
+{
+    this->bounds = bounds;
+    status_text->setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
+    command_text->setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
+}
+
+void CommandBar::set_ui_scale(float new_scale)
+{
+    ui_scale = new_scale;
+    float text_size = (unsigned)(15.f * ui_scale);
+    status_text->setCharacterSize(text_size);
+    command_text->setCharacterSize(text_size);
+    cursor_rect.setSize(sf::Vector2f(2, text_size + 7));
+    render_text();
 }
 
 // Returns whether anything was cleared
@@ -90,20 +96,13 @@ bool CommandBar::attempt_clear()
     cursor_start = 0;
     cursor_end = -1;
     cursor_time = 0.f;
-    command_text.setString("> ");
+    render_text();
     return true;
 }
 
 void CommandBar::set_typing(bool value)
 {
     typing = value;
-}
-
-void CommandBar::set_bounds(const sf::IntRect& bounds)
-{
-    this->bounds = bounds;
-    status_text.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
-    command_text.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
 }
 
 void CommandBar::append(const std::string& raw_text)
@@ -239,4 +238,17 @@ void CommandBar::select_all()
     cursor_time = 0.f;
     cursor_end = 0;
     cursor_start = command.length();
+}
+
+void CommandBar::render_text()
+{
+    command_text->setString("> " + command);
+    float start_x = command_text->findCharacterPos(2 + cursor_start).x;
+    cursor_rect.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(start_x, -2 + ui_scale));
+    if (cursor_end != -1)
+    {
+        float end_x = command_text->findCharacterPos(2 + cursor_end).x;
+        selection_rect.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(std::min(start_x, end_x), -2 + ui_scale));
+        selection_rect.setSize(sf::Vector2f(std::max(start_x, end_x) - std::min(start_x, end_x), cursor_rect.getSize().y));
+    }
 }

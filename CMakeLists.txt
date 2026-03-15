@@ -12,10 +12,8 @@ FetchContent_Declare(SFML
     SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-set(FFMPEG_DIR "ffmpeg")
 include_directories(
     src
-    ${FFMPEG_DIR}/include
 )
 link_directories(${FFMPEG_DIR}/lib)
 file(
@@ -30,10 +28,6 @@ add_executable(Butter src/main.cpp ${butter_SRC})
 target_compile_features(Butter PRIVATE cxx_std_17)
 target_link_libraries(Butter PRIVATE
     SFML::Graphics
-    avcodec
-    avformat
-    avutil
-    swscale
 )
 
 add_executable(NodeTest src/testing/NodeTest.cpp ${butter_SRC})

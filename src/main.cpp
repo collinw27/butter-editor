@@ -1,15 +1,8 @@
 
 #include <SFML/Graphics.hpp>
-extern "C" {
-    #include <libavcodec/avcodec.h>
-    #include <libavformat/avformat.h>
-    #include <libavutil/imgutils.h>
-    #include <libavutil/avutil.h>
-    #include <libswscale/swscale.h>
-}
 
 #include "editor/Editor.h"
-#include "utility/ResourceManager.h"
+#include "utility/FileManager.h"
 #include "utility/Logger.h"
 #include "utility/Input.h"
 #include "utility/Exceptions.h"
@@ -18,7 +11,7 @@ int main()
 {
     try
     {
-        ResourceManagerSingleton* resource_manager = new ResourceManagerSingleton();
+        FileManagerSingleton* resource_manager = new FileManagerSingleton();
         LoggerSingleton* logger = new LoggerSingleton();
         InputSingleton* input_manager = new InputSingleton();
         Editor* editor = new Editor();

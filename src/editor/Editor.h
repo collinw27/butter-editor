@@ -23,6 +23,9 @@ class Editor
     DragMouse* drag_mouse_event = nullptr;
     bool using_terminal = false;
 
+    int ui_scale_index = 0;
+    float ui_scale = 1.f;
+
     sf::Clock clock;
     float delta_time = 0.1f;
 

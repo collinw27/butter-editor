@@ -10,10 +10,14 @@ class CommandBar
 {
     Editor& editor;
     sf::IntRect bounds;
-    sf::Text status_text;
-    sf::Text command_text;
+    float ui_scale = 1.f;
     sf::RectangleShape cursor_rect;
     sf::RectangleShape selection_rect;
+
+    // Some members use pointers to avoid need for direct initialization
+    
+    sf::Text* status_text;
+    sf::Text* command_text;
 
     // Note: `cursor_start` isn't necessarily less than `cursor_end`
 
@@ -23,17 +27,21 @@ class CommandBar
     int cursor_end = -1;
     float cursor_time = 0.f;
 
-    bool textNeedsUpdate = false; // Used for optimization
+    // Used for optimization (not yet actually)
+
+    bool textNeedsUpdate = false;
 
 public:
 
-    CommandBar(Editor& editor, sf::IntRect bounds);
+    CommandBar(Editor& editor);
     void update(const std::string& keyboard_string);
     void draw(sf::RenderWindow& window);
+    
+    void set_bounds(const sf::IntRect& bounds);
+    void set_ui_scale(float new_scale);
 
     bool attempt_clear();
     void set_typing(bool value);
-    void set_bounds(const sf::IntRect& bounds);
     
 private:
 
@@ -48,6 +56,8 @@ private:
     void move_cursor(bool forward, MoveMode mode, bool do_select);
     inline void reset_selection();
     void select_all();
+
+    void render_text();
 };
 
 #endif

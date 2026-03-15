@@ -20,7 +20,8 @@ public:
     LoggerSingleton();
     ~LoggerSingleton();
 
-    void log(std::stringstream text);
+    void log(const std::string& text);
+    void log(const std::stringstream& text);
 
     std::stringstream str(sf::Vector2f vec);
 
