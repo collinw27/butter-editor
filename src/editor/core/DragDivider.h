@@ -1,4 +1,4 @@
-#include "editor/DragMouse.h"
+#include "editor/core/DragMouse.h"
 
 class DragDivider : public DragMouse
 {

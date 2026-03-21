@@ -1,4 +1,4 @@
-#include "editor/DragDivider.h"
+#include "editor/core/DragDivider.h"
 
 DragDivider::DragDivider(sf::Vector2i source_pos, bool vertical) :
     DragMouse{source_pos}, vertical{vertical}

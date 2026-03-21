@@ -1,44 +1,62 @@
 #include "editor/Editor.h"
 
-#include <SFML/OpenGL.hpp>
-
-#include "editor/DragDivider.h"
+#include "editor/core/DragDivider.h"
 #include "utility/Input.h"
 #include "utility/Logger.h"
 #include "utility/FileManager.h"
 #include "utility/UserSettings.h"
-#include "editor/TestModule.h"
+#include "editor/core/TestModule.h"
 
 constexpr int MODULE_MARGIN = 100;
+constexpr int TAB_HEIGHT = 30;
+constexpr int TAB_WIDTH = 90;
 constexpr int CMD_HEIGHT = 20;
+
+const sf::Color Editor::C_BG{0, 0, 0};
+const sf::Color Editor::C_FG{90, 90, 90};
+const sf::Color Editor::C_HOVER{130, 130, 130};
+const sf::Color Editor::C_FG_DESELECTED{50, 50, 50};
+const sf::Color Editor::C_HIGHLIGHT{90, 90, 90};
 
 Editor::Editor()
 {
-    ui_scale_index = FileManager().get_user_settings().ui_scale_index;
-    ui_scale = 1.f + (float)ui_scale_index * 0.1f;
+    // SFML setup
 
     window = new sf::RenderWindow(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close | sf::Style::Resize | sf::Style::Titlebar);
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));
     window->setFramerateLimit(150);
 
-    y_divider = 360;
-    x_divider = 640;
+    // Module setup (flex initialized later)
 
     preview_module = new EditorModule(*this);
-    config_module = new TestModule(*this, "Test Module 1");
     timeline_module = new EditorModule(*this);
     command_bar = new CommandBar(*this);
+    visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, &timeline_module});
+
+    // Flex module setup
+    // Like the modules themselves, tab parameters are set during `resize_modules()`
+
+    current_flex_tab = 1;
+    flex_tabs.push_back(new FlexTab(new TestModule(*this, "Test module #1"), "Test 1"));
+    flex_tabs.push_back(new FlexTab(new TestModule(*this, "Test module #2"), "Test 2"));
+    flex_tabs.at(current_flex_tab)->set_selected(true);
+    flex_module = &flex_tabs.at(current_flex_tab)->get_module();
+
+    // Misc graphics
 
     top_cover = sf::RectangleShape(sf::Vector2f(window_size));
     top_cover.setFillColor(sf::Color(0, 0, 0, 80));
 
-    modules.insert(modules.end(), {preview_module, config_module, timeline_module});
-
+    // UI parameters
     // `resize_modules()` must ALWAYS be called
     // Module properties are dependent on calculations whose implementation
     // are only provided in said function
     
+    y_divider = 360;
+    x_divider = 640;
+    ui_scale_index = FileManager().get_user_settings().ui_scale_index;
+    ui_scale = 1.f + (float)ui_scale_index * 0.1f;
     resize_modules();
 
     clock = sf::Clock();
@@ -49,8 +67,11 @@ Editor::~Editor()
 {
     delete window;
     delete preview_module;
-    delete config_module;
     delete timeline_module;
+    for (auto flex_tab : flex_tabs)
+    {
+        delete flex_tab;
+    }
 }
 
 void Editor::run()
@@ -100,7 +121,7 @@ void Editor::run()
             }
         }
         
-        // Handle delta time
+        // Store delta time, which can later be queried by any module
 
         delta_time = clock.restart().asSeconds();
 
@@ -124,9 +145,9 @@ void Editor::run()
         }
         else
         {
-            for (auto module : modules)
+            for (EditorModule** module : visible_modules)
             {
-                module->update();
+                (*module)->update();
             }
         }
 
@@ -147,7 +168,7 @@ void Editor::run()
             FileManager().update_user_settings(user_settings);
         }
 
-        window->clear();
+        window->clear(Editor::C_BG);
         draw(*window);
         window->display();
     }
@@ -165,11 +186,22 @@ float Editor::get_delta_time()
 
 void Editor::draw(sf::RenderWindow& window)
 {
-    for (auto module : modules)
+    // Draw tabs at top
+
+    for (auto flex_tab : flex_tabs)
     {
-        module->draw_bounds(window);
-        module->draw(window);
+        flex_tab->draw(window);
     }
+
+    // Ignore non-selected flex modules
+
+    for (EditorModule** module : visible_modules)
+    {
+        (*module)->draw(window);
+    }
+
+    // Darken everything else if using terminal
+
     if (using_terminal)
         window.draw(top_cover);
     command_bar->draw(window);
@@ -189,10 +221,21 @@ void Editor::on_resized(sf::Vector2i new_size)
 void Editor::on_mouse_moved(sf::Vector2i position)
 {
     mouse_position = position;
-    for (auto module : modules)
+
+    // Highlight modules
+
+    for (EditorModule** module : visible_modules)
     {
-        bool mouse_overlaps = module->get_bounds().contains(mouse_position);
-        module->set_hover_highlight(mouse_overlaps);
+        bool mouse_overlaps = (*module)->get_bounds().contains(mouse_position);
+        (*module)->set_hover_highlight(mouse_overlaps);
+    }
+
+    // Highlight tabs
+
+    for (FlexTab* tab : flex_tabs)
+    {
+        bool mouse_overlaps = tab->get_bounds().contains(mouse_position);
+        tab->set_hovering(mouse_overlaps);
     }
 
     // Scale sub-windows if dividers were moved
@@ -217,10 +260,10 @@ void Editor::on_mouse_moved(sf::Vector2i position)
         }
     }
 
-    // Set appropriate cursor type when not dragging
-
     else
     {
+        // Set appropriate cursor type when not dragging
+
         if (abs(mouse_position.y - y_divider) < 6)
             set_cursor(sf::Cursor::Type::SizeVertical);
         else if (mouse_position.y < y_divider && abs(mouse_position.x - x_divider) < 6)
@@ -232,14 +275,30 @@ void Editor::on_mouse_moved(sf::Vector2i position)
 
 void Editor::on_mouse_pressed()
 {
-    // Start scaling dividers if they were clicked
-
     if (!using_terminal)
     {
+        // Start scaling dividers if they were clicked
+
         if (abs(mouse_position.y - y_divider) < 6)
             drag_mouse_event = new DragDivider(mouse_position, true);
         else if (mouse_position.y < y_divider && abs(mouse_position.x - x_divider) < 6)
             drag_mouse_event = new DragDivider(mouse_position, false);
+
+        // Switch tabs if clicked
+        // In the future, it might be desirable to have this occur
+        // on mouse release instead
+
+        for (int i = 0; i < flex_tabs.size(); ++i)
+        {
+            FlexTab* tab = flex_tabs.at(i);
+            if (tab->get_bounds().contains(mouse_position))
+            {
+                flex_tabs.at(current_flex_tab)->set_selected(false);
+                tab->set_selected(true);
+                current_flex_tab = i;
+                flex_module = &tab->get_module();
+            }
+        }
     }
 }
 
@@ -258,16 +317,25 @@ sf::Vector2i Editor::get_mouse_position()
 
 void Editor::resize_modules()
 {
+    int tab_height = (int)(TAB_HEIGHT * ui_scale);
     int cmd_height = (int)(CMD_HEIGHT * ui_scale);
+    int tab_width = (int)(TAB_WIDTH * ui_scale);
 
-    preview_module->set_bounds(sf::IntRect({0, 0}, {x_divider, y_divider}));
+    preview_module->set_bounds(sf::IntRect({0, tab_height}, {x_divider, y_divider - tab_height}));
     preview_module->set_ui_scale(ui_scale);
-    config_module->set_bounds(sf::IntRect({x_divider, 0}, {window_size.x - x_divider, y_divider}));
-    config_module->set_ui_scale(ui_scale);
     timeline_module->set_bounds(sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider - cmd_height}));
     timeline_module->set_ui_scale(ui_scale);
     command_bar->set_bounds(sf::IntRect({0, window_size.y - cmd_height}, {window_size.x, cmd_height}));
     command_bar->set_ui_scale(ui_scale);
+
+    for (int i = 0; i < flex_tabs.size(); ++i)
+    {
+        FlexTab& flex_tab = *flex_tabs.at(i);
+        flex_tab.set_bounds(sf::IntRect({x_divider + 8 + (tab_width + 5) * i, 8}, {tab_width, tab_height - 3}));
+        flex_tab.set_ui_scale(ui_scale);
+        flex_tab.get_module().set_bounds(sf::IntRect({x_divider, tab_height}, {window_size.x - x_divider, y_divider - tab_height}));
+        flex_tab.get_module().set_ui_scale(ui_scale);
+    }
 
     top_cover.setSize(sf::Vector2f(window_size));
 }

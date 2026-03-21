@@ -1,4 +1,4 @@
-#include "editor/DragMouse.h"
+#include "editor/core/DragMouse.h"
 
 DragMouse::DragMouse(sf::Vector2i source_pos) :
     source_pos{source_pos}

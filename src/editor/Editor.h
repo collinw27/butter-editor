@@ -5,18 +5,41 @@
 #include <vector>
 
 #include "editor/EditorModule.h"
-#include "editor/CommandBar.h"
-#include "editor/DragMouse.h"
+#include "editor/core/FlexTab.h"
+#include "editor/core/CommandBar.h"
+#include "editor/core/DragMouse.h"
 
 class Editor
 {
+public:
+
+    // Start by defining publicly-accessible constants
+    // These are defined as static so you don't need access to THE editor instance
+    // This could be changed in the future, for example, if color customization is added
+    
+    static const sf::Color C_BG;
+    static const sf::Color C_FG;
+    static const sf::Color C_HOVER;
+    static const sf::Color C_HIGHLIGHT;
+    static const sf::Color C_FG_DESELECTED;
+
+private:
+
     sf::RenderWindow* window;
 
+    // For now, the editor has 3 modules visible at all times
+    // Flex modules can be toggled between each other using
+    // a list of tabs that appear over it
+    // `visible_modules` uses double pointers to automatically switch
+    // between flex modules without needing to modify the vector
+
     EditorModule* preview_module;
-    EditorModule* config_module;
+    EditorModule* flex_module;
     EditorModule* timeline_module;
-    std::vector<EditorModule*> modules;
+    std::vector<EditorModule**> visible_modules;
     CommandBar* command_bar;
+    std::vector<FlexTab*> flex_tabs;
+    unsigned current_flex_tab;
 
     sf::Vector2i window_size;
     sf::Vector2i mouse_position;

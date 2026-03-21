@@ -1,4 +1,4 @@
-#include "editor/CommandBar.h"
+#include "editor/core/CommandBar.h"
 
 #include <cmath>
 #include "editor/Editor.h"
@@ -20,7 +20,13 @@ CommandBar::CommandBar(Editor &editor) :
     command_text = new sf::Text(FileManager().get_mono(), "> ", 15u);
     cursor_rect = sf::RectangleShape(sf::Vector2f(1, 1));
     cursor_rect.setFillColor(sf::Color::White);
-    selection_rect.setFillColor(sf::Color(90, 90, 90));
+    selection_rect.setFillColor(Editor::C_HIGHLIGHT);
+}
+
+CommandBar::~CommandBar()
+{
+    delete status_text;
+    delete command_text;
 }
 
 void CommandBar::update(const std::string& typed_string)
@@ -69,9 +75,9 @@ void CommandBar::draw(sf::RenderWindow& window)
     }
 }
 
-void CommandBar::set_bounds(const sf::IntRect& bounds)
+void CommandBar::set_bounds(const sf::IntRect& new_bounds)
 {
-    this->bounds = bounds;
+    bounds = new_bounds;
     status_text->setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
     command_text->setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
 }

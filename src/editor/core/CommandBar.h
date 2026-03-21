@@ -34,10 +34,11 @@ class CommandBar
 public:
 
     CommandBar(Editor& editor);
+    ~CommandBar();
     void update(const std::string& keyboard_string);
     void draw(sf::RenderWindow& window);
     
-    void set_bounds(const sf::IntRect& bounds);
+    void set_bounds(const sf::IntRect& new_bounds);
     void set_ui_scale(float new_scale);
 
     bool attempt_clear();

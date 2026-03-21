@@ -1,4 +1,4 @@
-#include "editor/TestModule.h"
+#include "editor/core/TestModule.h"
 
 #include "utility/FileManager.h"
 
@@ -11,11 +11,11 @@ TestModule::TestModule(Editor& editor, std::string sample_text)
 TestModule::~TestModule()
 {
     delete text;
-    text = nullptr;
 }
 
 void TestModule::draw(sf::RenderWindow& window)
 {
+    EditorModule::draw(window);
     window.draw(*text);
 }
 
