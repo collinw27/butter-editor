@@ -1,1 +1,1 @@
-ui_scale_index: 10
+ui_scale_index: -2

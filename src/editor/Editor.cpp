@@ -7,6 +7,7 @@
 #include "utility/Logger.h"
 #include "utility/FileManager.h"
 #include "utility/UserSettings.h"
+#include "editor/TestModule.h"
 
 constexpr int MODULE_MARGIN = 100;
 constexpr int CMD_HEIGHT = 20;
@@ -25,7 +26,7 @@ Editor::Editor()
     x_divider = 640;
 
     preview_module = new EditorModule(*this);
-    config_module = new EditorModule(*this);
+    config_module = new TestModule(*this, "Test Module 1");
     timeline_module = new EditorModule(*this);
     command_bar = new CommandBar(*this);
 
@@ -143,7 +144,6 @@ void Editor::run()
             resize_modules();
             UserSettings user_settings = FileManager().get_user_settings();
             user_settings.ui_scale_index = ui_scale_index;
-            Logger().log(std::to_string(user_settings.ui_scale_index));
             FileManager().update_user_settings(user_settings);
         }
 
@@ -167,6 +167,7 @@ void Editor::draw(sf::RenderWindow& window)
 {
     for (auto module : modules)
     {
+        module->draw_bounds(window);
         module->draw(window);
     }
     if (using_terminal)
@@ -260,8 +261,11 @@ void Editor::resize_modules()
     int cmd_height = (int)(CMD_HEIGHT * ui_scale);
 
     preview_module->set_bounds(sf::IntRect({0, 0}, {x_divider, y_divider}));
+    preview_module->set_ui_scale(ui_scale);
     config_module->set_bounds(sf::IntRect({x_divider, 0}, {window_size.x - x_divider, y_divider}));
+    config_module->set_ui_scale(ui_scale);
     timeline_module->set_bounds(sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider - cmd_height}));
+    timeline_module->set_ui_scale(ui_scale);
     command_bar->set_bounds(sf::IntRect({0, window_size.y - cmd_height}, {window_size.x, cmd_height}));
     command_bar->set_ui_scale(ui_scale);
 
