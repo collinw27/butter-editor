@@ -37,9 +37,13 @@ private:
     EditorModule* flex_module;
     EditorModule* timeline_module;
     std::vector<EditorModule**> visible_modules;
+
+    // Top and bottom HUD
+
     CommandBar* command_bar;
     std::vector<FlexTab*> flex_tabs;
     unsigned current_flex_tab;
+    sf::Text* temp_menu_bar;
 
     sf::Vector2i window_size;
     sf::Vector2i mouse_position;

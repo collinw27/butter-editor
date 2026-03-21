@@ -45,6 +45,7 @@ Editor::Editor()
 
     // Misc graphics
 
+    temp_menu_bar = new sf::Text(FileManager().get_font(), "File   Edit   Settings   Export");
     top_cover = sf::RectangleShape(sf::Vector2f(window_size));
     top_cover.setFillColor(sf::Color(0, 0, 0, 80));
 
@@ -72,6 +73,7 @@ Editor::~Editor()
     {
         delete flex_tab;
     }
+    delete temp_menu_bar;
 }
 
 void Editor::run()
@@ -199,6 +201,7 @@ void Editor::draw(sf::RenderWindow& window)
     {
         (*module)->draw(window);
     }
+    window.draw(*temp_menu_bar);
 
     // Darken everything else if using terminal
 
@@ -221,30 +224,31 @@ void Editor::on_resized(sf::Vector2i new_size)
 void Editor::on_mouse_moved(sf::Vector2i position)
 {
     mouse_position = position;
+    
+    DragDivider* drag_divider_event = nullptr;
+    if (drag_mouse_event != nullptr)
+        drag_divider_event = dynamic_cast<DragDivider*>(drag_mouse_event);
 
-    // Highlight modules
+    // Highlight modules & tabs (but not if moving dividers)
 
-    for (EditorModule** module : visible_modules)
+    if (drag_divider_event == nullptr)
     {
-        bool mouse_overlaps = (*module)->get_bounds().contains(mouse_position);
-        (*module)->set_hover_highlight(mouse_overlaps);
-    }
-
-    // Highlight tabs
-
-    for (FlexTab* tab : flex_tabs)
-    {
-        bool mouse_overlaps = tab->get_bounds().contains(mouse_position);
-        tab->set_hovering(mouse_overlaps);
+        for (EditorModule** module : visible_modules)
+        {
+            bool mouse_overlaps = (*module)->get_bounds().contains(mouse_position);
+            (*module)->set_hover_highlight(mouse_overlaps);
+        }
+        for (FlexTab* tab : flex_tabs)
+        {
+            bool mouse_overlaps = tab->get_bounds().contains(mouse_position);
+            tab->set_hovering(mouse_overlaps);
+        }
     }
 
     // Scale sub-windows if dividers were moved
 
-    if (using_terminal)
-        set_cursor(sf::Cursor::Type::Arrow);
-    else if (drag_mouse_event != nullptr)
+    if (drag_mouse_event != nullptr)
     {
-        DragDivider* drag_divider_event = dynamic_cast<DragDivider*>(drag_mouse_event);
         if (drag_divider_event != nullptr)
         {
             if (drag_divider_event->is_vertical() && mouse_position.y > MODULE_MARGIN && mouse_position.y < (window_size.y - MODULE_MARGIN))
@@ -259,7 +263,6 @@ void Editor::on_mouse_moved(sf::Vector2i position)
             }
         }
     }
-
     else
     {
         // Set appropriate cursor type when not dragging
@@ -275,29 +278,26 @@ void Editor::on_mouse_moved(sf::Vector2i position)
 
 void Editor::on_mouse_pressed()
 {
-    if (!using_terminal)
+    // Start scaling dividers if they were clicked
+
+    if (abs(mouse_position.y - y_divider) < 6)
+        drag_mouse_event = new DragDivider(mouse_position, true);
+    else if (mouse_position.y < y_divider && abs(mouse_position.x - x_divider) < 6)
+        drag_mouse_event = new DragDivider(mouse_position, false);
+
+    // Switch tabs if clicked
+    // In the future, it might be desirable to have this occur
+    // on mouse release instead
+
+    for (int i = 0; i < flex_tabs.size(); ++i)
     {
-        // Start scaling dividers if they were clicked
-
-        if (abs(mouse_position.y - y_divider) < 6)
-            drag_mouse_event = new DragDivider(mouse_position, true);
-        else if (mouse_position.y < y_divider && abs(mouse_position.x - x_divider) < 6)
-            drag_mouse_event = new DragDivider(mouse_position, false);
-
-        // Switch tabs if clicked
-        // In the future, it might be desirable to have this occur
-        // on mouse release instead
-
-        for (int i = 0; i < flex_tabs.size(); ++i)
+        FlexTab* tab = flex_tabs.at(i);
+        if (tab->get_bounds().contains(mouse_position))
         {
-            FlexTab* tab = flex_tabs.at(i);
-            if (tab->get_bounds().contains(mouse_position))
-            {
-                flex_tabs.at(current_flex_tab)->set_selected(false);
-                tab->set_selected(true);
-                current_flex_tab = i;
-                flex_module = &tab->get_module();
-            }
+            flex_tabs.at(current_flex_tab)->set_selected(false);
+            tab->set_selected(true);
+            current_flex_tab = i;
+            flex_module = &tab->get_module();
         }
     }
 }
@@ -321,12 +321,16 @@ void Editor::resize_modules()
     int cmd_height = (int)(CMD_HEIGHT * ui_scale);
     int tab_width = (int)(TAB_WIDTH * ui_scale);
 
+    // Modules
+
     preview_module->set_bounds(sf::IntRect({0, tab_height}, {x_divider, y_divider - tab_height}));
     preview_module->set_ui_scale(ui_scale);
     timeline_module->set_bounds(sf::IntRect({0, y_divider}, {window_size.x, window_size.y - y_divider - cmd_height}));
     timeline_module->set_ui_scale(ui_scale);
     command_bar->set_bounds(sf::IntRect({0, window_size.y - cmd_height}, {window_size.x, cmd_height}));
     command_bar->set_ui_scale(ui_scale);
+
+    // Tabs
 
     for (int i = 0; i < flex_tabs.size(); ++i)
     {
@@ -337,5 +341,9 @@ void Editor::resize_modules()
         flex_tab.get_module().set_ui_scale(ui_scale);
     }
 
+    // Misc graphics
+
+    temp_menu_bar->setPosition(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 8 + 2 * ui_scale)));
+    temp_menu_bar->setCharacterSize((unsigned)(19.f * ui_scale));
     top_cover.setSize(sf::Vector2f(window_size));
 }
