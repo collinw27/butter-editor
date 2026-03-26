@@ -6,13 +6,6 @@ class ButterException
 
 public:
 
-    ButterException(const std::string& error_string) :
-        error_string{error_string}
-    {
-    }
-
-    void print() const
-    {
-        std::cout << "[ERROR] " << error_string << std::endl;
-    }
+    ButterException(const std::string& error_string);
+    void print() const;
 };

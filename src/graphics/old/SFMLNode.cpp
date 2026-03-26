@@ -1,4 +1,4 @@
-#include "graphics/SFMLNode.h"
+#include "graphics/old/SFMLNode.h"
 
 void SFMLNode::sync_position()
 {

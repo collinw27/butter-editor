@@ -1,4 +1,4 @@
-#include "graphics/RectNode.h"
+#include "graphics/old/RectNode.h"
 
 RectNode::RectNode(Node* parent, sf::Color color, sf::FloatRect rect)
     : SFMLNode(parent)

@@ -37,7 +37,7 @@ Editor::Editor()
     // Flex module setup
     // Like the modules themselves, tab parameters are set during `resize_modules()`
 
-    current_flex_tab = 1;
+    current_flex_tab = 0;
     flex_tabs.push_back(new FlexTab(new TestModule(*this, "Test module #1"), "Test 1"));
     flex_tabs.push_back(new FlexTab(new TestModule(*this, "Test module #2"), "Test 2"));
     flex_tabs.at(current_flex_tab)->set_selected(true);

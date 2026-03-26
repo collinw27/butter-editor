@@ -37,6 +37,8 @@ public:
     const UserSettings& get_user_settings();
     void update_user_settings(const UserSettings& settings);
 
+    std::string load_shader(std::string filename);
+
     friend FileManagerSingleton& FileManager();
 
 private:

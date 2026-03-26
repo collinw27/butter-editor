@@ -3,6 +3,7 @@
 
 #include "editor/Editor.h"
 #include "utility/FileManager.h"
+#include "utility/Graphics.h"
 #include "utility/Logger.h"
 #include "utility/Input.h"
 #include "utility/Exceptions.h"
@@ -12,6 +13,7 @@ int main()
     try
     {
         FileManagerSingleton* resource_manager = new FileManagerSingleton();
+        GraphicsSingleton* graphics = new GraphicsSingleton();
         LoggerSingleton* logger = new LoggerSingleton();
         InputSingleton* input_manager = new InputSingleton();
         Editor* editor = new Editor();
@@ -20,6 +22,7 @@ int main()
         
         delete editor;
         delete resource_manager;
+        delete graphics;
         delete logger;
         delete input_manager;
     }
