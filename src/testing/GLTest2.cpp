@@ -25,7 +25,7 @@ int main()
 
     if (!window.setActive(true))
         throw ButterException("Error requesting OpenGL context");
-    GLRectangle rect {sf::Vector2f(10, 10), sf::Vector2f(100, 100)};
+    GLRectangle rect {sf::Vector2f(10, 10), sf::Vector2f(2000, 100)};
     rect.set_fill_color(sf::Color::Red);
     std::ignore = window.setActive(false);
 
@@ -35,10 +35,15 @@ int main()
         {
             if (event->is<sf::Event::Closed>())
                 window.close();
+            else if (const auto* resized = event->getIf<sf::Event::Resized>())
+            {
+                rect.on_window_resized();
+            }
         }
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, 1280, 720);
+        glViewport(0, 0, window.getSize().x, window.getSize().y);
+
         std::ignore = window.setActive(true);
         rect.draw();
         glBindVertexArray(0);

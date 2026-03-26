@@ -33,6 +33,8 @@ public:
     void set_position(sf::Vector2f position);
     sf::Vector2f get_size();
     void set_size(sf::Vector2f size);
+    
+    void on_window_resized();
 
     void set_fill_color(sf::Color color);
     void set_outline_color(sf::Color color);

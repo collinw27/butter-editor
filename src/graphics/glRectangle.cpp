@@ -46,6 +46,15 @@ void GLRectangle::set_size(sf::Vector2f size)
     this->size = size;
 }
 
+// For now, must be manually called for all objects
+// In the near future, a tree hierarchy of all GL objects
+// will manage this automatically (similar to Godot's node system)
+
+void GLRectangle::on_window_resized()
+{
+    set_model_mat();
+}
+
 void GLRectangle::set_fill_color(sf::Color color)
 {
     glUseProgram(shader_program);
@@ -149,19 +158,24 @@ void GLRectangle::setup_GL()
     set_fill_color(fill_color);
 }
 
+// Must be called when
+// a) The bounds of the rectangle are changed
+// b) The scaling of the window is changed
+
 void GLRectangle::set_model_mat()
 {
-    // Our coordinates range from (0, 0) -> (1280, 720), whereas OpenGL
-    // coordinate range from (-1, -1) -> (1, 1)
+    // Our coordinates range from (0, 0) -> (window_width, window_height),
+    // whereas OpenGL coordinate range from (-1, -1) -> (1, 1)
     // Note that this is where the factor of 2 comes from: 1 - (-1)
     // These transformations should be self-explanatory, but note that
     // these are applied in reverse order as per matrix multiplication convention
 
     glUseProgram(shader_program);
     glm::mat4 model_mat = glm::mat4(1);
+    sf::Vector2u window = Graphics().get_window().getSize();
     model_mat = glm::translate(model_mat, glm::vec3(-1, 1, 0));
-    model_mat = glm::translate(model_mat, glm::vec3(position.x / WINDOW_W * 2.f, -position.y / WINDOW_H * 2.f, 0.f));
-    model_mat = glm::scale(model_mat, glm::vec3(size.x / WINDOW_W * 2.f, size.y / WINDOW_H * 2.f, 1.f));
+    model_mat = glm::translate(model_mat, glm::vec3(position.x / window.x * 2.f, -position.y / window.y * 2.f, 0.f));
+    model_mat = glm::scale(model_mat, glm::vec3(size.x / window.x * 2.f, size.y / window.y * 2.f, 1.f));
     GLint model_loc = glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_mat));
 }
