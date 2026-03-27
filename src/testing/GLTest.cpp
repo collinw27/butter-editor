@@ -8,11 +8,13 @@
 #include "utility/FileManager.h"
 #include "utility/Graphics.h"
 #include "utility/Exceptions.h"
-#include "graphics/glRectangle.h"
+#include "graphics/GLRootNode.h"
+#include "graphics/GLRectangle.h"
 
 int main()
 {
     try{
+
     FileManagerSingleton* file_manager = new FileManagerSingleton();
     GraphicsSingleton* graphics = new GraphicsSingleton();
 
@@ -25,8 +27,9 @@ int main()
 
     if (!window.setActive(true))
         throw ButterException("Error requesting OpenGL context");
-    GLRectangle rect {sf::Vector2f(10, 10), sf::Vector2f(2000, 100)};
-    rect.set_fill_color(sf::Color::Red);
+    GLRootNode* root = GLRootNode::create();
+    GLRectangle* rect = GLRectangle::create(root, sf::Vector2f(10, 10), sf::Vector2f(2000, 100));
+    rect->set_fill_color(sf::Color::Red);
     std::ignore = window.setActive(false);
 
     while (window.isOpen())
@@ -37,7 +40,7 @@ int main()
                 window.close();
             else if (const auto* resized = event->getIf<sf::Event::Resized>())
             {
-                rect.on_window_resized();
+                root->on_window_resized_all();
             }
         }
         
@@ -45,7 +48,7 @@ int main()
         glViewport(0, 0, window.getSize().x, window.getSize().y);
 
         std::ignore = window.setActive(true);
-        rect.draw();
+        root->draw_all();
         glBindVertexArray(0);
         glUseProgram(0);
         std::ignore = window.setActive(false);

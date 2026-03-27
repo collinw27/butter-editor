@@ -60,7 +60,7 @@ target_link_libraries(Butter PRIVATE
 # target_compile_features(NodeTest PRIVATE cxx_std_17)
 # target_link_libraries(NodeTest PRIVATE SFML::Graphics)
 
-add_executable(GLTest src/testing/GLTest2.cpp ${butter_SRC})
+add_executable(GLTest src/testing/GLTest.cpp ${butter_SRC})
 target_compile_features(GLTest PRIVATE cxx_std_17)
 target_include_directories(GLTest PRIVATE ${SFML_DIR}/include ${GLEW_DIR}/include ${GLM_DIR})
 target_link_libraries(GLTest PRIVATE

@@ -1,39 +1,51 @@
 #include "graphics/glRectangle.h"
 
 #include <utility>
-#include "glm/glm.hpp"
-#include "glm/gtc/type_ptr.hpp"
-#include "glm/ext/matrix_transform.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include "utility/Math.h"
 #include "utility/Exceptions.h"
 #include "utility/Graphics.h"
 
-GLRectangle::GLRectangle()
+GLRectangle::GLRectangle(GLNode* parent, sf::Vector2f position, sf::Vector2f size)
+    : GLNode(parent)
 {
-    setup_GL();
-}
-
-GLRectangle::GLRectangle(sf::Vector2f size)
-{
+    this->m_position = position;
     this->size = size;
     setup_GL();
 }
 
-GLRectangle::GLRectangle(sf::Vector2f position, sf::Vector2f size)
+GLRectangle* GLRectangle::create(GLNode* parent, sf::Vector2f position, sf::Vector2f size)
 {
-    this->position = position;
-    this->size = size;
-    setup_GL();
+    GLRectangle* instance = new GLRectangle(parent, position, size);
+    instance->init();
+    return instance;
 }
 
-sf::Vector2f GLRectangle::get_position()
+void GLRectangle::on_window_resized()
 {
-    return position;
+    set_model_mat();
 }
 
-void GLRectangle::set_position(sf::Vector2f position)
+void GLRectangle::draw()
 {
-    this->position = position;
+    sf::RenderWindow& window = Graphics().get_window();
+    std::ignore = window.setActive(true);
+    glUseProgram(shader_program);
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
+
+sf::Vector2f GLRectangle::get_m_position()
+{
+    return m_position;
+}
+
+void GLRectangle::set_m_position(sf::Vector2f position)
+{
+    this->m_position = position;
 }
 
 sf::Vector2f GLRectangle::get_size()
@@ -44,15 +56,6 @@ sf::Vector2f GLRectangle::get_size()
 void GLRectangle::set_size(sf::Vector2f size)
 {
     this->size = size;
-}
-
-// For now, must be manually called for all objects
-// In the near future, a tree hierarchy of all GL objects
-// will manage this automatically (similar to Godot's node system)
-
-void GLRectangle::on_window_resized()
-{
-    set_model_mat();
 }
 
 void GLRectangle::set_fill_color(sf::Color color)
@@ -72,15 +75,6 @@ void GLRectangle::set_outline_color(sf::Color color)
 void GLRectangle::set_outline_thickness(float thickness)
 {
     outline_thickness = thickness;
-}
-
-void GLRectangle::draw()
-{
-    sf::RenderWindow& window = Graphics().get_window();
-    std::ignore = window.setActive(true);
-    glUseProgram(shader_program);
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 void GLRectangle::setup_GL()
@@ -174,7 +168,7 @@ void GLRectangle::set_model_mat()
     glm::mat4 model_mat = glm::mat4(1);
     sf::Vector2u window = Graphics().get_window().getSize();
     model_mat = glm::translate(model_mat, glm::vec3(-1, 1, 0));
-    model_mat = glm::translate(model_mat, glm::vec3(position.x / window.x * 2.f, -position.y / window.y * 2.f, 0.f));
+    model_mat = glm::translate(model_mat, glm::vec3(m_position.x / window.x * 2.f, -m_position.y / window.y * 2.f, 0.f));
     model_mat = glm::scale(model_mat, glm::vec3(size.x / window.x * 2.f, size.y / window.y * 2.f, 1.f));
     GLint model_loc = glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_mat));

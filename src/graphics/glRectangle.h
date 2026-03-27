@@ -4,10 +4,11 @@
 #include <GL/glew.h>
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
+#include "graphics/GLNode.h"
 
-class GLRectangle
+class GLRectangle : public GLNode
 {
-    sf::Vector2f position {0, 0};
+    sf::Vector2f m_position {0, 0};
     sf::Vector2f size {1, 1};
     sf::Color fill_color {sf::Color::White};
     sf::Color outline_color {sf::Color::White};
@@ -23,24 +24,29 @@ class GLRectangle
     GLuint vertex_VBO;
     GLuint index_VBO;
 
+protected:
+    
+    GLRectangle(GLNode* parent, sf::Vector2f position, sf::Vector2f size);
+
 public:
 
-    GLRectangle();
-    GLRectangle(sf::Vector2f size);
-    GLRectangle(sf::Vector2f position, sf::Vector2f size);
+    static GLRectangle* create(GLNode* parent, sf::Vector2f position = {0, 0}, sf::Vector2f size = {1, 1});
 
-    sf::Vector2f get_position();
-    void set_position(sf::Vector2f position);
+protected:
+
+    virtual void on_window_resized() override;
+    virtual void draw() override;
+
+public:
+
+    sf::Vector2f get_m_position();
+    void set_m_position(sf::Vector2f position);
     sf::Vector2f get_size();
     void set_size(sf::Vector2f size);
-    
-    void on_window_resized();
 
     void set_fill_color(sf::Color color);
     void set_outline_color(sf::Color color);
     void set_outline_thickness(float thickness);
-
-    void draw();
 
 private:
 
