@@ -4,6 +4,8 @@
 #include <algorithm>
 #include "utility/Exceptions.h"
 
+glm::mat4 GLNode::window_matrix = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-1, 1, 0)), glm::vec3(2, 2, 1));
+
 GLNode::GLNode(GLNode* parent)
 {
     if (parent != nullptr)
@@ -30,6 +32,8 @@ void GLNode::update_global_matrix()
         global_matrix = parent->get_global_matrix() * get_local_matrix();
     else
         global_matrix = get_local_matrix();
+    for (GLNode* child : children)
+        child->update_global_matrix();
 }
 
 void GLNode::apply_global_matrix() {}
@@ -77,7 +81,7 @@ sf::Vector2f GLNode::get_position()
 sf::Vector2f GLNode::get_global_position()
 {
     glm::vec4 translated_point = glm::vec4(position.x, position.y, 0, 1) * global_matrix;
-    return sf::Vector2f(translated_point.x, translated_point.y);
+    return sf::Vector2f(translated_point.x, -translated_point.y);
 }
 
 void GLNode::set_position(sf::Vector2f position)
@@ -131,12 +135,23 @@ void GLNode::set_scale_axis(Axis axis, float scale)
 
 glm::mat4 GLNode::get_local_matrix()
 {
-    return glm::translate(glm::scale(glm::mat4(1),
-        glm::vec3(scale.x, scale.y, 1.f)),
-        glm::vec3(position.x, position.y, 0.f));
+    // The y-coordinate is negative since OpenGL uses bottom-left as (0, 0),
+    // whereas our API uses the more conventional top-left as (0, 0)
+
+    return glm::scale(glm::translate(glm::mat4(1),
+        glm::vec3(position.x, -position.y, 0.f)),
+        glm::vec3(scale.x, scale.y, 1.f));
 }
 
 glm::mat4 GLNode::get_global_matrix()
 {
     return global_matrix;
+}
+
+// Produces the windowing transformation used to translate between
+// (0, 0, 1, 1) -> (-1, -1, 1, 1)
+
+glm::mat4 GLNode::get_window_matrix()
+{
+    return window_matrix;
 }

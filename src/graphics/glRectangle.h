@@ -8,7 +8,6 @@
 
 class GLRectangle : public GLNode
 {
-    sf::Vector2f m_position {0, 0};
     sf::Vector2f size {1, 1};
     sf::Color fill_color {sf::Color::White};
     sf::Color outline_color {sf::Color::White};
@@ -39,8 +38,6 @@ protected:
 
 public:
 
-    sf::Vector2f get_m_position();
-    void set_m_position(sf::Vector2f position);
     sf::Vector2f get_size();
     void set_size(sf::Vector2f size);
 

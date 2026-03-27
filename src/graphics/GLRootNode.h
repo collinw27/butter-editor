@@ -15,6 +15,12 @@ public:
 
     static GLRootNode* create();
 
+protected:
+
+    virtual void on_window_resized() override;
+
+public:
+
     // Public-accessible methods call the protected versions
     // on all children in the node tree
 

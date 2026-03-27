@@ -11,7 +11,7 @@
 GLRectangle::GLRectangle(GLNode* parent, sf::Vector2f position, sf::Vector2f size)
     : GLNode(parent)
 {
-    this->m_position = position;
+    set_position(position);
     this->size = size;
     setup_GL();
 }
@@ -35,17 +35,6 @@ void GLRectangle::draw()
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-
-
-sf::Vector2f GLRectangle::get_m_position()
-{
-    return m_position;
-}
-
-void GLRectangle::set_m_position(sf::Vector2f position)
-{
-    this->m_position = position;
 }
 
 sf::Vector2f GLRectangle::get_size()
@@ -123,9 +112,7 @@ void GLRectangle::setup_GL()
     Graphics().check_gl_errors();
 
     // The corner is on the origin to make scaling easy
-    // The y-coordinate is negative since OpenGL uses bottom-left as (0, 0),
-    // whereas our API uses the more conventional top-left as (0, 0)
-    // See the transformation matrix in `set_model_mat()` for more info
+    // Negative y coordinate is used for parity with GLNode position
     
     GLfloat vertices[] = {
         0.f, 0.f, 0.f,
@@ -165,11 +152,10 @@ void GLRectangle::set_model_mat()
     // these are applied in reverse order as per matrix multiplication convention
 
     glUseProgram(shader_program);
-    glm::mat4 model_mat = glm::mat4(1);
     sf::Vector2u window = Graphics().get_window().getSize();
-    model_mat = glm::translate(model_mat, glm::vec3(-1, 1, 0));
-    model_mat = glm::translate(model_mat, glm::vec3(m_position.x / window.x * 2.f, -m_position.y / window.y * 2.f, 0.f));
-    model_mat = glm::scale(model_mat, glm::vec3(size.x / window.x * 2.f, size.y / window.y * 2.f, 1.f));
+    glm::mat4 model_mat = glm::scale(glm::mat4(1), glm::vec3(size.x, size.y, 1.f));
+    // glm::mat4 model_mat = glm::mat4(1);
+    model_mat = GLNode::get_window_matrix() * global_matrix * model_mat;
     GLint model_loc = glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_mat));
 }

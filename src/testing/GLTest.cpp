@@ -28,7 +28,7 @@ int main()
     if (!window.setActive(true))
         throw ButterException("Error requesting OpenGL context");
     GLRootNode* root = GLRootNode::create();
-    GLRectangle* rect = GLRectangle::create(root, sf::Vector2f(10, 10), sf::Vector2f(2000, 100));
+    GLRectangle* rect = GLRectangle::create(root, sf::Vector2f(10, 10), sf::Vector2f(500, 100));
     rect->set_fill_color(sf::Color::Red);
     std::ignore = window.setActive(false);
 
