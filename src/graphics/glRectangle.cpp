@@ -139,10 +139,6 @@ void GLRectangle::setup_GL()
     set_fill_color(fill_color);
 }
 
-// Must be called when
-// a) The bounds of the rectangle are changed
-// b) The scaling of the window is changed
-
 void GLRectangle::set_model_mat()
 {
     // Our coordinates range from (0, 0) -> (window_width, window_height),
@@ -154,8 +150,7 @@ void GLRectangle::set_model_mat()
     glUseProgram(shader_program);
     sf::Vector2u window = Graphics().get_window().getSize();
     glm::mat4 model_mat = glm::scale(glm::mat4(1), glm::vec3(size.x, size.y, 1.f));
-    // glm::mat4 model_mat = glm::mat4(1);
-    model_mat = GLNode::get_window_matrix() * global_matrix * model_mat;
+    model_mat = Graphics().world_to_view() * global_matrix * model_mat;
     GLint model_loc = glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_mat));
 }

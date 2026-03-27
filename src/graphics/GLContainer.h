@@ -8,7 +8,17 @@
 
 class GLContainer : public GLNode
 {
+    sf::Vector2f size {1, 1};
 
+protected:
+    
+    GLContainer(GLNode* parent, sf::Vector2f position, sf::Vector2f size);
+
+public:
+
+    static GLContainer* create(GLNode* parent, sf::Vector2f position = {0, 0}, sf::Vector2f size = {1, 1});
+
+    virtual void draw() override;
 };
 
 #endif

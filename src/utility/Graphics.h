@@ -3,7 +3,9 @@
 
 #include <string>
 #include <vector>
+#include <stack>
 #include <SFML/Graphics.hpp>
+#include <glm/glm.hpp>
 
 constexpr int WINDOW_W = 1280;
 constexpr int WINDOW_H = 720;
@@ -29,6 +31,10 @@ class GraphicsSingleton
 
     sf::RenderWindow* window = nullptr;
     std::vector<std::string> builtin_shaders {};
+    std::stack<sf::IntRect> scissors {};
+
+    glm::mat4 world_to_view_matrix;
+    glm::mat4 world_to_screen_matrix;
 
 public:
 
@@ -37,10 +43,17 @@ public:
 
     void create_window(sf::VideoMode mode, std::string title, uint32_t style);
     sf::RenderWindow& get_window();
+    void on_window_resized();
+
     std::string get_builtin_shader(BuiltinShader shader_id);
+    glm::mat4 world_to_view();
+    glm::mat4 world_to_screen();
+    sf::Vector2f screen_to_world(sf::Vector2f vec);
 
     void check_gl_errors();
-    bool clear_gl_errors();
+
+    unsigned push_scissor(sf::IntRect bounds);
+    void pop_scissor(unsigned check_index);
 
     friend GraphicsSingleton& Graphics();
 

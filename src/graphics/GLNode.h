@@ -28,8 +28,6 @@ class GLNode
     GLNode* parent = nullptr;
     std::vector<GLNode*> children {};
 
-    static glm::mat4 window_matrix;
-
 protected:
 
     bool is_root_node = false;
@@ -82,8 +80,6 @@ public:
 
     glm::mat4 get_local_matrix();
     glm::mat4 get_global_matrix();
-    
-    static glm::mat4 get_window_matrix();
 
     friend GLRootNode;
 };

@@ -4,8 +4,6 @@
 #include <algorithm>
 #include "utility/Exceptions.h"
 
-glm::mat4 GLNode::window_matrix = glm::scale(glm::translate(glm::mat4(1), glm::vec3(-1, 1, 0)), glm::vec3(2, 2, 1));
-
 GLNode::GLNode(GLNode* parent)
 {
     if (parent != nullptr)
@@ -38,9 +36,17 @@ void GLNode::update_global_matrix()
 
 void GLNode::apply_global_matrix() {}
 
-void GLNode::draw() {}
+void GLNode::draw()
+{
+    for (GLNode* child : children)
+        child->draw();
+}
 
-void GLNode::on_window_resized() {}
+void GLNode::on_window_resized()
+{
+    for (GLNode* child : children)
+        child->on_window_resized();
+}
 
 void GLNode::add_child(GLNode* child)
 {
@@ -146,12 +152,4 @@ glm::mat4 GLNode::get_local_matrix()
 glm::mat4 GLNode::get_global_matrix()
 {
     return global_matrix;
-}
-
-// Produces the windowing transformation used to translate between
-// (0, 0, 1, 1) -> (-1, -1, 1, 1)
-
-glm::mat4 GLNode::get_window_matrix()
-{
-    return window_matrix;
 }

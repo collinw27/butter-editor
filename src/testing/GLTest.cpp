@@ -9,6 +9,7 @@
 #include "utility/Graphics.h"
 #include "utility/Exceptions.h"
 #include "graphics/GLRootNode.h"
+#include "graphics/GLContainer.h"
 #include "graphics/GLRectangle.h"
 
 int main()
@@ -28,7 +29,8 @@ int main()
     if (!window.setActive(true))
         throw ButterException("Error requesting OpenGL context");
     GLRootNode* root = GLRootNode::create();
-    GLRectangle* rect = GLRectangle::create(root, sf::Vector2f(10, 10), sf::Vector2f(500, 100));
+    GLContainer* container = GLContainer::create(root, sf::Vector2f(0, 0), sf::Vector2f(100, 1000));
+    GLRectangle* rect = GLRectangle::create(container, sf::Vector2f(10, 10), sf::Vector2f(500, 100));
     rect->set_fill_color(sf::Color::Red);
     std::ignore = window.setActive(false);
 
@@ -37,9 +39,12 @@ int main()
         while (const std::optional event = window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
+            {
                 window.close();
+            }
             else if (const auto* resized = event->getIf<sf::Event::Resized>())
             {
+                Graphics().on_window_resized();
                 root->on_window_resized_all();
             }
         }
