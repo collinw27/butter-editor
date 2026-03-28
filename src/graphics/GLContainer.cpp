@@ -23,9 +23,6 @@ void GLContainer::draw()
     // This doesn't account for transformations that alter angles, but
     // this class wasn't built to support such transformations anyway
 
-    // Also, note that push_scissor_world() is used to convert the world coordinates
-    // into the screen coordiantes required by glScissor()
-
     glm::mat4 world_to_screen = Graphics().world_to_screen();
     glm::vec4 point_a = world_to_screen * glm::vec4(position.x, position.y, 0, 1) * global_matrix;
     glm::vec4 point_b = world_to_screen * glm::vec4(position.x + size.x, position.y + size.y, 0, 1) * global_matrix;

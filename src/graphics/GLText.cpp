@@ -1,42 +1,37 @@
-#include "graphics/glRectangle.h"
+#include "graphics/GLText.h"
 
-#include <utility>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include "utility/Math.h"
 #include "utility/Exceptions.h"
 #include "utility/Graphics.h"
 
-GLRectangle::GLRectangle(GLNode* parent, sf::Vector2f position, sf::Vector2f size)
+GLText::GLText(GLNode* parent, sf::Vector2f position, std::string str)
     : GLNode(parent)
 {
     this->position = position;
-    this->size = size;
+    this->str = str;
 }
 
-// `setup_GL()` called from `init()` to allow running virtual functions
-// responsible for making sure internal values are correct
-
-void GLRectangle::init()
+void GLText::init()
 {
     GLNode::init();
     setup_GL();
 }
 
-GLRectangle* GLRectangle::create(GLNode* parent, sf::Vector2f position, sf::Vector2f size)
+GLText* GLText::create(GLNode* parent, sf::Vector2f position, std::string str)
 {
-    GLRectangle* instance = new GLRectangle(parent, position, size);
+    GLText* instance = new GLText(parent, position, str);
     instance->init();
     return instance;
 }
 
-void GLRectangle::on_window_resized()
+void GLText::on_window_resized()
 {
     set_model_mat();
 }
 
-void GLRectangle::draw()
+void GLText::draw()
 {
     sf::RenderWindow& window = Graphics().get_window();
     std::ignore = window.setActive(true);
@@ -45,36 +40,35 @@ void GLRectangle::draw()
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-sf::Vector2f GLRectangle::get_size()
+void GLText::set_string(std::string str)
 {
-    return size;
+    this->str = str;
 }
 
-void GLRectangle::set_size(sf::Vector2f size)
+std::string GLText::get_string()
 {
-    this->size = size;
+    return str;
 }
 
-void GLRectangle::set_fill_color(sf::Color color)
+void GLText::set_char_size(float new_size)
 {
-    glUseProgram(shader_program);
-    fill_color = color;
-    GLuint color_loc = glGetUniformLocation(shader_program, "fill_color");
-    glm::vec4 col = to_gl(fill_color);
-    glUniform4fv(color_loc, 1, glm::value_ptr(col));
+    char_size = new_size;
+    set_model_mat();
 }
 
-void GLRectangle::set_outline_color(sf::Color color)
+float GLText::get_char_size()
 {
-    outline_color = color;
+    return char_size;
 }
 
-void GLRectangle::set_outline_thickness(float thickness)
+// Returns the offset of the position from this object
+
+sf::Vector2f GLText::find_char_pos()
 {
-    outline_thickness = thickness;
+    return sf::Vector2f();
 }
 
-void GLRectangle::setup_GL()
+void GLText::setup_GL()
 {
     int success;
     GLchar info_log[512];
@@ -142,12 +136,16 @@ void GLRectangle::setup_GL()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_VBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     glBindVertexArray(0);
+    
+    glUseProgram(shader_program);
+    GLuint color_loc = glGetUniformLocation(shader_program, "fill_color");
+    glm::vec4 col = glm::vec4(1, 1, 1, 1);
+    glUniform4fv(color_loc, 1, glm::value_ptr(col));
 
     set_model_mat();
-    set_fill_color(fill_color);
 }
 
-void GLRectangle::set_model_mat()
+void GLText::set_model_mat()
 {
     // Our coordinates range from (0, 0) -> (window_width, window_height),
     // whereas OpenGL coordinate range from (-1, -1) -> (1, 1)
@@ -155,6 +153,7 @@ void GLRectangle::set_model_mat()
     // These transformations should be self-explanatory, but note that
     // these are applied in reverse order as per matrix multiplication convention
 
+    size = sf::Vector2f(char_size * 1 * str.length(), char_size * 2);
     glUseProgram(shader_program);
     sf::Vector2u window = Graphics().get_window().getSize();
     glm::mat4 model_mat = glm::scale(glm::mat4(1), glm::vec3(size.x, size.y, 1.f));

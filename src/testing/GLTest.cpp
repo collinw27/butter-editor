@@ -11,6 +11,7 @@
 #include "graphics/GLRootNode.h"
 #include "graphics/GLContainer.h"
 #include "graphics/GLRectangle.h"
+#include "graphics/GLText.h"
 
 int main()
 {
@@ -29,8 +30,10 @@ int main()
     if (!window.setActive(true))
         throw ButterException("Error requesting OpenGL context");
     GLRootNode* root = GLRootNode::create();
-    GLContainer* container = GLContainer::create(root, sf::Vector2f(0, 0), sf::Vector2f(100, 1000));
+    GLContainer* container = GLContainer::create(root, sf::Vector2f(0, 0), sf::Vector2f(1000, 1000));
     GLRectangle* rect = GLRectangle::create(container, sf::Vector2f(10, 10), sf::Vector2f(500, 100));
+    GLText* text = GLText::create(container, sf::Vector2f(10, 200), "asdf");
+    text->set_char_size(20);
     rect->set_fill_color(sf::Color::Red);
     std::ignore = window.setActive(false);
 

@@ -26,6 +26,7 @@ class GLRectangle : public GLNode
 protected:
     
     GLRectangle(GLNode* parent, sf::Vector2f position, sf::Vector2f size);
+    virtual void init() override;
 
 public:
 
