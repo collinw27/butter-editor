@@ -1,10 +1,12 @@
 #include "Graphics.h"
 
+#include <utility>
 #include <gl/glew.h>
 #include <SFML/OpenGL.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include "utility/FileManager.h"
 #include "utility/Exceptions.h"
+#include "graphics/GLRootNode.h"
 
 GraphicsSingleton* GraphicsSingleton::singleton_object = nullptr;
 
@@ -36,24 +38,51 @@ GraphicsSingleton::~GraphicsSingleton()
     GraphicsSingleton::singleton_object = nullptr;
 }
 
-void GraphicsSingleton::create_window(sf::VideoMode mode, std::string title, uint32_t style)
+void GraphicsSingleton::init(sf::VideoMode mode, std::string title, uint32_t style)
 {
     if (window != nullptr)
         throw ButterException("Cannot create second window");
     window = new sf::RenderWindow(mode, title, style);
     
     glViewport(0, 0, WINDOW_W, WINDOW_H);
-    on_window_resized();
+    on_window_resized(nullptr);
+    
+    if (glewInit() != GLEW_OK)
+        throw ButterException("Cannot initialize GLEW");
 }
 
-void GraphicsSingleton::on_window_resized()
+void GraphicsSingleton::display(GLRootNode* root)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, window->getSize().x, window->getSize().y);
+    Graphics().window_set_active(true);
+    if (root != nullptr)
+        root->draw();
+    glBindVertexArray(0);
+    glUseProgram(0);
+    Graphics().window_set_active(false);
+    window->display();
+}
+
+void GraphicsSingleton::on_window_resized(GLRootNode* root)
 {
     world_to_screen_matrix = glm::scale(glm::mat4(1), glm::vec3(window->getSize().x, window->getSize().y, 1.f));
+    if (root != nullptr)
+        root->on_window_resized();
 }
 
 sf::RenderWindow& GraphicsSingleton::get_window()
 {
     return *window;
+}
+
+void GraphicsSingleton::window_set_active(bool active)
+{
+    if (window_is_active != active)
+    {
+        window_is_active = active;
+        std::ignore = window->setActive(active);
+    }
 }
 
 std::string GraphicsSingleton::get_builtin_shader(BuiltinShader shader_id)

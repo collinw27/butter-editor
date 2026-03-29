@@ -16,19 +16,6 @@ GLRootNode* GLRootNode::create()
     return instance;
 }
 
-void GLRootNode::draw_all()
-{
-    for (GLNode* child : children)
-        child->draw();
-}
-
-void GLRootNode::on_window_resized_all()
-{
-    on_window_resized();
-    for (GLNode* child : children)
-        child->on_window_resized();
-}
-
 // This node will automatically take the inverse scale of the window
 // so its children maintain their size when the window is resized
 // This is useful for GUI elements, but it can also be overridden by
@@ -38,4 +25,5 @@ void GLRootNode::on_window_resized()
 {
     sf::Vector2u window_size = Graphics().get_window().getSize();
     set_scale(sf::Vector2f(1.f / window_size.x, 1.f / window_size.y));
+    GLNode::on_window_resized();
 }

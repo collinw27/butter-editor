@@ -21,6 +21,9 @@ class GLText : public GLNode
     GLuint VAO;
     GLuint vertex_VBO;
     GLuint index_VBO;
+    
+    glm::mat4 u_model_mat;
+    glm::vec4 u_fill_color;
 
 protected:
     

@@ -11,6 +11,7 @@ GLText::GLText(GLNode* parent, sf::Vector2f position, std::string str)
 {
     this->position = position;
     this->str = str;
+    u_fill_color = glm::vec4(1, 1, 1, 1);
 }
 
 void GLText::init()
@@ -34,9 +35,14 @@ void GLText::on_window_resized()
 void GLText::draw()
 {
     sf::RenderWindow& window = Graphics().get_window();
-    std::ignore = window.setActive(true);
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
+
+    GLuint model_loc = glGetUniformLocation(shader_program, "model");
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));
+    GLuint fill_color_loc = glGetUniformLocation(shader_program, "fill_color");
+    glUniform4fv(fill_color_loc, 1, glm::value_ptr(u_fill_color));
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
@@ -70,6 +76,8 @@ sf::Vector2f GLText::find_char_pos()
 
 void GLText::setup_GL()
 {
+    Graphics().window_set_active(true);
+
     int success;
     GLchar info_log[512];
 
@@ -143,6 +151,8 @@ void GLText::setup_GL()
     glUniform4fv(color_loc, 1, glm::value_ptr(col));
 
     set_model_mat();
+    
+    Graphics().window_set_active(false);
 }
 
 void GLText::set_model_mat()
@@ -154,10 +164,6 @@ void GLText::set_model_mat()
     // these are applied in reverse order as per matrix multiplication convention
 
     size = sf::Vector2f(char_size * 1 * str.length(), char_size * 2);
-    glUseProgram(shader_program);
-    sf::Vector2u window = Graphics().get_window().getSize();
-    glm::mat4 model_mat = glm::scale(glm::mat4(1), glm::vec3(size.x, size.y, 1.f));
-    model_mat = Graphics().world_to_view() * global_matrix * model_mat;
-    GLint model_loc = glGetUniformLocation(shader_program, "model");
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_mat));
+    u_model_mat = glm::scale(glm::mat4(1), glm::vec3(size.x, size.y, 1.f));
+    u_model_mat = Graphics().world_to_view() * global_matrix * u_model_mat;
 }

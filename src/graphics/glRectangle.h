@@ -23,6 +23,9 @@ class GLRectangle : public GLNode
     GLuint vertex_VBO;
     GLuint index_VBO;
 
+    glm::mat4 u_model_mat;
+    glm::vec4 u_fill_color;
+
 protected:
     
     GLRectangle(GLNode* parent, sf::Vector2f position, sf::Vector2f size);

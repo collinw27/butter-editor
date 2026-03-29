@@ -13,6 +13,7 @@ constexpr int WINDOW_H = 720;
 // This MUST be initialized after FileManager
 
 class GraphicsSingleton;
+class GLRootNode;
 
 GraphicsSingleton& Graphics();
 
@@ -30,6 +31,7 @@ class GraphicsSingleton
     static GraphicsSingleton* singleton_object;
 
     sf::RenderWindow* window = nullptr;
+    bool window_is_active = false;
     std::vector<std::string> builtin_shaders {};
     std::stack<sf::IntRect> scissors {};
 
@@ -41,9 +43,12 @@ public:
     GraphicsSingleton();
     ~GraphicsSingleton();
 
-    void create_window(sf::VideoMode mode, std::string title, uint32_t style);
+    void init(sf::VideoMode mode, std::string title, uint32_t style);
+    void display(GLRootNode* root);
+
     sf::RenderWindow& get_window();
-    void on_window_resized();
+    void window_set_active(bool active);
+    void on_window_resized(GLRootNode* root);
 
     std::string get_builtin_shader(BuiltinShader shader_id);
     glm::mat4 world_to_view();

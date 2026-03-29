@@ -39,9 +39,14 @@ void GLRectangle::on_window_resized()
 void GLRectangle::draw()
 {
     sf::RenderWindow& window = Graphics().get_window();
-    std::ignore = window.setActive(true);
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
+
+    GLuint model_loc = glGetUniformLocation(shader_program, "model");
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));
+    GLuint fill_color_loc = glGetUniformLocation(shader_program, "fill_color");
+    glUniform4fv(fill_color_loc, 1, glm::value_ptr(u_fill_color));
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
@@ -57,11 +62,8 @@ void GLRectangle::set_size(sf::Vector2f size)
 
 void GLRectangle::set_fill_color(sf::Color color)
 {
-    glUseProgram(shader_program);
     fill_color = color;
-    GLuint color_loc = glGetUniformLocation(shader_program, "fill_color");
-    glm::vec4 col = to_gl(fill_color);
-    glUniform4fv(color_loc, 1, glm::value_ptr(col));
+    u_fill_color = to_gl(fill_color);
 }
 
 void GLRectangle::set_outline_color(sf::Color color)
@@ -76,6 +78,8 @@ void GLRectangle::set_outline_thickness(float thickness)
 
 void GLRectangle::setup_GL()
 {
+    Graphics().window_set_active(true);
+
     int success;
     GLchar info_log[512];
 
@@ -145,6 +149,8 @@ void GLRectangle::setup_GL()
 
     set_model_mat();
     set_fill_color(fill_color);
+    
+    Graphics().window_set_active(false);
 }
 
 void GLRectangle::set_model_mat()
@@ -155,10 +161,6 @@ void GLRectangle::set_model_mat()
     // These transformations should be self-explanatory, but note that
     // these are applied in reverse order as per matrix multiplication convention
 
-    glUseProgram(shader_program);
-    sf::Vector2u window = Graphics().get_window().getSize();
-    glm::mat4 model_mat = glm::scale(glm::mat4(1), glm::vec3(size.x, size.y, 1.f));
-    model_mat = Graphics().world_to_view() * global_matrix * model_mat;
-    GLint model_loc = glGetUniformLocation(shader_program, "model");
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_mat));
+    u_model_mat = glm::scale(glm::mat4(1), glm::vec3(size.x, size.y, 1.f));
+    u_model_mat = Graphics().world_to_view() * global_matrix * u_model_mat;
 }
