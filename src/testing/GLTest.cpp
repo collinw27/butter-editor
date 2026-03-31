@@ -10,7 +10,7 @@
 #include "utility/Exceptions.h"
 #include "graphics/GLRootNode.h"
 #include "graphics/GLContainer.h"
-#include "graphics/GLRectangle.h"
+#include "graphics/GLOutlinedRectangle.h"
 #include "graphics/GLText.h"
 
 int main()
@@ -24,8 +24,10 @@ int main()
 
     GLRootNode* root = GLRootNode::create();
     GLContainer* container = GLContainer::create(root, sf::Vector2f(0, 0), sf::Vector2f(1000, 1000));
-    GLRectangle* rect = GLRectangle::create(container, sf::Vector2f(10, 10), sf::Vector2f(500, 100));
+    GLOutlinedRectangle* rect = GLOutlinedRectangle::create(container, sf::Vector2f(10, 10), sf::Vector2f(500, 100));
     rect->set_fill_color(sf::Color::Red);
+    rect->set_outline_color(sf::Color::Blue);
+    rect->set_outline_thickness(-10);
     GLText* text = GLText::create(container, sf::Vector2f(10, 200), "asdf");
     text->set_char_size(20);
 

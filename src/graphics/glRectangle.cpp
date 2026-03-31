@@ -1,9 +1,9 @@
-#include "graphics/glRectangle.h"
+#include "graphics/GLRectangle.h"
 
-#include <utility>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/ext/matrix_transform.hpp>
+
 #include "utility/Math.h"
 #include "utility/Exceptions.h"
 #include "utility/Graphics.h"
@@ -33,7 +33,7 @@ GLRectangle* GLRectangle::create(GLNode* parent, sf::Vector2f position, sf::Vect
 
 void GLRectangle::on_window_resized()
 {
-    set_model_mat();
+    update_model_matrix();
 }
 
 void GLRectangle::draw()
@@ -64,16 +64,6 @@ void GLRectangle::set_fill_color(sf::Color color)
 {
     fill_color = color;
     u_fill_color = to_gl(fill_color);
-}
-
-void GLRectangle::set_outline_color(sf::Color color)
-{
-    outline_color = color;
-}
-
-void GLRectangle::set_outline_thickness(float thickness)
-{
-    outline_thickness = thickness;
 }
 
 void GLRectangle::setup_GL()
@@ -147,13 +137,13 @@ void GLRectangle::setup_GL()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     glBindVertexArray(0);
 
-    set_model_mat();
+    update_model_matrix();
     set_fill_color(fill_color);
     
     Graphics().window_set_active(false);
 }
 
-void GLRectangle::set_model_mat()
+void GLRectangle::update_model_matrix()
 {
     // Our coordinates range from (0, 0) -> (window_width, window_height),
     // whereas OpenGL coordinate range from (-1, -1) -> (1, 1)

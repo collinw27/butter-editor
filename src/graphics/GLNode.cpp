@@ -14,7 +14,6 @@ GLNode::GLNode(GLNode* parent)
 void GLNode::init()
 {
     update_global_matrix();
-    apply_global_matrix();
 }
 
 GLNode* GLNode::create(GLNode* parent)
@@ -23,18 +22,6 @@ GLNode* GLNode::create(GLNode* parent)
     instance->init();
     return instance;
 }
-
-void GLNode::update_global_matrix()
-{
-    if (parent != nullptr)
-        global_matrix = parent->get_global_matrix() * get_local_matrix();
-    else
-        global_matrix = get_local_matrix();
-    for (GLNode* child : children)
-        child->update_global_matrix();
-}
-
-void GLNode::apply_global_matrix() {}
 
 void GLNode::draw()
 {
@@ -94,7 +81,7 @@ void GLNode::set_position(sf::Vector2f position)
 {
     this->position = position;
     update_global_matrix();
-    apply_global_matrix();
+    apply_position();
 }
 
 void GLNode::set_position_axis(Axis axis, float position)
@@ -104,7 +91,7 @@ void GLNode::set_position_axis(Axis axis, float position)
     else
         this->position.y = position;
     update_global_matrix();
-    apply_global_matrix();
+    apply_position();
 }
 
 sf::Vector2f GLNode::get_scale()
@@ -125,8 +112,8 @@ sf::Vector2f GLNode::get_global_scale()
 void GLNode::set_scale(sf::Vector2f scale)
 {
     this->scale = scale;
+    apply_scale();
     update_global_matrix();
-    apply_global_matrix();
 }
 
 void GLNode::set_scale_axis(Axis axis, float scale)
@@ -135,8 +122,8 @@ void GLNode::set_scale_axis(Axis axis, float scale)
         this->scale.x = scale;
     else
         this->scale.y = scale;
+    apply_scale();
     update_global_matrix();
-    apply_global_matrix();
 }
 
 glm::mat4 GLNode::get_local_matrix()
@@ -153,3 +140,16 @@ glm::mat4 GLNode::get_global_matrix()
 {
     return global_matrix;
 }
+
+void GLNode::update_global_matrix()
+{
+    if (parent != nullptr)
+        global_matrix = parent->get_global_matrix() * get_local_matrix();
+    else
+        global_matrix = get_local_matrix();
+    for (GLNode* child : children)
+        child->update_global_matrix();
+}
+
+void GLNode::apply_position() {}
+void GLNode::apply_scale() {}

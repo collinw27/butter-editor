@@ -56,8 +56,15 @@ public:
 
 protected:
 
-    void update_global_matrix();
-    virtual void apply_global_matrix();
+    // Position and scale are fully controlled by the base GLNode class
+    // (i.e. subclasses cannot modify the way these are updated)
+    // These values can still be used for visuals if desired, but
+    // `apply_position()` and `apply_scale()` give the option to set
+    // different internal state based on the needs of each specific subclass
+
+    virtual void apply_position();
+    virtual void apply_scale();
+
     virtual void draw();
     virtual void on_window_resized();
 
@@ -80,6 +87,7 @@ public:
 
     glm::mat4 get_local_matrix();
     glm::mat4 get_global_matrix();
+    void update_global_matrix();
 
     friend GLRootNode;
 };

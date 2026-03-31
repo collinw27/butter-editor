@@ -24,7 +24,9 @@ GraphicsSingleton::GraphicsSingleton()
     // Basic shaders are loaded automatically for easy access
 
     load_builtin_shader(BuiltinShader::V_RECT, "rect.vs");
+    load_builtin_shader(BuiltinShader::V_RECT_OUTLINED, "rect_outlined.vs");
     load_builtin_shader(BuiltinShader::F_RECT, "rect.fs");
+    load_builtin_shader(BuiltinShader::F_RECT_OUTLINED, "rect_outlined.fs");
 
     // Pre-computer matrix values
     // Some will need to be updated later on (ex. on window resize)

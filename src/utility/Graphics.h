@@ -23,7 +23,9 @@ GraphicsSingleton& Graphics();
 enum class BuiltinShader
 {
     V_RECT,
-    F_RECT
+    V_RECT_OUTLINED,
+    F_RECT,
+    F_RECT_OUTLINED
 };
 
 class GraphicsSingleton
