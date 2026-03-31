@@ -27,6 +27,7 @@ class GLNode
 {
     GLNode* parent = nullptr;
     std::vector<GLNode*> children {};
+    bool visible = true;
 
 protected:
 
@@ -67,6 +68,7 @@ protected:
 
     virtual void draw();
     virtual void on_window_resized();
+    virtual void apply_global_matrix() {}
 
 public:
 
@@ -74,6 +76,9 @@ public:
     void remove_child(GLNode* child);
     void free();
     GLNode* get_parent();
+
+    bool is_visible();
+    void set_visible(bool visible);
 
     sf::Vector2f get_position();
     sf::Vector2f get_global_position();

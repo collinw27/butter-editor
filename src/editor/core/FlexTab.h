@@ -1,7 +1,7 @@
 #ifndef FLEX_TAB_H
 #define FLEX_TAB_H
 
-#include <SFML/Graphics.hpp>
+#include "graphics/nodes.h"
 #include "editor/EditorModule.h"
 
 class FlexTab
@@ -9,17 +9,18 @@ class FlexTab
     EditorModule* module;
     sf::IntRect bounds;
     float ui_scale = 1.f;
-    sf::RectangleShape rect;
-    sf::Text* text;
+    GLNode* container;
+    GLRectangle* rect;
+    GLText* text;
 
     bool hovering = false;
     bool selected = false;
 
 public:
 
-    FlexTab(EditorModule* module, std::string name);
+    FlexTab(Editor& editor, EditorModule* module, std::string name);
     ~FlexTab();
-    void draw(sf::RenderWindow& window);
+    GLNode* get_node();
 
     void set_bounds(const sf::IntRect& new_bounds);
     void set_ui_scale(float new_scale);

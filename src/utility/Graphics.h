@@ -51,6 +51,7 @@ public:
     sf::RenderWindow& get_window();
     void window_set_active(bool active);
     void on_window_resized(GLRootNode* root);
+    void set_clear_color(sf::Color color);
 
     std::string get_builtin_shader(BuiltinShader shader_id);
     glm::mat4 world_to_view();

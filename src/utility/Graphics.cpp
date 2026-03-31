@@ -7,6 +7,7 @@
 #include "utility/FileManager.h"
 #include "utility/Exceptions.h"
 #include "graphics/GLRootNode.h"
+#include "utility/Math.h"
 
 GraphicsSingleton* GraphicsSingleton::singleton_object = nullptr;
 
@@ -58,7 +59,7 @@ void GraphicsSingleton::display(GLRootNode* root)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window->getSize().x, window->getSize().y);
     Graphics().window_set_active(true);
-    if (root != nullptr)
+    if (root != nullptr && root->is_visible())
         root->draw();
     glBindVertexArray(0);
     glUseProgram(0);
@@ -85,6 +86,11 @@ void GraphicsSingleton::window_set_active(bool active)
         window_is_active = active;
         std::ignore = window->setActive(active);
     }
+}
+
+void GraphicsSingleton::set_clear_color(sf::Color color)
+{
+    glClearColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
 }
 
 std::string GraphicsSingleton::get_builtin_shader(BuiltinShader shader_id)

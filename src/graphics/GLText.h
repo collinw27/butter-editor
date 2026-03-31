@@ -38,6 +38,7 @@ protected:
 
     virtual void on_window_resized() override;
     virtual void draw() override;
+    virtual void apply_global_matrix() override;
 
 public:
 
@@ -47,12 +48,12 @@ public:
     void set_char_size(float new_size);
     float get_char_size();
 
-    sf::Vector2f find_char_pos();
+    sf::Vector2f find_char_pos(unsigned index);
 
 private: 
 
     void setup_GL();
-    void set_model_mat();
+    void update_model_matrix();
 };
 
 #endif

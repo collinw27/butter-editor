@@ -29,7 +29,7 @@ GLText* GLText::create(GLNode* parent, sf::Vector2f position, std::string str)
 
 void GLText::on_window_resized()
 {
-    set_model_mat();
+    update_model_matrix();
 }
 
 void GLText::draw()
@@ -44,11 +44,19 @@ void GLText::draw()
     glUniform4fv(fill_color_loc, 1, glm::value_ptr(u_fill_color));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    GLNode::draw();
+}
+
+void GLText::apply_global_matrix()
+{
+    update_model_matrix();
 }
 
 void GLText::set_string(std::string str)
 {
     this->str = str;
+    update_model_matrix();
 }
 
 std::string GLText::get_string()
@@ -59,7 +67,7 @@ std::string GLText::get_string()
 void GLText::set_char_size(float new_size)
 {
     char_size = new_size;
-    set_model_mat();
+    update_model_matrix();
 }
 
 float GLText::get_char_size()
@@ -69,7 +77,7 @@ float GLText::get_char_size()
 
 // Returns the offset of the position from this object
 
-sf::Vector2f GLText::find_char_pos()
+sf::Vector2f GLText::find_char_pos(unsigned index)
 {
     return sf::Vector2f();
 }
@@ -150,12 +158,12 @@ void GLText::setup_GL()
     glm::vec4 col = glm::vec4(1, 1, 1, 1);
     glUniform4fv(color_loc, 1, glm::value_ptr(col));
 
-    set_model_mat();
+    update_model_matrix();
     
     Graphics().window_set_active(false);
 }
 
-void GLText::set_model_mat()
+void GLText::update_model_matrix()
 {
     // Our coordinates range from (0, 0) -> (window_width, window_height),
     // whereas OpenGL coordinate range from (-1, -1) -> (1, 1)

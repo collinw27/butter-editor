@@ -48,6 +48,13 @@ void GLRectangle::draw()
     glUniform4fv(fill_color_loc, 1, glm::value_ptr(u_fill_color));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    GLNode::draw();
+}
+
+void GLRectangle::apply_global_matrix()
+{
+    update_model_matrix();
 }
 
 sf::Vector2f GLRectangle::get_size()
@@ -58,6 +65,7 @@ sf::Vector2f GLRectangle::get_size()
 void GLRectangle::set_size(sf::Vector2f size)
 {
     this->size = size;
+    update_model_matrix();
 }
 
 void GLRectangle::set_fill_color(sf::Color color)

@@ -16,11 +16,22 @@ CommandBar::CommandBar(Editor &editor) :
 {
     command = "";
     
-    status_text = new sf::Text(FileManager().get_mono(), "Untitled project  |  00h 00m 00s 000ms", 15u);
-    command_text = new sf::Text(FileManager().get_mono(), "> ", 15u);
-    cursor_rect = sf::RectangleShape(sf::Vector2f(1, 1));
-    cursor_rect.setFillColor(sf::Color::White);
-    selection_rect.setFillColor(Editor::C_HIGHLIGHT);
+    // status_text = new sf::Text(FileManager().get_mono(), "Untitled project  |  00h 00m 00s 000ms", 15u);
+    // command_text = new sf::Text(FileManager().get_mono(), "> ", 15u);
+    // cursor_rect = sf::RectangleShape(sf::Vector2f(1, 1));
+    // cursor_rect.setFillColor(sf::Color::White);
+    // selection_rect.setFillColor(Editor::C_HIGHLIGHT);
+    container = GLNode::create(nullptr);
+    status_text = GLText::create(container, sf::Vector2f(), "Untitled project  |  00h 00m 00s 000ms");
+    command_text = GLText::create(container, sf::Vector2f(), "> ");
+    cursor_rect = GLRectangle::create(container);
+    selection_rect = GLRectangle::create(container);
+    cursor_rect->set_fill_color(sf::Color::White);
+    selection_rect->set_fill_color(Editor::C_HIGHLIGHT);
+
+    command_text->set_visible(false);
+    cursor_rect->set_visible(false);
+    selection_rect->set_visible(false);
 }
 
 CommandBar::~CommandBar()
@@ -59,36 +70,25 @@ void CommandBar::update(const std::string& typed_string)
     cursor_time += editor.get_delta_time();
 }
 
-void CommandBar::draw(sf::RenderWindow& window)
+GLNode* CommandBar::get_node()
 {
-    if (typing)
-    {
-        if (cursor_end != -1)
-            window.draw(selection_rect);
-        window.draw(*command_text);
-        if ((int)std::floor(cursor_time / 0.7) % 2 == 0)
-            window.draw(cursor_rect);
-    }
-    else
-    {
-        window.draw(*status_text);
-    }
+    return container;
 }
 
 void CommandBar::set_bounds(const sf::IntRect& new_bounds)
 {
     bounds = new_bounds;
-    status_text->setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
-    command_text->setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
+    status_text->set_position(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
+    command_text->set_position(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
 }
 
 void CommandBar::set_ui_scale(float new_scale)
 {
     ui_scale = new_scale;
     float text_size = (unsigned)(15.f * ui_scale);
-    status_text->setCharacterSize(text_size);
-    command_text->setCharacterSize(text_size);
-    cursor_rect.setSize(sf::Vector2f(2, text_size + 7));
+    status_text->set_char_size(text_size);
+    command_text->set_char_size(text_size);
+    cursor_rect->set_size(sf::Vector2f(2, text_size + 7));
     render_text();
 }
 
@@ -109,6 +109,11 @@ bool CommandBar::attempt_clear()
 void CommandBar::set_typing(bool value)
 {
     typing = value;
+    
+    status_text->set_visible(!typing);
+    command_text->set_visible(typing);
+    cursor_rect->set_visible(typing);
+    selection_rect->set_visible(typing);
 }
 
 void CommandBar::append(const std::string& raw_text)
@@ -248,13 +253,13 @@ void CommandBar::select_all()
 
 void CommandBar::render_text()
 {
-    command_text->setString("> " + command);
-    float start_x = command_text->findCharacterPos(2 + cursor_start).x;
-    cursor_rect.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(start_x, -2 + ui_scale));
+    command_text->set_string("> " + command);
+    float start_x = command_text->find_char_pos(2 + cursor_start).x;
+    cursor_rect->set_position(sf::Vector2f(bounds.position) + sf::Vector2f(start_x, -2 + ui_scale));
     if (cursor_end != -1)
     {
-        float end_x = command_text->findCharacterPos(2 + cursor_end).x;
-        selection_rect.setPosition(sf::Vector2f(bounds.position) + sf::Vector2f(std::min(start_x, end_x), -2 + ui_scale));
-        selection_rect.setSize(sf::Vector2f(std::max(start_x, end_x) - std::min(start_x, end_x), cursor_rect.getSize().y));
+        float end_x = command_text->find_char_pos(2 + cursor_end).x;
+        selection_rect->set_position(sf::Vector2f(bounds.position) + sf::Vector2f(std::min(start_x, end_x), -2 + ui_scale));
+        selection_rect->set_size(sf::Vector2f(std::max(start_x, end_x) - std::min(start_x, end_x), cursor_rect->get_size().y));
     }
 }

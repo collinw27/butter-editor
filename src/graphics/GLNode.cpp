@@ -26,7 +26,10 @@ GLNode* GLNode::create(GLNode* parent)
 void GLNode::draw()
 {
     for (GLNode* child : children)
-        child->draw();
+    {
+        if (child->is_visible())
+            child->draw();
+    }
 }
 
 void GLNode::on_window_resized()
@@ -43,6 +46,7 @@ void GLNode::add_child(GLNode* child)
         child->parent->remove_child(child);
     children.push_back(child);
     child->parent = this;
+    child->update_global_matrix();
 }
 
 void GLNode::remove_child(GLNode* child)
@@ -63,6 +67,17 @@ GLNode* GLNode::get_parent()
 {
     return parent;
 }
+
+bool GLNode::is_visible()
+{
+    return visible;
+}
+
+void GLNode::set_visible(bool visible)
+{
+    this->visible = visible;
+}
+
 
 sf::Vector2f GLNode::get_position()
 {
@@ -149,6 +164,7 @@ void GLNode::update_global_matrix()
         global_matrix = get_local_matrix();
     for (GLNode* child : children)
         child->update_global_matrix();
+    apply_global_matrix();
 }
 
 void GLNode::apply_position() {}

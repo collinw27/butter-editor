@@ -48,6 +48,7 @@ protected:
     virtual void apply_scale() override;
     virtual void on_window_resized() override;
     virtual void draw() override;
+    virtual void apply_global_matrix() override;
 
 public:
 

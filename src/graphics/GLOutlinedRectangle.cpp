@@ -67,6 +67,13 @@ void GLOutlinedRectangle::draw()
     glUniform2fv(loc, 1, glm::value_ptr(u_outline_width));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    GLNode::draw();
+}
+
+void GLOutlinedRectangle::apply_global_matrix()
+{
+    update_model_matrix();
 }
 
 sf::Vector2f GLOutlinedRectangle::get_size()
