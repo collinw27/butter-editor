@@ -30,6 +30,7 @@ class GLFont
 public:
 
     GLFont(std::filesystem::path ttf_location);
+    ~GLFont();
     void load_char_map(unsigned char_size);
     std::map<char, FontChar>& get_char_map(unsigned char_size);
 };

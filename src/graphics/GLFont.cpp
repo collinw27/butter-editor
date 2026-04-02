@@ -16,8 +16,15 @@ GLFont::GLFont(std::filesystem::path ttf_location)
         throw ButterException("Error loading font " + ttf_location.string());
 }
 
+GLFont::~GLFont()
+{
+    FT_Done_Face(font_face);
+}
+
 void GLFont::load_char_map(unsigned char_size)
 {
+    Graphics().window_set_active(true);
+
     // Ensure this size hasn't been cached yet
 
     if (loaded_chars.find(char_size) != loaded_chars.end())
@@ -72,8 +79,8 @@ void GLFont::load_char_map(unsigned char_size)
     // Now that the char map is populated, cache it for this font size
 
     loaded_chars.insert({char_size, char_map});
-    FT_Done_Face(font_face);
-    FT_Done_FreeType(Graphics().ft_lib());
+    
+    Graphics().window_set_active(false);
 }
 
 std::map<char, FontChar>& GLFont::get_char_map(unsigned char_size)

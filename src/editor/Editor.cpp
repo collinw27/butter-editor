@@ -60,7 +60,7 @@ Editor::Editor()
         root->add_child(tab->get_node());
     for (FlexTab* tab : flex_tabs)
         root->add_child(tab->get_module().get_node());
-    // temp_menu_bar = GLText::create(root, sf::Vector2f(), "File   Edit   Settings   Export");
+    temp_menu_bar = GLText::create(root, Graphics().main_font(), 19u, "File   Edit   Settings   Export");
 
     // UI parameters
     // `resize_modules()` must ALWAYS be called
@@ -197,25 +197,6 @@ float Editor::get_delta_time()
     return delta_time;
 }
 
-// void Editor::draw(sf::RenderWindow& window)
-// {
-//     // Draw tabs at top
-
-//     for (auto flex_tab : flex_tabs)
-//     {
-//         flex_tab->draw(window);
-//     }
-
-//     // Ignore non-selected flex modules
-
-//     for (EditorModule** module : visible_modules)
-//     {
-//         (*module)->draw(window);
-//     }
-//     window.draw(*temp_menu_bar);
-//     command_bar->draw(window);
-// }
-
 void Editor::on_resized(sf::Vector2i new_size)
 {
     Graphics().on_window_resized(root);
@@ -223,7 +204,6 @@ void Editor::on_resized(sf::Vector2i new_size)
     y_divider = (int)( ((float)y_divider / window_size.y) * new_size.y);
     x_divider = std::max(MODULE_MARGIN, std::min(new_size.x - MODULE_MARGIN, x_divider));
     y_divider = std::max(MODULE_MARGIN, std::min(new_size.y - MODULE_MARGIN, y_divider));
-    // window->setView(sf::View(sf::FloatRect(sf::Vector2f(), sf::Vector2f(new_size))));
     window_size = new_size;
     resize_modules();
 }
@@ -350,6 +330,6 @@ void Editor::resize_modules()
 
     // Misc graphics
 
-    temp_menu_bar->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 8 + 2 * ui_scale)));
+    temp_menu_bar->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
     temp_menu_bar->set_char_size((unsigned)(19.f * ui_scale));
 }

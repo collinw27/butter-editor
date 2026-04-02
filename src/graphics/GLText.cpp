@@ -58,7 +58,7 @@ void GLText::draw()
 
     std::map<char, FontChar>& char_map = font->get_char_map(char_size);
     float x_offset = 0;
-    float y_offset = char_map.find('A')->second.size.y;
+    float y_offset = char_map.find('|')->second.size.y;
     for (int i = 0; i < str.length(); ++i)
     {
         // Ignore characters with no associated glyph
@@ -68,7 +68,7 @@ void GLText::draw()
             continue;
         FontChar ch = ch_it->second;
 
-        // The height of the 'A' character is added by default
+        // The height of the '|' character is added by default
         // The characters then "grow upward" based on ch.size.y
         // Note that y coordinates are negative to match the way
         // our provided coordinates start from the top-left, not bottom-left

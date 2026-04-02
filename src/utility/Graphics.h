@@ -41,9 +41,9 @@ class GraphicsSingleton
     static GraphicsSingleton* singleton_object;
 
     sf::RenderWindow* window = nullptr;
-    bool window_is_active = false;
     std::vector<std::string> builtin_shaders {};
     std::stack<sf::IntRect> scissors {};
+    unsigned window_active_state = 0u;
 
     GLFont* main_font_obj;
     GLFont* mono_font_obj;

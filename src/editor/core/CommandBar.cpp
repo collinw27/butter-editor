@@ -5,7 +5,7 @@
 #include "utility/Math.h"
 #include "utility/Input.h"
 #include "utility/FileManager.h"
-#include "utility/Logger.h"
+#include "utility/Graphics.h"
 
 constexpr int CHAR_LIMIT = 1024;
 
@@ -22,12 +22,12 @@ CommandBar::CommandBar(Editor &editor) :
     // cursor_rect.setFillColor(sf::Color::White);
     // selection_rect.setFillColor(Editor::C_HIGHLIGHT);
     container = GLNode::create(nullptr);
-    // status_text = GLText::create(container, sf::Vector2f(), "Untitled project  |  00h 00m 00s 000ms");
-    // command_text = GLText::create(container, sf::Vector2f(), "> ");
-    cursor_rect = GLRectangle::create(container);
     selection_rect = GLRectangle::create(container);
-    cursor_rect->set_fill_color(sf::Color::White);
     selection_rect->set_fill_color(Editor::C_HIGHLIGHT);
+    status_text = GLText::create(container, Graphics().mono_font(), 16u, "Untitled project  |  00h 00m 00s 000ms");
+    command_text = GLText::create(container, Graphics().mono_font(), 16u, "> ");
+    cursor_rect = GLRectangle::create(container);
+    cursor_rect->set_fill_color(sf::Color::White);
 
     command_text->set_visible(false);
     cursor_rect->set_visible(false);
@@ -85,7 +85,7 @@ void CommandBar::set_bounds(const sf::IntRect& new_bounds)
 void CommandBar::set_ui_scale(float new_scale)
 {
     ui_scale = new_scale;
-    float text_size = (unsigned)(15.f * ui_scale);
+    float text_size = (unsigned)(16.f * ui_scale);
     status_text->set_char_size(text_size);
     command_text->set_char_size(text_size);
     cursor_rect->set_size(sf::Vector2f(2, text_size + 7));
@@ -255,11 +255,12 @@ void CommandBar::render_text()
 {
     command_text->set_string("> " + command);
     float start_x = command_text->find_char_pos(2 + cursor_start).x;
-    cursor_rect->set_position(sf::Vector2f(bounds.position) + sf::Vector2f(start_x, -2 + ui_scale));
+    cursor_rect->set_position(command_text->get_position() + sf::Vector2f(start_x, -2 + ui_scale));
     if (cursor_end != -1)
     {
         float end_x = command_text->find_char_pos(2 + cursor_end).x;
-        selection_rect->set_position(sf::Vector2f(bounds.position) + sf::Vector2f(std::min(start_x, end_x), -2 + ui_scale));
+        selection_rect->set_position(command_text->get_position() + sf::Vector2f(std::min(start_x, end_x), -2 + ui_scale));
         selection_rect->set_size(sf::Vector2f(std::max(start_x, end_x) - std::min(start_x, end_x), cursor_rect->get_size().y));
     }
+    selection_rect->set_visible(cursor_end != -1);
 }

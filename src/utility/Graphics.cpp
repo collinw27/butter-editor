@@ -95,13 +95,21 @@ sf::RenderWindow& GraphicsSingleton::get_window()
     return *window;
 }
 
+// Keeps track of consecutive calls
+// This way, if a function enabled the window while it's
+// already enabled, the window stays enable after the
+// function is finished
+// IMPORTANT: calls to this function should come in pairs
+
 void GraphicsSingleton::window_set_active(bool active)
 {
-    if (window_is_active != active)
-    {
-        window_is_active = active;
-        std::ignore = window->setActive(active);
-    }
+    if (window_active_state == 0 && !active)
+        return;
+    if (active && window_active_state == 0)
+        std::ignore = window->setActive(true);
+    else if (!active && window_active_state == 1)
+        std::ignore = window->setActive(false);
+    window_active_state += (active) ? 1 : -1;
 }
 
 void GraphicsSingleton::set_clear_color(sf::Color color)
