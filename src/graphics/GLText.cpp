@@ -5,12 +5,17 @@
 #include <glm/ext/matrix_transform.hpp>
 #include "utility/Exceptions.h"
 #include "utility/Graphics.h"
+#include "graphics/GLFont.h"
 
-GLText::GLText(GLNode* parent, sf::Vector2f position, std::string str)
+GLText::GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str)
     : GLNode(parent)
 {
-    this->position = position;
+    this->font = font;
+    if (font == nullptr)
+        throw ButterException("Invalid font");
+
     this->str = str;
+    this->char_size = char_size;
     u_fill_color = glm::vec4(1, 1, 1, 1);
 }
 
@@ -20,9 +25,9 @@ void GLText::init()
     setup_GL();
 }
 
-GLText* GLText::create(GLNode* parent, sf::Vector2f position, std::string str)
+GLText* GLText::create(GLNode* parent, GLFont* font, unsigned char_size, std::string str)
 {
-    GLText* instance = new GLText(parent, position, str);
+    GLText* instance = new GLText(parent, font, char_size, str);
     instance->init();
     return instance;
 }
@@ -40,8 +45,6 @@ void GLText::draw()
 
     GLuint model_loc = glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));
-    GLuint fill_color_loc = glGetUniformLocation(shader_program, "fill_color");
-    glUniform4fv(fill_color_loc, 1, glm::value_ptr(u_fill_color));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -85,82 +88,67 @@ sf::Vector2f GLText::find_char_pos(unsigned index)
 void GLText::setup_GL()
 {
     Graphics().window_set_active(true);
-
-    int success;
-    GLchar info_log[512];
-
-    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    std::string vs_string = Graphics().get_builtin_shader(BuiltinShader::V_RECT);
-    const GLchar* vs_str = vs_string.c_str();
-    glShaderSource(vertex_shader, 1, &vs_str, NULL);
-    glCompileShader(vertex_shader);
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
-        throw ButterException("OpenGL Error: " + std::string(info_log));
-    }
-
-    GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    std::string fs_string = Graphics().get_builtin_shader(BuiltinShader::F_RECT);
-    const GLchar* fs_str = fs_string.c_str();
-    glShaderSource(fragment_shader, 1, &fs_str, NULL);
-    glCompileShader(fragment_shader);
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
-        throw ButterException("OpenGL Error: " + std::string(info_log));
-    }
-
-    shader_program = glCreateProgram();
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
-    glValidateProgram(shader_program);
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-        throw ButterException("OpenGL Error: " + std::string(info_log));
-    }
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-    Graphics().check_gl_errors();
-
-    // The corner is on the origin to make scaling easy
-    // Negative y coordinate is used for parity with GLNode position
     
-    GLfloat vertices[] = {
-        0.f, 0.f, 0.f,
-        0.f, -1.f, 0.f,
-        1.f, -1.f, 0.f,
-        1.f, 0.f, 0.f
-    };
-    GLuint indices[] = {
-        0, 1, 3, 1, 2, 3
-    };
+    shader_program = Graphics().link_shader(BuiltinShader::V_TEX_RECT, BuiltinShader::F_TEX_RECT);
+    
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glGenBuffers(1, &vertex_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
-    glGenBuffers(1, &index_VBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_VBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     glBindVertexArray(0);
-    
-    glUseProgram(shader_program);
-    GLuint color_loc = glGetUniformLocation(shader_program, "fill_color");
-    glm::vec4 col = glm::vec4(1, 1, 1, 1);
-    glUniform4fv(color_loc, 1, glm::value_ptr(col));
+
+    update_rendered_text();
 
     update_model_matrix();
     
     Graphics().window_set_active(false);
+}
+
+void GLText::update_rendered_text()
+{
+    std::vector<GLfloat> vertex_vec {};
+    std::vector<GLuint> index_vec {};
+    std::map<char, FontChar>& char_map = font->get_char_map(char_size);
+    float current_x = 0;
+    for (int i = 0; i < str.length(); ++i)
+    {
+        auto ch_it = char_map.find(str.at(i));
+        FontChar ch = (ch_it == char_map.end()) ? char_map.find('?')->second : ch_it->second;
+
+        float x = current_x + ch.bearing.x;
+        float y = -(ch.size.y - ch.bearing.y);
+        vertex_vec.insert(vertex_vec.end(), {
+            x, y - ch.size.y, 0.f, 0.f, 0.f,
+            x, y, 0.f, 0.f, 1.f,
+            x + ch.size.x, y, 0.f, 1.f, 1.f,
+            x + ch.size.x, y - ch.size.y, 0.f, 1.f, 0.f
+        });
+        GLuint s = (GLuint)i * 4u;
+        index_vec.insert(index_vec.end(), {s + 0, s + 1, s + 2, s + 0, s + 2, s + 3});
+        current_x += (ch.advance >> 6);
+    }
+    // vertex_vec.insert(vertex_vec.end(), {
+    //     0.f, 0.f, 0.f, 0.f, 0.f,
+    //     0.f, -1.f, 0.f, 0.f, 1.f,
+    //     1.f, -1.f, 0.f, 1.f, 1.f,
+    //     1.f, 0.f, 0.f, 1.f, 0.f
+    // });
+    // index_vec.insert(index_vec.end(), {
+    //     0, 1, 3, 1, 2, 3
+    // });
+    GLfloat* vertices = vertex_vec.data();
+    GLuint* indices = index_vec.data();
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertex_vec.size(), vertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+    glGenBuffers(1, &index_VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_VBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * index_vec.size(), indices, GL_STATIC_DRAW);
+    glBindVertexArray(0);
 }
 
 void GLText::update_model_matrix()

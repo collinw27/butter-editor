@@ -60,7 +60,7 @@ Editor::Editor()
         root->add_child(tab->get_node());
     for (FlexTab* tab : flex_tabs)
         root->add_child(tab->get_module().get_node());
-    temp_menu_bar = GLText::create(root, sf::Vector2f(), "File   Edit   Settings   Export");
+    // temp_menu_bar = GLText::create(root, sf::Vector2f(), "File   Edit   Settings   Export");
 
     // UI parameters
     // `resize_modules()` must ALWAYS be called

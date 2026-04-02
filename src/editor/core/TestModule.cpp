@@ -7,7 +7,7 @@ TestModule::TestModule(Editor& editor, std::string sample_text)
     : EditorModule(editor)
 {
     // text = new sf::Text(FileManager().get_font(), sample_text, 30u);
-    text = GLText::create(visible_rect, sf::Vector2f(), sample_text);
+    // text = GLText::create(visible_rect, sf::Vector2f(), sample_text);
     text->set_position(sf::Vector2f(30, 30));
 }
 

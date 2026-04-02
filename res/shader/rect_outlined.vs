@@ -1,8 +1,5 @@
 #version 330 core
 
-// This shader is built to transform a rectangle whose vertices
-// are defined to take up the entire screen space
-
 layout (location = 0) in vec3 vert_pos;
 layout (location = 1) in vec2 uv_input;
 

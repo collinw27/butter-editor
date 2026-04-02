@@ -4,6 +4,10 @@
 #include <string>
 #include <vector>
 #include <stack>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include "gl/glew.h"
 #include <SFML/Graphics.hpp>
 #include <glm/glm.hpp>
 
@@ -14,6 +18,7 @@ constexpr int WINDOW_H = 720;
 
 class GraphicsSingleton;
 class GLRootNode;
+class GLFont;
 
 GraphicsSingleton& Graphics();
 
@@ -24,8 +29,10 @@ enum class BuiltinShader
 {
     V_RECT,
     V_RECT_OUTLINED,
+    V_TEX_RECT,
     F_RECT,
-    F_RECT_OUTLINED
+    F_RECT_OUTLINED,
+    F_TEX_RECT
 };
 
 class GraphicsSingleton
@@ -37,8 +44,13 @@ class GraphicsSingleton
     std::vector<std::string> builtin_shaders {};
     std::stack<sf::IntRect> scissors {};
 
+    GLFont* main_font_obj;
+    GLFont* mono_font_obj;
+
     glm::mat4 world_to_view_matrix;
     glm::mat4 world_to_screen_matrix;
+
+    FT_Library ft_library;
 
 public:
 
@@ -52,16 +64,23 @@ public:
     void window_set_active(bool active);
     void on_window_resized(GLRootNode* root);
     void set_clear_color(sf::Color color);
+    
+    GLFont* main_font();
+    GLFont* mono_font();
 
     std::string get_builtin_shader(BuiltinShader shader_id);
+    GLuint link_shader(BuiltinShader vertex_shader, BuiltinShader fragment_shader);
+
     glm::mat4 world_to_view();
     glm::mat4 world_to_screen();
     sf::Vector2f screen_to_world(sf::Vector2f vec);
 
     void check_gl_errors();
+    FT_Library& ft_lib();
 
     unsigned push_scissor(sf::IntRect bounds);
     void pop_scissor(unsigned check_index);
+
 
     friend GraphicsSingleton& Graphics();
 

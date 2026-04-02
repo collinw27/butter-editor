@@ -54,16 +54,6 @@ std::string FileManagerSingleton::get_data_path(const std::filesystem::path& pat
     return (data_root_dir/path).string();
 }
 
-const sf::Font& FileManagerSingleton::get_font()
-{
-    return main_font;
-}
-
-const sf::Font& FileManagerSingleton::get_mono()
-{
-    return mono_font;
-}
-
 // To modify, must pass a copy to `write_user_settings()`
 // This is a more safe way of doing it (prevents modifying it without writing),
 // but may become slow as the settings file becomes bigger

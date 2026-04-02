@@ -22,8 +22,8 @@ CommandBar::CommandBar(Editor &editor) :
     // cursor_rect.setFillColor(sf::Color::White);
     // selection_rect.setFillColor(Editor::C_HIGHLIGHT);
     container = GLNode::create(nullptr);
-    status_text = GLText::create(container, sf::Vector2f(), "Untitled project  |  00h 00m 00s 000ms");
-    command_text = GLText::create(container, sf::Vector2f(), "> ");
+    // status_text = GLText::create(container, sf::Vector2f(), "Untitled project  |  00h 00m 00s 000ms");
+    // command_text = GLText::create(container, sf::Vector2f(), "> ");
     cursor_rect = GLRectangle::create(container);
     selection_rect = GLRectangle::create(container);
     cursor_rect->set_fill_color(sf::Color::White);

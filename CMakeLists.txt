@@ -14,8 +14,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 #    ├─ GLEW
 #    │  ├─ include
 #    │  └─ lib
-#    └─ GLM
-#       └─ glm
+#    ├─ GLM
+#    │  └─ glm
+#    └─ FreeType
+#       └─ include
 
 # User must manually download SFML 3.0 (https://github.com/SFML/SFML/releases)
 # Then, it is dynamically linked, meaning all DLLs must be copied to bin
@@ -34,6 +36,12 @@ link_directories(${GLEW_DIR}/lib)
 set(GLM_DIR ${CMAKE_BINARY_DIR}/lib/GLM)
 link_directories(${GLM_DIR}/lib)
 
+# User must manually download FreeType 2.14.1 (https://download.savannah.gnu.org/releases/freetype/)
+# Note that only the include path is used
+# The library file is provided as part of SFML
+
+set(FREETYPE_DIR ${CMAKE_BINARY_DIR}/lib/FreeType)
+
 # Link files & generate executables
 
 include_directories(
@@ -49,9 +57,15 @@ file(
 
 add_executable(Butter src/main.cpp ${butter_SRC})
 target_compile_features(Butter PRIVATE cxx_std_17)
-target_include_directories(Butter PRIVATE ${SFML_DIR}/include ${GLEW_DIR}/include ${GLM_DIR})
+target_include_directories(Butter PRIVATE
+    ${SFML_DIR}/include
+    ${GLEW_DIR}/include
+    ${GLM_DIR}
+    ${FREETYPE_DIR}/include
+)
 target_link_libraries(Butter PRIVATE
     sfml-graphics-d sfml-window-d sfml-system-d
+    freetyped
     ${GLEW_DIR}/lib/glew32.lib
     opengl32
     gdi32)
@@ -62,9 +76,15 @@ target_link_libraries(Butter PRIVATE
 
 add_executable(GLTest src/testing/GLTest.cpp ${butter_SRC})
 target_compile_features(GLTest PRIVATE cxx_std_17)
-target_include_directories(GLTest PRIVATE ${SFML_DIR}/include ${GLEW_DIR}/include ${GLM_DIR})
+target_include_directories(GLTest PRIVATE 
+    ${SFML_DIR}/include
+    ${GLEW_DIR}/include
+    ${GLM_DIR}
+    ${FREETYPE_DIR}/include
+)
 target_link_libraries(GLTest PRIVATE
     sfml-graphics-d sfml-window-d sfml-system-d
+    freetyped
     ${GLEW_DIR}/lib/glew32.lib
     opengl32
     gdi32

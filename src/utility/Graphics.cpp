@@ -1,12 +1,15 @@
 #include "Graphics.h"
 
 #include <utility>
+
 #include <gl/glew.h>
 #include <SFML/OpenGL.hpp>
 #include <glm/ext/matrix_transform.hpp>
+
 #include "utility/FileManager.h"
 #include "utility/Exceptions.h"
 #include "graphics/GLRootNode.h"
+#include "graphics/GLFont.h"
 #include "utility/Math.h"
 
 GraphicsSingleton* GraphicsSingleton::singleton_object = nullptr;
@@ -26,8 +29,10 @@ GraphicsSingleton::GraphicsSingleton()
 
     load_builtin_shader(BuiltinShader::V_RECT, "rect.vs");
     load_builtin_shader(BuiltinShader::V_RECT_OUTLINED, "rect_outlined.vs");
+    load_builtin_shader(BuiltinShader::V_TEX_RECT, "tex_rect.vs");
     load_builtin_shader(BuiltinShader::F_RECT, "rect.fs");
     load_builtin_shader(BuiltinShader::F_RECT_OUTLINED, "rect_outlined.fs");
+    load_builtin_shader(BuiltinShader::F_TEX_RECT, "tex_rect.fs");
 
     // Pre-computer matrix values
     // Some will need to be updated later on (ex. on window resize)
@@ -52,6 +57,16 @@ void GraphicsSingleton::init(sf::VideoMode mode, std::string title, uint32_t sty
     
     if (glewInit() != GLEW_OK)
         throw ButterException("Cannot initialize GLEW");
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (FT_Init_FreeType(&ft_library))
+        throw ButterException("Cannot initialize FreeType");
+
+    // Load fonts now that initialization is finished
+
+    main_font_obj = new GLFont(FileManager().get_res_path("font/Lato-Bold.ttf"));
+    mono_font_obj = new GLFont(FileManager().get_res_path("font/Consolas.ttf"));
 }
 
 void GraphicsSingleton::display(GLRootNode* root)
@@ -93,11 +108,69 @@ void GraphicsSingleton::set_clear_color(sf::Color color)
     glClearColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
 }
 
+GLFont* GraphicsSingleton::main_font()
+{
+    return main_font_obj;
+}
+
+GLFont* GraphicsSingleton::mono_font()
+{
+    return mono_font_obj;
+}
+
 std::string GraphicsSingleton::get_builtin_shader(BuiltinShader shader_id)
 {
     if ((int)shader_id >= builtin_shaders.size())
         throw ButterException("Invalid shader request");
     return builtin_shaders.at((int)shader_id);
+}
+
+GLuint GraphicsSingleton::link_shader(BuiltinShader vertex_id, BuiltinShader fragment_id)
+{
+    int success;
+    GLchar info_log[512];
+
+    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    std::string vs_string = Graphics().get_builtin_shader(vertex_id);
+    const GLchar* vs_str = vs_string.c_str();
+    glShaderSource(vertex_shader, 1, &vs_str, NULL);
+    glCompileShader(vertex_shader);
+    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
+        throw ButterException("OpenGL Error: " + std::string(info_log));
+    }
+
+    GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    std::string fs_string = Graphics().get_builtin_shader(fragment_id);
+    const GLchar* fs_str = fs_string.c_str();
+    glShaderSource(fragment_shader, 1, &fs_str, NULL);
+    glCompileShader(fragment_shader);
+    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
+        throw ButterException("OpenGL Error: " + std::string(info_log));
+    }
+
+    GLuint shader_program = glCreateProgram();
+    glAttachShader(shader_program, vertex_shader);
+    glAttachShader(shader_program, fragment_shader);
+    glLinkProgram(shader_program);
+    glValidateProgram(shader_program);
+    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetProgramInfoLog(shader_program, 512, NULL, info_log);
+        throw ButterException("OpenGL Error: " + std::string(info_log));
+    }
+
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
+    Graphics().check_gl_errors();
+
+    return shader_program;
 }
 
 // For simplicity, the only visible region of world space is (0, 0) to (1, 1)
@@ -146,6 +219,11 @@ void GraphicsSingleton::check_gl_errors()
     }
 }
 
+FT_Library& GraphicsSingleton::ft_lib()
+{
+    return ft_library;
+}
+
 // Instead of manually setting the glScissor parameters, the states
 // are pushed to and popped from a stack
 // This ensures that if one is interrupted by another, the proper state
@@ -179,8 +257,8 @@ void GraphicsSingleton::pop_scissor(unsigned check_index)
     }
 }
 
-// Shader ID is not needed, but is passed in to make sure 
-// the index is correct
+// Shader ID is not needed,
+// but is passed to make sure the index is correct
 
 void GraphicsSingleton::load_builtin_shader(BuiltinShader shader_id, std::string filename)
 {

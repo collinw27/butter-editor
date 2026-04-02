@@ -6,16 +6,17 @@
 #include <SFML/OpenGL.hpp>
 #include "graphics/GLNode.h"
 
-// For now, much of this class's functionality is a placeholder
-// to allow testing OpenGL compatibility in place of SFML without
-// having to implement all the nuances of text rendering
+// Created with help from https://learnopengl.com/In-Practice/Text-Rendering
+
+class GLFont;
 
 class GLText : public GLNode
 {
     sf::Vector2f size {1, 1};
 
+    GLFont* font;
     std::string str;
-    float char_size = 10;
+    unsigned char_size;
 
     GLuint shader_program;
     GLuint VAO;
@@ -27,12 +28,12 @@ class GLText : public GLNode
 
 protected:
     
-    GLText(GLNode* parent, sf::Vector2f position, std::string str);
+    GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str);
     virtual void init();
 
 public:
 
-    static GLText* create(GLNode* parent, sf::Vector2f position, std::string str);
+    static GLText* create(GLNode* parent, GLFont* font, unsigned char_size, std::string str = "");
 
 protected:
 
@@ -53,6 +54,7 @@ public:
 private: 
 
     void setup_GL();
+    void update_rendered_text();
     void update_model_matrix();
 };
 
