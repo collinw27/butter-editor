@@ -33,6 +33,7 @@ GraphicsSingleton::GraphicsSingleton()
     load_builtin_shader(BuiltinShader::F_RECT, "rect.fs");
     load_builtin_shader(BuiltinShader::F_RECT_OUTLINED, "rect_outlined.fs");
     load_builtin_shader(BuiltinShader::F_TEX_RECT, "tex_rect.fs");
+    load_builtin_shader(BuiltinShader::F_GLYPH, "glyph.fs");
 
     // Pre-computer matrix values
     // Some will need to be updated later on (ex. on window resize)

@@ -34,3 +34,8 @@ glm::vec4 to_gl(sf::Color col, float alpha)
 {
     return glm::vec4(col.r / 255.0, col.g / 255.0, col.b / 255.0, alpha / 255.0);
 }
+
+glm::vec3 to_gl3(sf::Color col)
+{
+    return glm::vec3(col.r / 255.0, col.g / 255.0, col.b / 255.0);
+}

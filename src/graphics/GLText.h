@@ -12,11 +12,10 @@ class GLFont;
 
 class GLText : public GLNode
 {
-    sf::Vector2f size {1, 1};
-
     GLFont* font;
     std::string str;
     unsigned char_size;
+    sf::Color fill_color {sf::Color::White};
 
     GLuint shader_program;
     GLuint VAO;
@@ -24,7 +23,7 @@ class GLText : public GLNode
     GLuint index_VBO;
     
     glm::mat4 u_model_mat;
-    glm::vec4 u_fill_color;
+    glm::vec3 u_fill_color;
 
 protected:
     
@@ -46,15 +45,16 @@ public:
     void set_string(std::string str);
     std::string get_string();
 
-    void set_char_size(float new_size);
-    float get_char_size();
+    void set_char_size(unsigned new_size);
+    unsigned get_char_size();
+    
+    void set_fill_color(sf::Color color);
 
     sf::Vector2f find_char_pos(unsigned index);
 
 private: 
 
     void setup_GL();
-    void update_rendered_text();
     void update_model_matrix();
 };
 

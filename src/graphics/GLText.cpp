@@ -5,6 +5,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include "utility/Exceptions.h"
 #include "utility/Graphics.h"
+#include "utility/Math.h"
 #include "graphics/GLFont.h"
 
 GLText::GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str)
@@ -16,7 +17,7 @@ GLText::GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str
 
     this->str = str;
     this->char_size = char_size;
-    u_fill_color = glm::vec4(1, 1, 1, 1);
+    u_fill_color = {1, 1, 1};
 }
 
 void GLText::init()
@@ -42,11 +43,53 @@ void GLText::draw()
     sf::RenderWindow& window = Graphics().get_window();
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
+    glActiveTexture(GL_TEXTURE0);
 
-    GLuint model_loc = glGetUniformLocation(shader_program, "model");
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));
+    GLuint loc = glGetUniformLocation(shader_program, "model");
+    glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));
+    loc = glGetUniformLocation(shader_program, "text_color");
+    glUniform3fv(loc, 1, glm::value_ptr(u_fill_color));
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    // Since each glyph is its own distinct texture, we need to re-bind
+    // the vertex data for every glyph we draw
+    // In the future, it would be beneficial to have GLFont stitch all
+    // glyphs together into a single sprite sheet
+    // (I think sf::Font does this already)
+
+    std::map<char, FontChar>& char_map = font->get_char_map(char_size);
+    float x_offset = 0;
+    float y_offset = char_map.find('A')->second.size.y;
+    for (int i = 0; i < str.length(); ++i)
+    {
+        // Ignore characters with no associated glyph
+
+        auto ch_it = char_map.find(str.at(i));
+        if (ch_it == char_map.end())
+            continue;
+        FontChar ch = ch_it->second;
+
+        // The height of the 'A' character is added by default
+        // The characters then "grow upward" based on ch.size.y
+        // Note that y coordinates are negative to match the way
+        // our provided coordinates start from the top-left, not bottom-left
+
+        float x = x_offset + ch.bearing.x;
+        float y = y_offset + ch.size.y - ch.bearing.y;
+        GLfloat vertices[] = {
+            x, -y + ch.size.y, 0.f, 0.f, 0.f,
+            x, -y, 0.f, 0.f, 1.f,
+            x + ch.size.x, -y, 0.f, 1.f, 1.f,
+            x + ch.size.x, -y + ch.size.y, 0.f, 1.f, 0.f
+        };
+        x_offset += (ch.advance >> 6);
+        
+        glBindTexture(GL_TEXTURE_2D, ch.texture_ID);
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * 4 * sizeof(GLfloat), vertices);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    }
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     GLNode::draw();
 }
@@ -67,99 +110,75 @@ std::string GLText::get_string()
     return str;
 }
 
-void GLText::set_char_size(float new_size)
+void GLText::set_char_size(unsigned new_size)
 {
     char_size = new_size;
-    update_model_matrix();
 }
 
-float GLText::get_char_size()
+unsigned GLText::get_char_size()
 {
     return char_size;
 }
 
-// Returns the offset of the position from this object
+void GLText::set_fill_color(sf::Color color)
+{
+    fill_color = color;
+    u_fill_color = to_gl3(fill_color);
+}
+
+// Returns the offset from within this object
+// If index is outside the range of the string, applies to last char
 
 sf::Vector2f GLText::find_char_pos(unsigned index)
 {
-    return sf::Vector2f();
+    // See `draw()` for more info on calculations
+
+    std::map<char, FontChar>& char_map = font->get_char_map(char_size);
+    float x_offset = 0;
+    const float y_offset = char_map.find('A')->second.size.y;
+    float last_y = 0;
+    for (int i = 0; i < std::min((unsigned)str.length(), index); ++i)
+    {
+        auto ch_it = char_map.find(str.at(i));
+        if (ch_it == char_map.end())
+            continue;
+        FontChar ch = ch_it->second;
+        float x = x_offset + ch.bearing.x;
+        float y = y_offset + ch.size.y - ch.bearing.y;
+        last_y = y - ch.size.y;
+        x_offset += (ch.advance >> 6);
+    }
+    return sf::Vector2f(x_offset, last_y);
 }
 
 void GLText::setup_GL()
 {
     Graphics().window_set_active(true);
     
-    shader_program = Graphics().link_shader(BuiltinShader::V_TEX_RECT, BuiltinShader::F_TEX_RECT);
+    shader_program = Graphics().link_shader(BuiltinShader::V_TEX_RECT, BuiltinShader::F_GLYPH);
     
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glGenBuffers(1, &vertex_VBO);
-    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_VBO);
+    glBufferData(GL_ARRAY_BUFFER, 6 * 4 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 
-    update_rendered_text();
+    GLuint indices[] = {0, 1, 2, 0, 2, 3};
+    glGenBuffers(1, &index_VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_VBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBindVertexArray(0);
 
     update_model_matrix();
     
     Graphics().window_set_active(false);
 }
 
-void GLText::update_rendered_text()
-{
-    std::vector<GLfloat> vertex_vec {};
-    std::vector<GLuint> index_vec {};
-    std::map<char, FontChar>& char_map = font->get_char_map(char_size);
-    float current_x = 0;
-    for (int i = 0; i < str.length(); ++i)
-    {
-        auto ch_it = char_map.find(str.at(i));
-        FontChar ch = (ch_it == char_map.end()) ? char_map.find('?')->second : ch_it->second;
-
-        float x = current_x + ch.bearing.x;
-        float y = -(ch.size.y - ch.bearing.y);
-        vertex_vec.insert(vertex_vec.end(), {
-            x, y - ch.size.y, 0.f, 0.f, 0.f,
-            x, y, 0.f, 0.f, 1.f,
-            x + ch.size.x, y, 0.f, 1.f, 1.f,
-            x + ch.size.x, y - ch.size.y, 0.f, 1.f, 0.f
-        });
-        GLuint s = (GLuint)i * 4u;
-        index_vec.insert(index_vec.end(), {s + 0, s + 1, s + 2, s + 0, s + 2, s + 3});
-        current_x += (ch.advance >> 6);
-    }
-    // vertex_vec.insert(vertex_vec.end(), {
-    //     0.f, 0.f, 0.f, 0.f, 0.f,
-    //     0.f, -1.f, 0.f, 0.f, 1.f,
-    //     1.f, -1.f, 0.f, 1.f, 1.f,
-    //     1.f, 0.f, 0.f, 1.f, 0.f
-    // });
-    // index_vec.insert(index_vec.end(), {
-    //     0, 1, 3, 1, 2, 3
-    // });
-    GLfloat* vertices = vertex_vec.data();
-    GLuint* indices = index_vec.data();
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertex_vec.size(), vertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
-    glGenBuffers(1, &index_VBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_VBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * index_vec.size(), indices, GL_STATIC_DRAW);
-    glBindVertexArray(0);
-}
-
 void GLText::update_model_matrix()
 {
-    // Our coordinates range from (0, 0) -> (window_width, window_height),
-    // whereas OpenGL coordinate range from (-1, -1) -> (1, 1)
-    // Note that this is where the factor of 2 comes from: 1 - (-1)
-    // These transformations should be self-explanatory, but note that
-    // these are applied in reverse order as per matrix multiplication convention
-
-    size = sf::Vector2f(char_size * 1 * str.length(), char_size * 2);
-    u_model_mat = glm::scale(glm::mat4(1), glm::vec3(size.x, size.y, 1.f));
-    u_model_mat = Graphics().world_to_view() * global_matrix * u_model_mat;
+    u_model_mat = Graphics().world_to_view() * global_matrix;
 }

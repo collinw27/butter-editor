@@ -19,5 +19,6 @@ glm::vec3 to_gl(sf::Vector2f vec, float z);
 glm::vec3 to_gl(sf::Vector3f vec);
 glm::vec4 to_gl(sf::Color col);
 glm::vec4 to_gl(sf::Color col, float alpha);
+glm::vec3 to_gl3(sf::Color col);
 
 #endif

@@ -8,10 +8,7 @@
 #include "utility/FileManager.h"
 #include "utility/Graphics.h"
 #include "utility/Exceptions.h"
-#include "graphics/GLRootNode.h"
-#include "graphics/GLContainer.h"
-#include "graphics/GLOutlinedRectangle.h"
-#include "graphics/GLText.h"
+#include "graphics/nodes.h"
 
 int main()
 {
@@ -29,8 +26,10 @@ int main()
     rect->set_outline_color(sf::Color::Blue);
     rect->set_outline_thickness(-10);
 
-    GLText* text = GLText::create(container, Graphics().main_font(), 10u, "The quick brown fox");
-    // text->set_char_size(20);
+    GLText* text = GLText::create(container, Graphics().main_font(), 10u, "The quick brown fox jumps over the lazy dog.");
+    text->set_position(sf::Vector2f(10, 200));
+    text->set_char_size(40u);
+    text->set_fill_color(sf::Color::Blue);
 
     sf::RenderWindow& window = Graphics().get_window();
     while (window.isOpen())
