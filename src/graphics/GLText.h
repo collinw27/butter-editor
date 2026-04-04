@@ -1,0 +1,62 @@
+#ifndef GL_TEXT_H
+#define GL_TEXT_H
+
+#include <GL/glew.h>
+#include <SFML/Graphics.hpp>
+#include <SFML/OpenGL.hpp>
+#include "graphics/GLNode.h"
+
+// Created with help from https://learnopengl.com/In-Practice/Text-Rendering
+
+class GLFont;
+
+class GLText : public GLNode
+{
+    GLFont* font;
+    std::string str;
+    unsigned char_size;
+    sf::Color text_color {sf::Color::White};
+
+    GLuint shader_program;
+    GLuint VAO;
+    GLuint vertex_VBO;
+    GLuint index_VBO;
+    
+    glm::mat4 u_model_mat;
+    glm::vec3 u_color;
+
+protected:
+    
+    GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str);
+    virtual void init();
+
+public:
+
+    static GLText* create(GLNode* parent, GLFont* font, unsigned char_size, std::string str = "");
+
+protected:
+
+    virtual void on_window_resized() override;
+    virtual void draw() override;
+    virtual void apply_global_matrix() override;
+
+public:
+
+    void set_string(std::string str);
+    std::string get_string();
+
+    unsigned get_char_size();
+    void set_char_size(unsigned new_size);
+    
+    sf::Color get_color();
+    void set_color(sf::Color color);
+
+    sf::Vector2f find_char_pos(unsigned index);
+
+private: 
+
+    void setup_GL();
+    void update_model_matrix();
+};
+
+#endif

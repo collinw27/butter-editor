@@ -2,7 +2,7 @@
 #define MINI_TERMINAL_H
 
 #include <string>
-#include <SFML/Graphics.hpp>
+#include "graphics/nodes.h"
 
 class Editor;
 
@@ -11,13 +11,11 @@ class CommandBar
     Editor& editor;
     sf::IntRect bounds;
     float ui_scale = 1.f;
-    sf::RectangleShape cursor_rect;
-    sf::RectangleShape selection_rect;
-
-    // Some members use pointers to avoid need for direct initialization
-    
-    sf::Text* status_text;
-    sf::Text* command_text;
+    GLContainer* container;
+    GLRectangle* cursor_rect;
+    GLRectangle* selection_rect;
+    GLText* status_text;
+    GLText* command_text;
 
     // Note: `cursor_start` isn't necessarily less than `cursor_end`
 
@@ -34,9 +32,8 @@ class CommandBar
 public:
 
     CommandBar(Editor& editor);
-    ~CommandBar();
     void update(const std::string& keyboard_string);
-    void draw(sf::RenderWindow& window);
+    GLNode* get_node();
     
     void set_bounds(const sf::IntRect& new_bounds);
     void set_ui_scale(float new_scale);

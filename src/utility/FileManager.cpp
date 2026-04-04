@@ -54,14 +54,32 @@ std::string FileManagerSingleton::get_data_path(const std::filesystem::path& pat
     return (data_root_dir/path).string();
 }
 
-const sf::Font& FileManagerSingleton::get_font()
+// To modify, must pass a copy to `write_user_settings()`
+// This is a more safe way of doing it (prevents modifying it without writing),
+// but may become slow as the settings file becomes bigger
+
+const UserSettings& FileManagerSingleton::get_user_settings()
 {
-    return main_font;
+    return user_settings;
 }
 
-const sf::Font& FileManagerSingleton::get_mono()
+void FileManagerSingleton::update_user_settings(const UserSettings& new_settings)
 {
-    return mono_font;
+    user_settings = new_settings;
+
+    // Create settings file
+
+    std::ofstream file{get_data_path("user_settings.txt"), std::ios_base::out};
+    file << "ui_scale_index: " << user_settings.ui_scale_index;
+    file.close();
+}
+
+std::string FileManagerSingleton::load_shader(std::string filename)
+{
+    std::ifstream shader_file {res_root_dir/"shader"/filename};
+    if (!shader_file.is_open())
+        throw ButterException("Could not locate " + filename);
+    return (std::stringstream{} << shader_file.rdbuf()).str();
 }
 
 void FileManagerSingleton::load_user_settings()
@@ -88,26 +106,6 @@ void FileManagerSingleton::load_user_settings()
             user_settings.ui_scale_index = file_read_int(line.second, -5, 10);
         }
     }
-}
-
-// To modify, must pass a copy to `write_user_settings()`
-// This is a more safe way of doing it (prevents modifying it without writing),
-// but may become slow as the settings file becomes bigger
-
-const UserSettings& FileManagerSingleton::get_user_settings()
-{
-    return user_settings;
-}
-
-void FileManagerSingleton::update_user_settings(const UserSettings& new_settings)
-{
-    user_settings = new_settings;
-
-    // Create settings file
-
-    std::ofstream file{get_data_path("user_settings.txt"), std::ios_base::out};
-    file << "ui_scale_index: " << user_settings.ui_scale_index;
-    file.close();
 }
 
 std::pair<std::string, std::string> FileManagerSingleton::file_read_data_line(std::ifstream& file)

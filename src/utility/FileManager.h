@@ -31,11 +31,10 @@ public:
     std::string get_res_path(const std::filesystem::path& path);
     std::string get_data_path(const std::filesystem::path& path);
 
-    const sf::Font& get_font();
-    const sf::Font& get_mono();
-
     const UserSettings& get_user_settings();
     void update_user_settings(const UserSettings& settings);
+
+    std::string load_shader(std::string filename);
 
     friend FileManagerSingleton& FileManager();
 

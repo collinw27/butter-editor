@@ -1,11 +1,13 @@
 #include "editor/Editor.h"
 
 #include "editor/core/DragDivider.h"
+#include "editor/core/TestModule.h"
+
+#include "utility/Graphics.h"
 #include "utility/Input.h"
 #include "utility/Logger.h"
 #include "utility/FileManager.h"
 #include "utility/UserSettings.h"
-#include "editor/core/TestModule.h"
 
 constexpr int MODULE_MARGIN = 100;
 constexpr int TAB_HEIGHT = 30;
@@ -21,11 +23,14 @@ const sf::Color Editor::C_HIGHLIGHT{90, 90, 90};
 Editor::Editor()
 {
     // SFML setup
-
-    window = new sf::RenderWindow(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close | sf::Style::Resize | sf::Style::Titlebar);
+    
+    Graphics().init(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close | sf::Style::Resize | sf::Style::Titlebar);
+    Graphics().set_clear_color(Editor::C_BG);
+    window = &Graphics().get_window();
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));
     window->setFramerateLimit(150);
+    root = GLRootNode::create();
 
     // Module setup (flex initialized later)
 
@@ -37,17 +42,25 @@ Editor::Editor()
     // Flex module setup
     // Like the modules themselves, tab parameters are set during `resize_modules()`
 
-    current_flex_tab = 1;
-    flex_tabs.push_back(new FlexTab(new TestModule(*this, "Test module #1"), "Test 1"));
-    flex_tabs.push_back(new FlexTab(new TestModule(*this, "Test module #2"), "Test 2"));
+    current_flex_tab = 0;
+    flex_tabs.push_back(new FlexTab(*this, new TestModule(*this, "Test module #1"), "Test 1"));
+    flex_tabs.push_back(new FlexTab(*this, new TestModule(*this, "Test module #2"), "Test 2"));
     flex_tabs.at(current_flex_tab)->set_selected(true);
     flex_module = &flex_tabs.at(current_flex_tab)->get_module();
 
-    // Misc graphics
+    // Node tree setup
+    // Currently, nodes are drawn in the order they're added to the vector
+    // There will likely be support for layers added later on
 
-    temp_menu_bar = new sf::Text(FileManager().get_font(), "File   Edit   Settings   Export");
-    top_cover = sf::RectangleShape(sf::Vector2f(window_size));
-    top_cover.setFillColor(sf::Color(0, 0, 0, 80));
+    root->add_child(preview_module->get_node());
+    root->add_child(timeline_module->get_node());
+    root->add_child(command_bar->get_node());
+    for (FlexTab* tab : flex_tabs)
+        root->add_child(tab->get_node());
+    for (FlexTab* tab : flex_tabs)
+        root->add_child(tab->get_module().get_node());
+    temp_menu_bar = GLContainer::create(root, sf::Vector2f(), sf::Vector2f());
+    menu_bar_text = GLText::create(temp_menu_bar, Graphics().main_font(), 19u, "File   Edit   Settings   Export");
 
     // UI parameters
     // `resize_modules()` must ALWAYS be called
@@ -66,14 +79,9 @@ Editor::Editor()
 
 Editor::~Editor()
 {
-    delete window;
-    delete preview_module;
-    delete timeline_module;
-    for (auto flex_tab : flex_tabs)
-    {
-        delete flex_tab;
-    }
-    delete temp_menu_bar;
+    delete root;
+    if (drag_mouse_event != nullptr)
+        delete drag_mouse_event;
 }
 
 void Editor::run()
@@ -170,9 +178,7 @@ void Editor::run()
             FileManager().update_user_settings(user_settings);
         }
 
-        window->clear(Editor::C_BG);
-        draw(*window);
-        window->display();
+        Graphics().display(root);
     }
 }
 
@@ -186,37 +192,13 @@ float Editor::get_delta_time()
     return delta_time;
 }
 
-void Editor::draw(sf::RenderWindow& window)
-{
-    // Draw tabs at top
-
-    for (auto flex_tab : flex_tabs)
-    {
-        flex_tab->draw(window);
-    }
-
-    // Ignore non-selected flex modules
-
-    for (EditorModule** module : visible_modules)
-    {
-        (*module)->draw(window);
-    }
-    window.draw(*temp_menu_bar);
-
-    // Darken everything else if using terminal
-
-    if (using_terminal)
-        window.draw(top_cover);
-    command_bar->draw(window);
-}
-
 void Editor::on_resized(sf::Vector2i new_size)
 {
+    Graphics().on_window_resized(root);
     x_divider = (int)( ((float)x_divider / window_size.x) * new_size.x);
     y_divider = (int)( ((float)y_divider / window_size.y) * new_size.y);
     x_divider = std::max(MODULE_MARGIN, std::min(new_size.x - MODULE_MARGIN, x_divider));
     y_divider = std::max(MODULE_MARGIN, std::min(new_size.y - MODULE_MARGIN, y_divider));
-    window->setView(sf::View(sf::FloatRect(sf::Vector2f(), sf::Vector2f(new_size))));
     window_size = new_size;
     resize_modules();
 }
@@ -343,7 +325,7 @@ void Editor::resize_modules()
 
     // Misc graphics
 
-    temp_menu_bar->setPosition(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 8 + 2 * ui_scale)));
-    temp_menu_bar->setCharacterSize((unsigned)(19.f * ui_scale));
-    top_cover.setSize(sf::Vector2f(window_size));
+    temp_menu_bar->set_size(sf::Vector2f(x_divider, tab_height));
+    menu_bar_text->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
+    menu_bar_text->set_char_size((unsigned)(19.f * ui_scale));
 }

@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 
+#include "graphics/nodes.h"
 #include "editor/EditorModule.h"
 #include "editor/core/FlexTab.h"
 #include "editor/core/CommandBar.h"
@@ -26,6 +27,7 @@ public:
 private:
 
     sf::RenderWindow* window;
+    GLRootNode* root;
 
     // For now, the editor has 3 modules visible at all times
     // Flex modules can be toggled between each other using
@@ -43,7 +45,8 @@ private:
     CommandBar* command_bar;
     std::vector<FlexTab*> flex_tabs;
     unsigned current_flex_tab;
-    sf::Text* temp_menu_bar;
+    GLContainer* temp_menu_bar;
+    GLText* menu_bar_text;
 
     sf::Vector2i window_size;
     sf::Vector2i mouse_position;
@@ -77,8 +80,6 @@ public:
     float get_delta_time();
 
 private:
-
-    void draw(sf::RenderWindow& window);
 
     void on_resized(sf::Vector2i new_size);
     void on_mouse_moved(sf::Vector2i position);

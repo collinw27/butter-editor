@@ -3,19 +3,50 @@ project(ButterProject LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-include(FetchContent)
-FetchContent_Declare(SFML
-    GIT_REPOSITORY https://github.com/SFML/SFML.git
-    GIT_TAG 3.0.x
-    GIT_SHALLOW ON
-    EXCLUDE_FROM_ALL
-    SYSTEM)
-FetchContent_MakeAvailable(SFML)
+# Expects this directory structure:
+# 
+# build
+# └─ lib
+#    ├─ SFML
+#    │  ├─ bin
+#    │  ├─ include
+#    │  └─ lib
+#    ├─ GLEW
+#    │  ├─ include
+#    │  └─ lib
+#    ├─ GLM
+#    │  └─ glm
+#    └─ FreeType
+#       └─ include
+
+# User must manually download SFML 3.0 (https://github.com/SFML/SFML/releases)
+# Then, it is dynamically linked, meaning all DLLs must be copied to bin
+
+set(SFML_DIR ${CMAKE_BINARY_DIR}/lib/SFML)
+link_directories(${SFML_DIR}/lib)
+
+# User must manually download GLEW (https://glew.sourceforge.net/ binaries)
+# Then, it is dynamically linked, meaning glew32.dll must be copied to bin
+
+set(GLEW_DIR ${CMAKE_BINARY_DIR}/lib/GLEW)
+link_directories(${GLEW_DIR}/lib)
+
+# User must manually download GLM (https://github.com/g-truc/glm)
+
+set(GLM_DIR ${CMAKE_BINARY_DIR}/lib/GLM)
+link_directories(${GLM_DIR}/lib)
+
+# User must manually download FreeType 2.14.1 (https://download.savannah.gnu.org/releases/freetype/)
+# Note that only the include path is used
+# The library file is provided as part of SFML
+
+set(FREETYPE_DIR ${CMAKE_BINARY_DIR}/lib/FreeType)
+
+# Link files & generate executables
 
 include_directories(
     src
 )
-link_directories(${FFMPEG_DIR}/lib)
 file(
     GLOB butter_SRC
     "src/editor/*.cpp"
@@ -26,10 +57,35 @@ file(
 
 add_executable(Butter src/main.cpp ${butter_SRC})
 target_compile_features(Butter PRIVATE cxx_std_17)
-target_link_libraries(Butter PRIVATE
-    SFML::Graphics
+target_include_directories(Butter PRIVATE
+    ${SFML_DIR}/include
+    ${GLEW_DIR}/include
+    ${GLM_DIR}
+    ${FREETYPE_DIR}/include
 )
+target_link_libraries(Butter PRIVATE
+    sfml-graphics-d sfml-window-d sfml-system-d
+    freetyped
+    ${GLEW_DIR}/lib/glew32.lib
+    opengl32
+    gdi32)
 
-add_executable(NodeTest src/testing/NodeTest.cpp ${butter_SRC})
-target_compile_features(NodeTest PRIVATE cxx_std_17)
-target_link_libraries(NodeTest PRIVATE SFML::Graphics)
+# add_executable(NodeTest src/testing/NodeTest.cpp ${butter_SRC})
+# target_compile_features(NodeTest PRIVATE cxx_std_17)
+# target_link_libraries(NodeTest PRIVATE SFML::Graphics)
+
+add_executable(GLTest src/testing/GLTest.cpp ${butter_SRC})
+target_compile_features(GLTest PRIVATE cxx_std_17)
+target_include_directories(GLTest PRIVATE 
+    ${SFML_DIR}/include
+    ${GLEW_DIR}/include
+    ${GLM_DIR}
+    ${FREETYPE_DIR}/include
+)
+target_link_libraries(GLTest PRIVATE
+    sfml-graphics-d sfml-window-d sfml-system-d
+    freetyped
+    ${GLEW_DIR}/lib/glew32.lib
+    opengl32
+    gdi32
+)
