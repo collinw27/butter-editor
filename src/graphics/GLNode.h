@@ -72,22 +72,23 @@ protected:
 
 public:
 
+    ~GLNode();
+
     void add_child(GLNode* child);
     void remove_child(GLNode* child);
-    void free();
     GLNode* get_parent();
 
     bool is_visible();
     void set_visible(bool visible);
 
     sf::Vector2f get_position();
-    sf::Vector2f get_global_position();
-    void set_position(sf::Vector2f position);
-    void set_position_axis(Axis axis, float position);
-    
     sf::Vector2f get_scale();
-    sf::Vector2f get_global_scale();
+    // sf::Vector2f get_global_position();
+    // sf::Vector2f get_global_scale();
+
+    void set_position(sf::Vector2f position);
     void set_scale(sf::Vector2f scale);
+    void set_position_axis(Axis axis, float position);
     void set_scale_axis(Axis axis, float scale);
 
     glm::mat4 get_local_matrix();

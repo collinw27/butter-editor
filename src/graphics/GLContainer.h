@@ -19,6 +19,9 @@ public:
     static GLContainer* create(GLNode* parent, sf::Vector2f position = {0, 0}, sf::Vector2f size = {1, 1});
 
     virtual void draw() override;
+
+    void set_size(sf::Vector2f size);
+    sf::Vector2f get_size();
 };
 
 #endif

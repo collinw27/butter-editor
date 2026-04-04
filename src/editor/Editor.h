@@ -45,7 +45,8 @@ private:
     CommandBar* command_bar;
     std::vector<FlexTab*> flex_tabs;
     unsigned current_flex_tab;
-    GLText* temp_menu_bar;
+    GLContainer* temp_menu_bar;
+    GLText* menu_bar_text;
 
     sf::Vector2i window_size;
     sf::Vector2i mouse_position;

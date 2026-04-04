@@ -52,7 +52,6 @@ Editor::Editor()
     // Currently, nodes are drawn in the order they're added to the vector
     // There will likely be support for layers added later on
 
-    // temp_menu_bar = new sf::Text(FileManager().get_font(), "File   Edit   Settings   Export");
     root->add_child(preview_module->get_node());
     root->add_child(timeline_module->get_node());
     root->add_child(command_bar->get_node());
@@ -60,7 +59,8 @@ Editor::Editor()
         root->add_child(tab->get_node());
     for (FlexTab* tab : flex_tabs)
         root->add_child(tab->get_module().get_node());
-    temp_menu_bar = GLText::create(root, Graphics().main_font(), 19u, "File   Edit   Settings   Export");
+    temp_menu_bar = GLContainer::create(root, sf::Vector2f(), sf::Vector2f());
+    menu_bar_text = GLText::create(temp_menu_bar, Graphics().main_font(), 19u, "File   Edit   Settings   Export");
 
     // UI parameters
     // `resize_modules()` must ALWAYS be called
@@ -79,14 +79,9 @@ Editor::Editor()
 
 Editor::~Editor()
 {
-    delete window;
-    delete preview_module;
-    delete timeline_module;
-    for (auto flex_tab : flex_tabs)
-    {
-        delete flex_tab;
-    }
-    delete temp_menu_bar;
+    delete root;
+    if (drag_mouse_event != nullptr)
+        delete drag_mouse_event;
 }
 
 void Editor::run()
@@ -330,6 +325,7 @@ void Editor::resize_modules()
 
     // Misc graphics
 
-    temp_menu_bar->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
-    temp_menu_bar->set_char_size((unsigned)(19.f * ui_scale));
+    temp_menu_bar->set_size(sf::Vector2f(x_divider, tab_height));
+    menu_bar_text->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
+    menu_bar_text->set_char_size((unsigned)(19.f * ui_scale));
 }

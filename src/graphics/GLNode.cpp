@@ -3,6 +3,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <algorithm>
 #include "utility/Exceptions.h"
+#include "utility/Logger.h"
 
 GLNode::GLNode(GLNode* parent)
 {
@@ -38,6 +39,18 @@ void GLNode::on_window_resized()
         child->on_window_resized();
 }
 
+// All children are freed from the node upon deletion
+// If this is undesirable, make sure to unparent them first
+// !! Any remaining references to the children are now dangling!
+
+GLNode::~GLNode()
+{
+    for (GLNode* child : children)
+        delete child;
+    if (parent != nullptr)
+        parent->remove_child(this);
+}
+
 void GLNode::add_child(GLNode* child)
 {
     if (child->is_root_node)
@@ -55,12 +68,6 @@ void GLNode::remove_child(GLNode* child)
         throw ButterException("Cannot remove child from node that isn't its parent");
     children.erase(std::find(children.begin(), children.end(), child));
     child->parent = nullptr;
-}
-
-void GLNode::free()
-{
-    if (parent != nullptr)
-        parent->remove_child(this);
 }
 
 GLNode* GLNode::get_parent()
@@ -84,19 +91,50 @@ sf::Vector2f GLNode::get_position()
     return position;
 }
 
+sf::Vector2f GLNode::get_scale()
+{
+    return scale;
+}
+
+// Right now, global transformations take into account the downscaling performed
+// by the root node by (window_width, window_height)
+// This is technically correct behavior, but doesn't quite match what you would
+// expect to be returned
+// I'm not currently sure what I'll do about this, but since there's no need for
+// these functions right now, I'm just leaving them unimplemented 
+
+/*
 // Calculate global value by appling global transformation matrix to a point
 
 sf::Vector2f GLNode::get_global_position()
 {
-    glm::vec4 translated_point = glm::vec4(position.x, position.y, 0, 1) * global_matrix;
+    glm::vec4 translated_point = global_matrix * glm::vec4(0, 0, 0, 1);
     return sf::Vector2f(translated_point.x, -translated_point.y);
 }
+
+// Calculate global value by applying global transformation to 2 points,
+// and checking the proportion of the space between them
+
+sf::Vector2f GLNode::get_global_scale()
+{
+    glm::vec4 point_a = global_matrix * glm::vec4(0, 0, 0, 1);
+    glm::vec4 point_b = global_matrix * glm::vec4(1, 1, 1, 1);
+    return sf::Vector2f(point_b.x - point_a.x, point_b.y - point_a.y);
+}
+*/
 
 void GLNode::set_position(sf::Vector2f position)
 {
     this->position = position;
     update_global_matrix();
     apply_position();
+}
+
+void GLNode::set_scale(sf::Vector2f scale)
+{
+    this->scale = scale;
+    apply_scale();
+    update_global_matrix();
 }
 
 void GLNode::set_position_axis(Axis axis, float position)
@@ -107,28 +145,6 @@ void GLNode::set_position_axis(Axis axis, float position)
         this->position.y = position;
     update_global_matrix();
     apply_position();
-}
-
-sf::Vector2f GLNode::get_scale()
-{
-    return scale;
-}
-
-// Calculate global value by applying global transformation to 2 points,
-// and checking the proportion of the space between them
-
-sf::Vector2f GLNode::get_global_scale()
-{
-    glm::vec4 point_a = glm::vec4(0, 0, 0, 1) * global_matrix;
-    glm::vec4 point_b = glm::vec4(1, 1, 1, 1) * global_matrix;
-    return sf::Vector2f(point_b.x - point_a.x, point_b.y - point_a.y);
-}
-
-void GLNode::set_scale(sf::Vector2f scale)
-{
-    this->scale = scale;
-    apply_scale();
-    update_global_matrix();
 }
 
 void GLNode::set_scale_axis(Axis axis, float scale)

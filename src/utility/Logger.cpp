@@ -1,5 +1,6 @@
 #include "utility/Logger.h"
 
+#include <glm/gtc/type_ptr.hpp>
 #include "utility/Exceptions.h"
 
 LoggerSingleton* LoggerSingleton::singleton_object = nullptr;
@@ -31,7 +32,33 @@ void LoggerSingleton::log(const std::stringstream& text)
     std::cout << text.str() << std::endl;
 }
 
-std::stringstream LoggerSingleton::str(sf::Vector2f vec)
+std::string LoggerSingleton::str(sf::Vector2f vec)
 {
-    return std::stringstream{} << "(" << vec.x << ", " << vec.y << ")";
+    return (std::stringstream{} << "(" << vec.x << ", " << vec.y << ")").str();
+}
+
+std::string LoggerSingleton::str(glm::mat3 mat)
+{
+    float* mat_ptr = (float*)glm::value_ptr(mat);
+    std::stringstream output {};
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+            output << mat_ptr[i+j*3] << "  ";
+        output << '\n';
+    }
+    return output.str();
+}
+
+std::string LoggerSingleton::str(glm::mat4 mat)
+{
+    float* mat_ptr = (float*)glm::value_ptr(mat);
+    std::stringstream output {};
+    for (int i = 0; i < 4; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+            output << mat_ptr[i+j*4] << "  ";
+        output << '\n';
+    }
+    return output.str();
 }

@@ -13,6 +13,7 @@ protected:
     sf::IntRect bounds;
     float ui_scale = 1.f;
     GLOutlinedRectangle* visible_rect;
+    GLContainer* container;
     bool mouse_hover;
 
 public:

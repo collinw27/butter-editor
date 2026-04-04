@@ -16,12 +16,7 @@ CommandBar::CommandBar(Editor &editor) :
 {
     command = "";
     
-    // status_text = new sf::Text(FileManager().get_mono(), "Untitled project  |  00h 00m 00s 000ms", 15u);
-    // command_text = new sf::Text(FileManager().get_mono(), "> ", 15u);
-    // cursor_rect = sf::RectangleShape(sf::Vector2f(1, 1));
-    // cursor_rect.setFillColor(sf::Color::White);
-    // selection_rect.setFillColor(Editor::C_HIGHLIGHT);
-    container = GLNode::create(nullptr);
+    container = GLContainer::create(nullptr, sf::Vector2f(bounds.position), sf::Vector2f(1000, 1000));
     selection_rect = GLRectangle::create(container);
     selection_rect->set_fill_color(Editor::C_HIGHLIGHT);
     status_text = GLText::create(container, Graphics().mono_font(), 16u, "Untitled project  |  00h 00m 00s 000ms");
@@ -32,12 +27,6 @@ CommandBar::CommandBar(Editor &editor) :
     command_text->set_visible(false);
     cursor_rect->set_visible(false);
     selection_rect->set_visible(false);
-}
-
-CommandBar::~CommandBar()
-{
-    delete status_text;
-    delete command_text;
 }
 
 void CommandBar::update(const std::string& typed_string)
@@ -78,8 +67,10 @@ GLNode* CommandBar::get_node()
 void CommandBar::set_bounds(const sf::IntRect& new_bounds)
 {
     bounds = new_bounds;
-    status_text->set_position(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
-    command_text->set_position(sf::Vector2f(bounds.position) + sf::Vector2f(5, 0));
+    container->set_position(sf::Vector2f(bounds.position));
+    container->set_size(sf::Vector2f(bounds.size));
+    status_text->set_position(sf::Vector2f(5, 0));
+    command_text->set_position(sf::Vector2f(5, 0));
 }
 
 void CommandBar::set_ui_scale(float new_scale)

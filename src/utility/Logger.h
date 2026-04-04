@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cstdarg>
 
+#include <glm/glm.hpp>
 #include <SFML/Graphics.hpp>
 
 class LoggerSingleton;
@@ -23,7 +24,9 @@ public:
     void log(const std::string& text);
     void log(const std::stringstream& text);
 
-    std::stringstream str(sf::Vector2f vec);
+    std::string str(sf::Vector2f vec);
+    std::string str(glm::mat3 mat);
+    std::string str(glm::mat4 mat);
 
     friend LoggerSingleton& Logger();
 };

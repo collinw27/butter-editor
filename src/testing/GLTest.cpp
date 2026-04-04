@@ -20,20 +20,14 @@ int main()
     Graphics().init(sf::VideoMode({1280, 720}), "GLTest", sf::Style::Default);
 
     GLRootNode* root = GLRootNode::create();
-    GLContainer* container = GLContainer::create(root, sf::Vector2f(0, 0), sf::Vector2f(1000, 1000));
-    GLOutlinedRectangle* rect = GLOutlinedRectangle::create(container, sf::Vector2f(10, 10), sf::Vector2f(500, 100));
-    rect->set_fill_color(sf::Color::Red);
-    rect->set_outline_color(sf::Color::Blue);
-    rect->set_outline_thickness(-10);
+    GLNode* displacement = GLNode::create(root);
+    displacement->set_position(sf::Vector2f(0, 50));
+    GLContainer* container = GLContainer::create(displacement, sf::Vector2f(0, 30), sf::Vector2f(100, 100));
 
     GLText* text_1 = GLText::create(container, Graphics().main_font(), 10u, "The quick brown fox jumps over the lazy dog.");
-    text_1->set_position(sf::Vector2f(10, 200));
+    text_1->set_position(sf::Vector2f(0, -30));
     text_1->set_char_size(40u);
     text_1->set_fill_color(sf::Color::Blue);
-    GLText* text_2 = GLText::create(container, Graphics().mono_font(), 27u, "Text 2");
-    text_2->set_position(sf::Vector2f(10, 300));
-    // GLText* text_3 = GLText::create(container, Graphics().main_font(), 20u, "Text 3");
-    // text_3->set_position(sf::Vector2f(10, 350));
 
     sf::RenderWindow& window = Graphics().get_window();
     while (window.isOpen())

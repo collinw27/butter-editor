@@ -11,7 +11,7 @@ class CommandBar
     Editor& editor;
     sf::IntRect bounds;
     float ui_scale = 1.f;
-    GLNode* container;
+    GLContainer* container;
     GLRectangle* cursor_rect;
     GLRectangle* selection_rect;
     GLText* status_text;
@@ -32,7 +32,6 @@ class CommandBar
 public:
 
     CommandBar(Editor& editor);
-    ~CommandBar();
     void update(const std::string& keyboard_string);
     GLNode* get_node();
     
