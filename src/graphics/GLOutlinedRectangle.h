@@ -55,8 +55,11 @@ public:
     sf::Vector2f get_size();
     void set_size(sf::Vector2f size);
 
+    sf::Color get_fill_color();
     void set_fill_color(sf::Color color);
+    sf::Color get_outline_color();
     void set_outline_color(sf::Color color);
+    float get_outline_thickness();
     void set_outline_thickness(float thickness);
 
 private:

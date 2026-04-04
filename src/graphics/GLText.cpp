@@ -17,7 +17,7 @@ GLText::GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str
 
     this->str = str;
     this->char_size = char_size;
-    u_fill_color = {1, 1, 1};
+    u_color = {1, 1, 1};
 }
 
 void GLText::init()
@@ -48,7 +48,7 @@ void GLText::draw()
     GLuint loc = glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));
     loc = glGetUniformLocation(shader_program, "text_color");
-    glUniform3fv(loc, 1, glm::value_ptr(u_fill_color));
+    glUniform3fv(loc, 1, glm::value_ptr(u_color));
 
     // Since each glyph is its own distinct texture, we need to re-bind
     // the vertex data for every glyph we draw
@@ -110,20 +110,25 @@ std::string GLText::get_string()
     return str;
 }
 
-void GLText::set_char_size(unsigned new_size)
-{
-    char_size = new_size;
-}
-
 unsigned GLText::get_char_size()
 {
     return char_size;
 }
 
-void GLText::set_fill_color(sf::Color color)
+void GLText::set_char_size(unsigned new_size)
 {
-    fill_color = color;
-    u_fill_color = to_gl3(fill_color);
+    char_size = new_size;
+}
+
+sf::Color GLText::get_color()
+{
+    return text_color;
+}
+
+void GLText::set_color(sf::Color color)
+{
+    text_color = color;
+    u_color = to_gl3(text_color);
 }
 
 // Returns the offset from within this object

@@ -27,7 +27,7 @@ int main()
     GLText* text_1 = GLText::create(container, Graphics().main_font(), 10u, "The quick brown fox jumps over the lazy dog.");
     text_1->set_position(sf::Vector2f(0, -30));
     text_1->set_char_size(40u);
-    text_1->set_fill_color(sf::Color::Blue);
+    text_1->set_color(sf::Color::Blue);
 
     sf::RenderWindow& window = Graphics().get_window();
     while (window.isOpen())

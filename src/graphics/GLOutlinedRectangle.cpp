@@ -87,16 +87,31 @@ void GLOutlinedRectangle::set_size(sf::Vector2f size)
     r_size = size + sf::Vector2f(2, 2) * std::max(outline_thickness, 0.f);
 }
 
+sf::Color GLOutlinedRectangle::get_fill_color()
+{
+    return fill_color;
+}
+
 void GLOutlinedRectangle::set_fill_color(sf::Color color)
 {
     fill_color = color;
     u_fill_color = to_gl(fill_color);
 }
 
+sf::Color GLOutlinedRectangle::get_outline_color()
+{
+    return outline_color;
+}
+
 void GLOutlinedRectangle::set_outline_color(sf::Color color)
 {
     outline_color = color;
     u_outline_color = to_gl(outline_color);
+}
+
+float GLOutlinedRectangle::get_outline_thickness()
+{
+    return outline_thickness;
 }
 
 void GLOutlinedRectangle::set_outline_thickness(float thickness)

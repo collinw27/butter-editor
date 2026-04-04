@@ -44,6 +44,7 @@ public:
     sf::Vector2f get_size();
     void set_size(sf::Vector2f size);
 
+    sf::Color get_fill_color();
     void set_fill_color(sf::Color color);
 
 private:

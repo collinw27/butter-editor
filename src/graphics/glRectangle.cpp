@@ -68,6 +68,11 @@ void GLRectangle::set_size(sf::Vector2f size)
     update_model_matrix();
 }
 
+sf::Color GLRectangle::get_fill_color()
+{
+    return fill_color;
+}
+
 void GLRectangle::set_fill_color(sf::Color color)
 {
     fill_color = color;

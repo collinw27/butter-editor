@@ -36,12 +36,12 @@ void GLContainer::draw()
     Graphics().pop_scissor(check_index);
 }
 
-void GLContainer::set_size(sf::Vector2f size)
-{
-    this->size = size;
-}
-
 sf::Vector2f GLContainer::get_size()
 {
     return size;
+}
+
+void GLContainer::set_size(sf::Vector2f size)
+{
+    this->size = size;
 }

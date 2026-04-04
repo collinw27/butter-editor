@@ -20,8 +20,8 @@ public:
 
     virtual void draw() override;
 
-    void set_size(sf::Vector2f size);
     sf::Vector2f get_size();
+    void set_size(sf::Vector2f size);
 };
 
 #endif
