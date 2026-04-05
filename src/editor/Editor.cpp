@@ -8,6 +8,7 @@
 #include "utility/Logger.h"
 #include "utility/FileManager.h"
 #include "utility/UserSettings.h"
+#include "utility/Debugger.h"
 
 constexpr int MODULE_MARGIN = 100;
 constexpr int TAB_HEIGHT = 30;
@@ -29,7 +30,7 @@ Editor::Editor()
     window = &Graphics().get_window();
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));
-    window->setFramerateLimit(150);
+    // window->setFramerateLimit(150);
     root = GLRootNode::create();
 
     // Module setup (flex initialized later)

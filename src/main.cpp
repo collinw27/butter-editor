@@ -6,6 +6,7 @@
 #include "utility/Graphics.h"
 #include "utility/Logger.h"
 #include "utility/Input.h"
+#include "utility/Debugger.h"
 #include "utility/Exceptions.h"
 
 int main()
@@ -16,6 +17,7 @@ int main()
         GraphicsSingleton* graphics = new GraphicsSingleton();
         LoggerSingleton* logger = new LoggerSingleton();
         InputSingleton* input_manager = new InputSingleton();
+        DebuggerSingleton* debugger = new DebuggerSingleton();
         Editor* editor = new Editor();
 
         editor->run();
@@ -25,6 +27,7 @@ int main()
         delete graphics;
         delete logger;
         delete input_manager;
+        delete debugger;
     }
     catch(const ButterException& e)
     {
