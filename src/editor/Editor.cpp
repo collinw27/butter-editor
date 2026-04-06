@@ -30,7 +30,7 @@ Editor::Editor()
     window = &Graphics().get_window();
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));
-    // window->setFramerateLimit(150);
+    window->setFramerateLimit(150);
     root = GLRootNode::create();
 
     // Module setup (flex initialized later)
@@ -138,12 +138,26 @@ void Editor::run()
 
         // CTRL+P: Toggle mini terminal
         // Escape tries to clear text, and exits if nothing was there
+        // Enter works a similar way, but submits the command
 
         if (using_terminal && Input().check_key_press(sf::Keyboard::Key::Escape))
         {
             using_terminal = command_bar->attempt_clear();
             if (!using_terminal)
                 command_bar->set_typing(false);
+        }
+        if (using_terminal && Input().check_key_press(SF_KEY::Enter))
+        {
+            std::string command = command_bar->attempt_submit();
+            if (command.empty())
+            {
+                using_terminal = false;
+                command_bar->set_typing(false);
+            }
+            else
+            {
+                Logger().log("Command received: " + command);
+            }
         }
         if (Input().check_key_press(sf::Keyboard::Key::P, KeyMod::CTRL))
         {

@@ -39,6 +39,7 @@ public:
     void set_ui_scale(float new_scale);
 
     bool attempt_clear();
+    std::string attempt_submit();
     void set_typing(bool value);
     
 private:

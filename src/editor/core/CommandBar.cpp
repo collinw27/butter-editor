@@ -97,6 +97,13 @@ bool CommandBar::attempt_clear()
     return true;
 }
 
+std::string CommandBar::attempt_submit()
+{
+    std::string old_command = command;
+    attempt_clear();
+    return old_command;
+}
+
 void CommandBar::set_typing(bool value)
 {
     typing = value;
