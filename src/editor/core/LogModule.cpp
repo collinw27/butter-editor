@@ -1,15 +1,19 @@
 #include "editor/core/LogModule.h"
 
 #include "utility/Graphics.h"
+#include "utility/Logger.h"
 #include "editor/Editor.h"
 
 constexpr int MAX_HISTORY = 8;
+constexpr float T_HEIGHT = 22;
 
 LogModule::LogModule(Editor& editor)
     : EditorModule(editor)
 {
     highlight_rect = GLRectangle::create(container);
     highlight_rect->set_fill_color(Editor::C_HIGHLIGHT);
+    highlight_rect->set_visible(false);
+    highlight_rect->set_position(sf::Vector2f(0, 8));
 
     history_text = GLText::create(container, Graphics().mono_font(), 10u, "");
     history_text->set_position(sf::Vector2f(12, 8));
@@ -20,14 +24,14 @@ LogModule::LogModule(Editor& editor)
     render_text();
 }
 
-void LogModule::set_bounds(const sf::IntRect& bounds)
+void LogModule::apply_bounds()
 {
-    EditorModule::set_bounds(bounds);
+    highlight_rect->set_size(sf::Vector2f(bounds.size.x, T_HEIGHT * ui_scale));
 }
 
-void LogModule::set_ui_scale(float new_scale)
+void LogModule::apply_ui_scale()
 {
-    EditorModule::set_ui_scale(new_scale);
+    highlight_rect->set_size(sf::Vector2f(bounds.size.x, T_HEIGHT * ui_scale));
     history_text->set_char_size((unsigned)(16.f * ui_scale));
     error_text->set_char_size((unsigned)(16.f * ui_scale));
 }
@@ -47,6 +51,24 @@ void LogModule::push_error(std::string error)
     render_text();
 }
 
+void LogModule::on_mouse_moved(sf::Vector2f position, bool focused)
+{
+    highlight_rect->set_visible(false);
+    if (focused)
+    {
+        int total = history.size() + (error.has_value() ? 1 : 0);
+        for (int i = 0; i < total; ++i)
+        {
+            if (get_item_bounds(i).contains(sf::Vector2i(position)))
+            {
+                highlight_rect->set_visible(true);
+                highlight_rect->set_position(sf::Vector2f(get_item_bounds(i).position));
+                break;
+            }
+        }
+    }
+}
+
 void LogModule::render_text()
 {
     // Start with error if necessary
@@ -57,4 +79,9 @@ void LogModule::render_text()
     for (std::string line : history)
         text_string += line + "\n";
     history_text->set_string(text_string);
+}
+
+sf::IntRect LogModule::get_item_bounds(int index)
+{
+    return sf::IntRect({0, 8 + (int)(T_HEIGHT * ui_scale * index)}, {bounds.size.x, (int)(T_HEIGHT * ui_scale)});
 }

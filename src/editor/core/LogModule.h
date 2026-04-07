@@ -25,16 +25,18 @@ public:
 
     LogModule(Editor& editor);
 
-    virtual void set_bounds(const sf::IntRect& bounds) override;
-    virtual void set_ui_scale(float new_scale) override;
+    virtual void apply_bounds() override;
+    virtual void apply_ui_scale() override;
 
     void push_command(std::string command);
     void push_error(std::string error);
+    
+    virtual void on_mouse_moved(sf::Vector2f position, bool focused) override;
 
 private:
 
     void render_text();
-    // sf::IntRect get_item_bounds(int index);
+    sf::IntRect get_item_bounds(int index);
 };
 
 #endif

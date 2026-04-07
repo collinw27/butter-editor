@@ -14,8 +14,7 @@ public:
 
     TestModule(Editor& editor, std::string sample_text);
 
-    virtual void set_bounds(const sf::IntRect& bounds) override;
-    virtual void set_ui_scale(float new_scale) override;
+    virtual void apply_ui_scale() override;
 };
 
 #endif

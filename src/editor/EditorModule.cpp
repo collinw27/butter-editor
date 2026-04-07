@@ -19,17 +19,24 @@ GLNode* EditorModule::get_node()
     return visible_rect;
 }
 
-void EditorModule::set_bounds(const sf::IntRect& new_bounds)
+sf::IntRect EditorModule::get_bounds()
+{
+    return bounds;
+}
+
+void EditorModule::set_bounds(sf::IntRect new_bounds)
 {
     bounds = sf::IntRect{new_bounds.position + sf::Vector2i(5, 5), new_bounds.size - sf::Vector2i(10, 10)};
     visible_rect->set_size(sf::Vector2f(this->bounds.size));
     visible_rect->set_position(sf::Vector2f(this->bounds.position));
     container->set_size(sf::Vector2f(bounds.size));
+    apply_bounds();
 }
 
 void EditorModule::set_ui_scale(float new_scale)
 {
     ui_scale = new_scale;
+    apply_ui_scale();
 }
 
 void EditorModule::set_visible(bool visible)
@@ -41,9 +48,4 @@ void EditorModule::set_hover_highlight(bool hover)
 {
     mouse_hover = hover;
     visible_rect->set_outline_color(mouse_hover ? Editor::C_HOVER : Editor::C_FG);
-}
-
-sf::IntRect EditorModule::get_bounds()
-{
-    return bounds;
 }

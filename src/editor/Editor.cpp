@@ -239,8 +239,10 @@ void Editor::on_mouse_moved(sf::Vector2i position)
     {
         for (EditorModule** module : visible_modules)
         {
-            bool mouse_overlaps = (*module)->get_bounds().contains(mouse_position);
+            sf::IntRect module_bounds = (*module)->get_bounds();
+            bool mouse_overlaps = module_bounds.contains(mouse_position);
             (*module)->set_hover_highlight(mouse_overlaps);
+            (*module)->on_mouse_moved(sf::Vector2f(mouse_position - module_bounds.position), mouse_overlaps);
         }
         for (FlexTab* tab : flex_tabs)
         {
