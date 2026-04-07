@@ -31,15 +31,19 @@ CommandBar::CommandBar(Editor &editor) :
 
 void CommandBar::update(const std::string& typed_string)
 {
+    // Modifying the text removes the red highlight
+
+    std::string prev_command = command;
+        
     // Check for special keys
 
     bool pressed_l = Input().check_key_press(SF_KEY::Left);
     bool pressed_r = Input().check_key_press(SF_KEY::Right);
     bool pressed_home = Input().check_key_press(SF_KEY::Home);
     bool pressed_end = Input().check_key_press(SF_KEY::End);
-    if (Input().check_key_press(sf::Keyboard::Key::Backspace))
+    if (Input().check_key_press(SF_KEY::Backspace))
         backspace(Input().check_ctrl());
-    if (Input().check_key_press(sf::Keyboard::Key::Delete))
+    if (Input().check_key_press(SF_KEY::Delete))
         delete_ahead(Input().check_ctrl());
     if (pressed_l || pressed_r)
         move_cursor(pressed_r, (Input().check_ctrl() ? MoveMode::WORD : MoveMode::ONE), Input().check_shift());
@@ -55,6 +59,7 @@ void CommandBar::update(const std::string& typed_string)
 
     // Update visuals
 
+    invalid_command = invalid_command && (prev_command == command);
     render_text();
     cursor_time += editor.get_delta_time();
 }
@@ -93,15 +98,36 @@ bool CommandBar::attempt_clear()
     cursor_start = 0;
     cursor_end = -1;
     cursor_time = 0.f;
+    invalid_command = false;
     render_text();
     return true;
 }
 
-std::string CommandBar::attempt_submit()
+// Returns an invalid result if command could not be parsed
+// Otherwise, returns the parsed command
+// An empty commands indicates the command bar should be exited
+
+ParsedCommand CommandBar::attempt_submit()
 {
-    std::string old_command = command;
-    attempt_clear();
-    return old_command;
+    if (command == "invalid")
+    {
+        invalid_command = true;
+        render_text();
+        ParsedCommand parsed_command;
+        parsed_command.is_valid = false;
+        parsed_command.error = "Invalid command: invalid";
+        return parsed_command;
+    }
+    else
+    {
+        invalid_command = false;
+        std::string old_command = command;
+        attempt_clear();
+        ParsedCommand parsed_command;
+        parsed_command.is_valid = true;
+        parsed_command.root = old_command;
+        return parsed_command;
+    }
 }
 
 void CommandBar::set_typing(bool value)
@@ -251,6 +277,7 @@ void CommandBar::select_all()
 
 void CommandBar::render_text()
 {
+    command_text->set_color(invalid_command ? Editor::C_INVALID : sf::Color::White);
     command_text->set_string("> " + command);
     float start_x = command_text->find_char_pos(2 + cursor_start).x;
     cursor_rect->set_position(command_text->get_position() + sf::Vector2f(start_x, -2 + ui_scale));

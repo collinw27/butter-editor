@@ -27,29 +27,29 @@ void InputSingleton::clear_keys()
     key_presses.clear();
 }
 
-void InputSingleton::add_key_press(sf::Keyboard::Key key)
+void InputSingleton::add_key_press(SF_KEY key)
 {
     key_presses.push_back(key);
 }
 
-bool InputSingleton::check_key(sf::Keyboard::Key key, KeyMod mod)
+bool InputSingleton::check_key(SF_KEY key, KeyMod mod)
 {
     if ((int)mod & (int)KeyMod::CTRL
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl)
+        && !sf::Keyboard::isKeyPressed(SF_KEY::LControl)
+        && !sf::Keyboard::isKeyPressed(SF_KEY::RControl)
     ) return false;
     if ((int)mod & (int)KeyMod::SHIFT
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RShift)
+        && !sf::Keyboard::isKeyPressed(SF_KEY::LShift)
+        && !sf::Keyboard::isKeyPressed(SF_KEY::RShift)
     ) return false;
     if ((int)mod & (int)KeyMod::ALT
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LAlt)
-        && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RAlt)
+        && !sf::Keyboard::isKeyPressed(SF_KEY::LAlt)
+        && !sf::Keyboard::isKeyPressed(SF_KEY::RAlt)
     ) return false;
     return sf::Keyboard::isKeyPressed(key);
 }
 
-bool InputSingleton::check_key_press(sf::Keyboard::Key key, KeyMod mod)
+bool InputSingleton::check_key_press(SF_KEY key, KeyMod mod)
 {
     if ((int)mod & (int)KeyMod::CTRL && !check_ctrl()) return false;
     if ((int)mod & (int)KeyMod::SHIFT && !check_shift()) return false;
@@ -60,23 +60,23 @@ bool InputSingleton::check_key_press(sf::Keyboard::Key key, KeyMod mod)
 bool InputSingleton::check_ctrl()
 {
     return (
-        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)
-        || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl)
+        sf::Keyboard::isKeyPressed(SF_KEY::LControl)
+        || sf::Keyboard::isKeyPressed(SF_KEY::RControl)
     );
 }
 
 bool InputSingleton::check_shift()
 {
     return (
-        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)
-        || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RShift)
+        sf::Keyboard::isKeyPressed(SF_KEY::LShift)
+        || sf::Keyboard::isKeyPressed(SF_KEY::RShift)
     );
 }
 
 bool InputSingleton::check_alt()
 {
     return (
-        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LAlt)
-        || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RAlt)
+        sf::Keyboard::isKeyPressed(SF_KEY::LAlt)
+        || sf::Keyboard::isKeyPressed(SF_KEY::RAlt)
     );
 }

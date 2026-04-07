@@ -2,6 +2,7 @@
 
 #include "editor/core/DragDivider.h"
 #include "editor/core/TestModule.h"
+#include "editor/core/LogModule.h"
 
 #include "utility/Graphics.h"
 #include "utility/Input.h"
@@ -18,8 +19,9 @@ constexpr int CMD_HEIGHT = 20;
 const sf::Color Editor::C_BG{0, 0, 0};
 const sf::Color Editor::C_FG{90, 90, 90};
 const sf::Color Editor::C_HOVER{130, 130, 130};
-const sf::Color Editor::C_FG_DESELECTED{50, 50, 50};
 const sf::Color Editor::C_HIGHLIGHT{90, 90, 90};
+const sf::Color Editor::C_FG_DESELECTED{50, 50, 50};
+const sf::Color Editor::C_INVALID{255, 120, 120};
 
 Editor::Editor()
 {
@@ -33,18 +35,19 @@ Editor::Editor()
     window->setFramerateLimit(150);
     root = GLRootNode::create();
 
-    // Module setup (flex initialized later)
+    // Module setup
 
     preview_module = new EditorModule(*this);
     timeline_module = new EditorModule(*this);
     command_bar = new CommandBar(*this);
+    log_module = new LogModule(*this);
     visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, &timeline_module});
 
     // Flex module setup
     // Like the modules themselves, tab parameters are set during `resize_modules()`
 
     current_flex_tab = 0;
-    flex_tabs.push_back(new FlexTab(*this, new TestModule(*this, "Test module #1"), "Test 1"));
+    flex_tabs.push_back(new FlexTab(*this, log_module, "Log"));
     flex_tabs.push_back(new FlexTab(*this, new TestModule(*this, "Test module #2"), "Test 2"));
     flex_tabs.at(current_flex_tab)->set_selected(true);
     flex_module = &flex_tabs.at(current_flex_tab)->get_module();
@@ -140,7 +143,7 @@ void Editor::run()
         // Escape tries to clear text, and exits if nothing was there
         // Enter works a similar way, but submits the command
 
-        if (using_terminal && Input().check_key_press(sf::Keyboard::Key::Escape))
+        if (using_terminal && Input().check_key_press(SF_KEY::Escape))
         {
             using_terminal = command_bar->attempt_clear();
             if (!using_terminal)
@@ -148,18 +151,22 @@ void Editor::run()
         }
         if (using_terminal && Input().check_key_press(SF_KEY::Enter))
         {
-            std::string command = command_bar->attempt_submit();
-            if (command.empty())
+            ParsedCommand command = command_bar->attempt_submit();
+            if (!command.is_valid)
+            {
+                log_module->push_error(command.error);
+            }
+            else if (!command.root.empty())
+            {
+                log_module->push_command("Ran command: " + command.root);
+            }
+            else
             {
                 using_terminal = false;
                 command_bar->set_typing(false);
             }
-            else
-            {
-                Logger().log("Command received: " + command);
-            }
         }
-        if (Input().check_key_press(sf::Keyboard::Key::P, KeyMod::CTRL))
+        if (Input().check_key_press(SF_KEY::P, KeyMod::CTRL))
         {
             using_terminal = !using_terminal;
             command_bar->set_typing(using_terminal);

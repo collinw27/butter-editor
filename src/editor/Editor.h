@@ -9,6 +9,7 @@
 #include "editor/core/FlexTab.h"
 #include "editor/core/CommandBar.h"
 #include "editor/core/DragMouse.h"
+#include "editor/core/LogModule.h"
 
 class Editor
 {
@@ -23,6 +24,7 @@ public:
     static const sf::Color C_HOVER;
     static const sf::Color C_HIGHLIGHT;
     static const sf::Color C_FG_DESELECTED;
+    static const sf::Color C_INVALID;
 
 private:
 
@@ -39,6 +41,7 @@ private:
     EditorModule* flex_module;
     EditorModule* timeline_module;
     std::vector<EditorModule**> visible_modules;
+    LogModule* log_module;
 
     // Top and bottom HUD
 

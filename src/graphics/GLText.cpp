@@ -57,10 +57,21 @@ void GLText::draw()
     // (I think sf::Font does this already)
 
     std::map<char, FontChar>& char_map = font->get_char_map(char_size);
+    float char_height = char_map.find('|')->second.size.y;
     float x_offset = 0;
-    float y_offset = char_map.find('|')->second.size.y;
+    float y_offset = char_height;
     for (int i = 0; i < str.length(); ++i)
     {
+        // Special case for newline
+        // Line spacing of 10 equals the height of 1 char
+
+        if (str.at(i) == '\n')
+        {
+            x_offset = 0;
+            y_offset += (int)((1.f + line_spacing * 0.1f) * char_height);
+            continue;
+        }
+        
         // Ignore characters with no associated glyph
 
         auto ch_it = char_map.find(str.at(i));
@@ -102,7 +113,6 @@ void GLText::apply_global_matrix()
 void GLText::set_string(std::string str)
 {
     this->str = str;
-    update_model_matrix();
 }
 
 std::string GLText::get_string()
@@ -118,6 +128,16 @@ unsigned GLText::get_char_size()
 void GLText::set_char_size(unsigned new_size)
 {
     char_size = new_size;
+}
+
+float GLText::get_line_spacing()
+{
+    return line_spacing;
+}
+
+void GLText::set_line_spacing(float new_spacing)
+{
+    line_spacing = new_spacing;
 }
 
 sf::Color GLText::get_color()

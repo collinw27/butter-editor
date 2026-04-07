@@ -15,6 +15,7 @@ class GLText : public GLNode
     GLFont* font;
     std::string str;
     unsigned char_size;
+    float line_spacing = 4.f;
     sf::Color text_color {sf::Color::White};
 
     GLuint shader_program;
@@ -47,6 +48,8 @@ public:
 
     unsigned get_char_size();
     void set_char_size(unsigned new_size);
+    float get_line_spacing();
+    void set_line_spacing(float new_spacing);
     
     sf::Color get_color();
     void set_color(sf::Color color);

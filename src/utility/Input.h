@@ -6,7 +6,7 @@
 
 // Testing this out for potential use
 
-#define SF_KEY sf::Keyboard::Key
+using SF_KEY = sf::Keyboard::Key;
 
 enum class KeyMod
 {

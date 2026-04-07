@@ -1,10 +1,17 @@
-#ifndef MINI_TERMINAL_H
-#define MINI_TERMINAL_H
+#ifndef COMMAND_BAR_H
+#define COMMAND_BAR_H
 
 #include <string>
 #include "graphics/nodes.h"
 
 class Editor;
+
+struct ParsedCommand
+{
+    bool is_valid = false;
+    std::string error = "";
+    std::string root = "";
+};
 
 class CommandBar
 {
@@ -25,6 +32,10 @@ class CommandBar
     int cursor_end = -1;
     float cursor_time = 0.f;
 
+    // Used for lighlighting text red when an invalid command is submitted
+
+    bool invalid_command = false;
+
     // Used for optimization (not yet actually)
 
     bool textNeedsUpdate = false;
@@ -39,7 +50,7 @@ public:
     void set_ui_scale(float new_scale);
 
     bool attempt_clear();
-    std::string attempt_submit();
+    ParsedCommand attempt_submit();
     void set_typing(bool value);
     
 private:
