@@ -1,7 +1,7 @@
 #include "utility/Logger.h"
 
 #include <glm/gtc/type_ptr.hpp>
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 
 LoggerSingleton* LoggerSingleton::singleton_object = nullptr;
 

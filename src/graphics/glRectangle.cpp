@@ -4,8 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-#include "utility/Math.h"
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 #include "utility/Graphics.h"
 
 GLRectangle::GLRectangle(GLNode* parent, sf::Vector2f position, sf::Vector2f size)

@@ -151,14 +151,14 @@ void Editor::run()
         }
         if (using_terminal && Input().check_key_press(SF_KEY::Enter))
         {
-            ParsedCommand command = command_bar->attempt_submit();
-            if (!command.is_valid)
+            CommandResult command = command_bar->attempt_submit();
+            if (!command.is_valid())
             {
-                log_module->push_error(command.error);
+                log_module->push_error(command.get_error());
             }
-            else if (!command.root.empty())
+            else if (!command.get_root().empty())
             {
-                log_module->push_command("Ran command: " + command.root);
+                log_module->push_command("Ran command: " + command.get_root());
             }
             else
             {

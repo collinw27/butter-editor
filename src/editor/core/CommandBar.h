@@ -3,15 +3,9 @@
 
 #include <string>
 #include "graphics/nodes.h"
+#include "command/CommandParser.h"
 
 class Editor;
-
-struct ParsedCommand
-{
-    bool is_valid = false;
-    std::string error = "";
-    std::string root = "";
-};
 
 class CommandBar
 {
@@ -32,13 +26,18 @@ class CommandBar
     int cursor_end = -1;
     float cursor_time = 0.f;
 
-    // Used for lighlighting text red when an invalid command is submitted
+    // Used for highlighting text red when an invalid command is submitted
 
     bool invalid_command = false;
 
     // Used for optimization (not yet actually)
 
     bool textNeedsUpdate = false;
+
+    // For now, the command bar is responsible for parsing & defining commands
+    // This will likely be moved to a separate class in the future
+
+    CommandParser command_parser;
 
 public:
 
@@ -50,7 +49,7 @@ public:
     void set_ui_scale(float new_scale);
 
     bool attempt_clear();
-    ParsedCommand attempt_submit();
+    CommandResult attempt_submit();
     void set_typing(bool value);
     
 private:

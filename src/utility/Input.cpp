@@ -1,7 +1,7 @@
 #include "utility/Input.h"
 
 #include <algorithm>
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 
 InputSingleton* InputSingleton::singleton_object = nullptr;
 

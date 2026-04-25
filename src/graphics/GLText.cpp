@@ -3,9 +3,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 #include "utility/Graphics.h"
-#include "utility/Math.h"
 #include "graphics/GLFont.h"
 
 GLText::GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str)

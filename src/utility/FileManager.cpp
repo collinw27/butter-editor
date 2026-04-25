@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 
 FileManagerSingleton* FileManagerSingleton::singleton_object = nullptr;
 

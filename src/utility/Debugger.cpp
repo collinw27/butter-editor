@@ -1,7 +1,7 @@
 #include "utility/Debugger.h"
 
 #include "utility/Logger.h"
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 
 DebuggerSingleton* DebuggerSingleton::singleton_object = nullptr;
 

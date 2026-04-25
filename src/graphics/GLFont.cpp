@@ -4,7 +4,7 @@
 #include <gl/glew.h>
 #include <SFML/OpenGL.hpp>
 #include "utility/Graphics.h"
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 
 // Created with help from https://learnopengl.com/In-Practice/Text-Rendering
 

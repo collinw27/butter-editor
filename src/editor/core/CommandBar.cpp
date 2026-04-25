@@ -2,17 +2,18 @@
 
 #include <cmath>
 #include "editor/Editor.h"
-#include "utility/Math.h"
+#include "utility/core.h"
 #include "utility/Input.h"
 #include "utility/FileManager.h"
 #include "utility/Graphics.h"
+#include "command/CommandParser.h"
 
 constexpr int CHAR_LIMIT = 1024;
 
 // Bounds & ui_scale are not initialized until respective setters are called (by Editor)
 
 CommandBar::CommandBar(Editor &editor) :
-    editor{editor}
+    editor{editor}, command_parser {}
 {
     command = "";
     
@@ -27,6 +28,10 @@ CommandBar::CommandBar(Editor &editor) :
     command_text->set_visible(false);
     cursor_rect->set_visible(false);
     selection_rect->set_visible(false);
+
+    command_parser.define_command(command_parser.new_command("test_log")
+        .add_parameter("number", CommandParser::ParamType::BOOL)
+    );
 }
 
 void CommandBar::update(const std::string& typed_string)
@@ -107,27 +112,22 @@ bool CommandBar::attempt_clear()
 // Otherwise, returns the parsed command
 // An empty commands indicates the command bar should be exited
 
-ParsedCommand CommandBar::attempt_submit()
+CommandResult CommandBar::attempt_submit()
 {
-    if (command == "invalid")
+    CommandResult result = command_parser.parse(command);
+
+    if (result.is_valid())
     {
-        invalid_command = true;
-        render_text();
-        ParsedCommand parsed_command;
-        parsed_command.is_valid = false;
-        parsed_command.error = "Invalid command: invalid";
-        return parsed_command;
+        invalid_command = false;
+        attempt_clear();
     }
     else
     {
-        invalid_command = false;
-        std::string old_command = command;
-        attempt_clear();
-        ParsedCommand parsed_command;
-        parsed_command.is_valid = true;
-        parsed_command.root = old_command;
-        return parsed_command;
+        invalid_command = true;
+        render_text();
     }
+
+    return result;
 }
 
 void CommandBar::set_typing(bool value)

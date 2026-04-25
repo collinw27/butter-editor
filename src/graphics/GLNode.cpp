@@ -2,7 +2,7 @@
 
 #include <glm/ext/matrix_transform.hpp>
 #include <algorithm>
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 #include "utility/Logger.h"
 
 GLNode::GLNode(GLNode* parent)

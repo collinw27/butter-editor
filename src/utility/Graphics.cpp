@@ -7,10 +7,9 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "utility/FileManager.h"
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 #include "graphics/GLRootNode.h"
 #include "graphics/GLFont.h"
-#include "utility/Math.h"
 
 GraphicsSingleton* GraphicsSingleton::singleton_object = nullptr;
 

@@ -7,7 +7,7 @@
 #include "utility/Logger.h"
 #include "utility/Input.h"
 #include "utility/Debugger.h"
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 
 int main()
 {

@@ -7,7 +7,7 @@
 
 #include "utility/FileManager.h"
 #include "utility/Graphics.h"
-#include "utility/Exceptions.h"
+#include "utility/core.h"
 #include "graphics/nodes.h"
 
 int main()
