@@ -7,6 +7,7 @@
 #include "utility/FileManager.h"
 #include "utility/Graphics.h"
 #include "command/CommandParser.h"
+#include "command/arguments.h"
 
 constexpr int CHAR_LIMIT = 1024;
 
@@ -30,7 +31,7 @@ CommandBar::CommandBar(Editor &editor) :
     selection_rect->set_visible(false);
 
     command_parser.define_command(command_parser.new_command("test_log")
-        .add_parameter("number", CommandParser::ParamType::BOOL)
+        .add_argument(new BoolArgument("boolean"))
     );
 }
 

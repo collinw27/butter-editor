@@ -54,6 +54,7 @@ file(
     "src/graphics/*.cpp"
     "src/utility/*.cpp"
     "src/command/*.cpp"
+    "src/command/**/*.cpp"
 )
 
 add_executable(Butter src/main.cpp ${butter_SRC})

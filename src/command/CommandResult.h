@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "command/argument/Argument.h"
 
 // Constructed in-place using friend class CommandParser
 
@@ -10,27 +11,10 @@ class CommandParser;
 
 class CommandResult
 {
-    enum class FieldType
-    {
-        EMPTY,
-        BOOL,
-        INT,
-        FLOAT,
-        STRING
-    };
-
-    struct Field
-    {
-        FieldType type;
-        int int_arg = 0;
-        float float_arg = 0.f;
-        std::string string_arg = "";
-    };
-
     bool m_is_valid = false;
     std::string error = "";
     std::string root = "";
-    std::vector<Field> fields {};
+    std::vector<Argument::Field> fields {};
 
 public:
 
