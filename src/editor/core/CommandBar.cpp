@@ -7,8 +7,10 @@
 #include "utility/FileManager.h"
 #include "utility/Graphics.h"
 #include "command/CommandParser.h"
+#include "utility/Logger.h"
 
 constexpr int CHAR_LIMIT = 1024;
+constexpr int HISTORY_LIMIT = 64;
 
 // Bounds & ui_scale are not initialized until respective setters are called (by Editor)
 
@@ -52,6 +54,10 @@ void CommandBar::update(const std::string& typed_string)
         move_cursor(pressed_end, MoveMode::ALL, Input().check_shift());
     if (Input().check_key_press(SF_KEY::A, KeyMod::CTRL))
         (Input().check_shift() ? reset_selection() : select_all());
+    if (Input().check_key_press(SF_KEY::Up))
+        traverse_history(1);
+    if (Input().check_key_press(SF_KEY::Down))
+        traverse_history(-1);
 
     // Now, create normal text
 
@@ -110,8 +116,20 @@ bool CommandBar::attempt_clear()
 
 void CommandBar::submit_valid()
 {
+    // Log the result
+
+    auto duplicate = std::find(history.begin(), history.end(), command);
+    if (duplicate != history.end())
+        history.erase(duplicate);
+    history.insert(history.begin(), command);
+    if (history.size() > HISTORY_LIMIT)
+        history.erase(history.end() - 1);
+    
+    // Clear terminal
+    
     invalid_command = false;
     attempt_clear();
+    history_index = -1;
 }
 
 void CommandBar::submit_error()
@@ -268,6 +286,18 @@ void CommandBar::select_all()
     cursor_time = 0.f;
     cursor_end = 0;
     cursor_start = command.length();
+}
+
+void CommandBar::traverse_history(int delta)
+{
+    int old_index = history_index;
+    history_index = clamp<int>(history_index + delta, -1, history.size() - 1);
+    if (history_index != old_index)
+    {
+        attempt_clear();
+        if (history_index != -1)
+            append(history.at(history_index));
+    }
 }
 
 void CommandBar::render_text()

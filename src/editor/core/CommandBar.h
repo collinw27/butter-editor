@@ -2,6 +2,7 @@
 #define COMMAND_BAR_H
 
 #include <string>
+#include <vector>
 #include "graphics/nodes.h"
 #include "command/CommandParser.h"
 
@@ -22,21 +23,18 @@ class CommandBar
 
     bool typing = false;
     std::string command;
+
+    // Traversal
+
     int cursor_start = 0;
     int cursor_end = -1;
     float cursor_time = 0.f;
+    std::vector<std::string> history {};
+    int history_index = -1;
 
     // Used for highlighting text red when an invalid command is submitted
 
     bool invalid_command = false;
-
-    // Used for optimization (not yet actually)
-
-    bool textNeedsUpdate = false;
-
-    // For now, the command bar is responsible for parsing & defining commands
-    // This will likely be moved to a separate class in the future
-
 
 public:
 
@@ -66,6 +64,7 @@ private:
     void move_cursor(bool forward, MoveMode mode, bool do_select);
     inline void reset_selection();
     void select_all();
+    void traverse_history(int delta);
 
     void render_text();
 };

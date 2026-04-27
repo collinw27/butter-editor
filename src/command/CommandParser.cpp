@@ -38,16 +38,24 @@ CommandResult CommandParser::parse(std::string source)
 {
     try
     {
+        if (source.length() == 0)
+            throw ParseException("Empty command");
+        if (source.at(0) == ' ')
+            throw ParseException("Unexpected whitespace at beginning");
 
-        // For now, split at spaces
-        // In the future, will allow parenthesis & quotes
+        // Split at spaces
+        // Quotes allow grouping strings together
+        // Quotes allow with them escape sequences \' \" \\
+        // In the future, will allow parenthesis for mathematical expressions
 
         std::vector<std::string> tokens {};
-        std::string buffer;
         std::stringstream stream {source};
-        while (std::getline(stream, buffer, ' '))
+        while (true)
         {
-            tokens.push_back(buffer);
+            if (stream.eof())
+                break;
+            tokens.push_back(lex_argument(stream));
+            lex_separator(stream);
         }
 
         if (tokens.size() == 0)
@@ -165,6 +173,7 @@ CommandResult::Field CommandParser::parse_arg(ParamType param_type, std::string 
         {
             throw ParseException("Invalid float '" + token + "'");
         }
+
     break;
     case ParamType::STRING:
 
@@ -179,7 +188,7 @@ void CommandParser::validate_range(int arg, int min_val, int max_val)
 {
     if (arg < min_val)
         throw ParseException((std::stringstream("Integer out of range: ") << arg << " < " << min_val).str());
-    if (arg > min_val)
+    if (arg > max_val)
         throw ParseException((std::stringstream("Integer out of range: ") << arg << " > " << max_val).str());
 }
 
@@ -187,6 +196,69 @@ void CommandParser::validate_range(float arg, float min_val, float max_val)
 {
     if (arg < min_val)
         throw ParseException((std::stringstream("Float out of range: ") << arg << " < " << min_val).str());
-    if (arg > min_val)
+    if (arg > max_val)
         throw ParseException((std::stringstream("Float out of range: ") << arg << " > " << max_val).str());
+}
+
+void CommandParser::lex_separator(std::stringstream& stream)
+{
+    char first = stream.get();
+    if (!stream.eof() && first != ' ')
+        throw ParseException("Missing separation");
+    while (true)
+    {
+        char c = stream.peek();
+        if (stream.eof() || c != ' ')
+            break;
+        stream.get();
+    }
+}
+
+std::string CommandParser::lex_argument(std::stringstream& stream)
+{
+    std::string output = "";
+    char start = stream.get();
+    output += start;
+
+    // Lex quote
+
+    if (start == '"' || start == '\'')
+    {
+        while (true)
+        {
+            char c = stream.get();
+            if (stream.eof())
+                throw ParseException("Unclosed quote");
+            if (c == '\\')
+                output += lex_escape(stream);
+            output += c;
+            if (c == start)
+                break;
+        }
+    }
+
+    // Lex non-quote
+    
+    else
+    {
+        while (!stream.eof())
+        {
+            char c = stream.peek();
+            if (stream.eof() || c == ' ')
+                break;
+            stream.get();
+            output += c;
+        }
+    }
+    return output;
+}
+
+std::string CommandParser::lex_escape(std::stringstream& stream)
+{
+    char c = stream.get();
+    if (stream.eof())
+        throw ParseException("Invalid escape, unexpected end");
+    if (c != '\\' && c != '\"' && c != '\'')
+        throw ParseException(std::string("Invalid escape '\\") + c + "'");
+    return std::string("\\") + c;
 }

@@ -85,6 +85,7 @@ Editor::Editor()
     command_parser = CommandParser();
     command_parser.define_command(command_parser.new_command("log")
         .add_parameter("value", CommandParser::ParamType::STRING)
+        .add_parameter("value2", CommandParser::ParamType::STRING)
     );
     
 }

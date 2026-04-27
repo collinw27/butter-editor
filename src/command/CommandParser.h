@@ -67,6 +67,14 @@ public:
 
     static void validate_range(int arg, int min_val, int max_val);
     static void validate_range(float arg, float min_val, float max_val);
+
+private:
+
+    // Lexing helper methods
+
+    void lex_separator(std::stringstream& stream);
+    std::string lex_argument(std::stringstream& stream);
+    std::string lex_escape(std::stringstream& stream);
 };
 
 #endif
