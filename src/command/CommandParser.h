@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include <regex>
 
 #include "command/CommandResult.h"
 
@@ -16,7 +17,9 @@ public:
     {
         BOOL,
         INT,
+        U_INT,
         FLOAT,
+        U_FLOAT,
         STRING
     };
 
@@ -45,6 +48,11 @@ private:
 
     std::unordered_map<std::string, Definition> defined_commands;
 
+    // Stored for use during validation
+
+    std::regex int_regex;
+    std::regex float_regex;
+
 public:
 
     CommandParser();
@@ -52,6 +60,13 @@ public:
     void define_command(Definition definition);
 
     CommandResult parse(std::string source);
+    CommandResult::Field parse_arg(ParamType param_type, std::string token);
+
+    // Argument validation
+    // Caveat: Performs validation on PARSED result, not token itself
+
+    static void validate_range(int arg, int min_val, int max_val);
+    static void validate_range(float arg, float min_val, float max_val);
 };
 
 #endif

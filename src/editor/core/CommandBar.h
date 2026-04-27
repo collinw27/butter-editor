@@ -37,7 +37,6 @@ class CommandBar
     // For now, the command bar is responsible for parsing & defining commands
     // This will likely be moved to a separate class in the future
 
-    CommandParser command_parser;
 
 public:
 
@@ -49,8 +48,10 @@ public:
     void set_ui_scale(float new_scale);
 
     bool attempt_clear();
-    CommandResult attempt_submit();
+    void submit_valid();
+    void submit_error();
     void set_typing(bool value);
+    std::string get_command();
     
 private:
 

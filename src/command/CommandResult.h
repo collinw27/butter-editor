@@ -10,33 +10,27 @@ class CommandParser;
 
 class CommandResult
 {
-    enum class FieldType
-    {
-        EMPTY,
-        BOOL,
-        INT,
-        FLOAT,
-        STRING
-    };
-
     struct Field
     {
-        FieldType type;
         int int_arg = 0;
         float float_arg = 0.f;
         std::string string_arg = "";
     };
 
-    bool m_is_valid = false;
+    bool is_valid = false;
     std::string error = "";
     std::string root = "";
     std::vector<Field> fields {};
 
 public:
 
-    bool is_valid();
+    bool valid();
     std::string get_root();
     std::string get_error();
+
+    // There is very little type safety when extracting values
+    // In practice, this is fine, since the caller of these functions
+    // should already know the command signature with 100% certainty
 
     bool get_bool(unsigned arg_index);
     int get_int(unsigned arg_index);

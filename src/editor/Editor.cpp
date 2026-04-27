@@ -79,6 +79,14 @@ Editor::Editor()
 
     clock = sf::Clock();
     clock.start();
+
+    // Command setup
+
+    command_parser = CommandParser();
+    command_parser.define_command(command_parser.new_command("log")
+        .add_parameter("value", CommandParser::ParamType::STRING)
+    );
+    
 }
 
 Editor::~Editor()
@@ -142,6 +150,8 @@ void Editor::run()
         // CTRL+P: Toggle mini terminal
         // Escape tries to clear text, and exits if nothing was there
         // Enter works a similar way, but submits the command
+        // Command parsing is handled by this class and the CommandBar is
+        // instructed on what to do next based on the result
 
         if (using_terminal && Input().check_key_press(SF_KEY::Escape))
         {
@@ -151,19 +161,21 @@ void Editor::run()
         }
         if (using_terminal && Input().check_key_press(SF_KEY::Enter))
         {
-            CommandResult command = command_bar->attempt_submit();
-            if (!command.is_valid())
-            {
-                log_module->push_error(command.get_error());
-            }
-            else if (!command.get_root().empty())
-            {
-                log_module->push_command("Ran command: " + command.get_root());
-            }
-            else
+            CommandResult command = command_parser.parse(command_bar->get_command());
+            if (command_bar->get_command().empty())
             {
                 using_terminal = false;
                 command_bar->set_typing(false);
+            }
+            else if (!command.valid())
+            {
+                command_bar->submit_error();
+                log_module->push_error(command.get_error());
+            }
+            else
+            {
+                command_bar->submit_valid();
+                log_module->push_command("Ran command: " + command.get_root());
             }
         }
         if (Input().check_key_press(SF_KEY::P, KeyMod::CTRL))

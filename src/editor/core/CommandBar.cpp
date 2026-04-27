@@ -13,7 +13,7 @@ constexpr int CHAR_LIMIT = 1024;
 // Bounds & ui_scale are not initialized until respective setters are called (by Editor)
 
 CommandBar::CommandBar(Editor &editor) :
-    editor{editor}, command_parser {}
+    editor{editor}
 {
     command = "";
     
@@ -28,10 +28,6 @@ CommandBar::CommandBar(Editor &editor) :
     command_text->set_visible(false);
     cursor_rect->set_visible(false);
     selection_rect->set_visible(false);
-
-    command_parser.define_command(command_parser.new_command("test_log")
-        .add_parameter("number", CommandParser::ParamType::BOOL)
-    );
 }
 
 void CommandBar::update(const std::string& typed_string)
@@ -112,22 +108,16 @@ bool CommandBar::attempt_clear()
 // Otherwise, returns the parsed command
 // An empty commands indicates the command bar should be exited
 
-CommandResult CommandBar::attempt_submit()
+void CommandBar::submit_valid()
 {
-    CommandResult result = command_parser.parse(command);
+    invalid_command = false;
+    attempt_clear();
+}
 
-    if (result.is_valid())
-    {
-        invalid_command = false;
-        attempt_clear();
-    }
-    else
-    {
-        invalid_command = true;
-        render_text();
-    }
-
-    return result;
+void CommandBar::submit_error()
+{
+    invalid_command = true;
+    render_text();
 }
 
 void CommandBar::set_typing(bool value)
@@ -138,6 +128,11 @@ void CommandBar::set_typing(bool value)
     command_text->set_visible(typing);
     cursor_rect->set_visible(typing);
     selection_rect->set_visible(typing);
+}
+
+std::string CommandBar::get_command()
+{
+    return command;
 }
 
 void CommandBar::append(const std::string& raw_text)

@@ -43,6 +43,10 @@ private:
     std::vector<EditorModule**> visible_modules;
     LogModule* log_module;
 
+    // Command processing
+    
+    CommandParser command_parser;
+
     // Top and bottom HUD
 
     CommandBar* command_bar;
@@ -61,10 +65,6 @@ private:
 
     sf::Clock clock;
     float delta_time = 0.1f;
-
-    // Used for darkening the upper section when typing command
-
-    sf::RectangleShape top_cover;
 
     // For now, the editor is divided into 3 windows
     // This may have more customization in the far future, but for now,
