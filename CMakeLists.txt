@@ -44,9 +44,22 @@ set(FREETYPE_DIR ${CMAKE_BINARY_DIR}/lib/FreeType)
 
 # Link files & generate executables
 
-include_directories(
+add_library(common INTERFACE)
+target_include_directories(common INTERFACE
     src
+    ${SFML_DIR}/include
+    ${GLEW_DIR}/include
+    ${GLM_DIR}
+    ${FREETYPE_DIR}/include
 )
+target_link_libraries(common INTERFACE
+    sfml-graphics-d sfml-window-d sfml-system-d
+    freetyped
+    ${GLEW_DIR}/lib/glew32.lib
+    opengl32
+    gdi32
+)
+target_compile_features(common INTERFACE cxx_std_17)
 file(
     GLOB butter_SRC
     "src/editor/*.cpp"
@@ -56,37 +69,9 @@ file(
     "src/command/*.cpp"
 )
 
+# MAIN EXECUTABLE
+
 add_executable(Butter src/main.cpp ${butter_SRC})
-target_compile_features(Butter PRIVATE cxx_std_17)
-target_include_directories(Butter PRIVATE
-    ${SFML_DIR}/include
-    ${GLEW_DIR}/include
-    ${GLM_DIR}
-    ${FREETYPE_DIR}/include
-)
-target_link_libraries(Butter PRIVATE
-    sfml-graphics-d sfml-window-d sfml-system-d
-    freetyped
-    ${GLEW_DIR}/lib/glew32.lib
-    opengl32
-    gdi32)
+target_link_libraries(Butter PRIVATE common)
 
-# add_executable(NodeTest src/testing/NodeTest.cpp ${butter_SRC})
-# target_compile_features(NodeTest PRIVATE cxx_std_17)
-# target_link_libraries(NodeTest PRIVATE SFML::Graphics)
-
-add_executable(GLTest src/testing/GLTest.cpp ${butter_SRC})
-target_compile_features(GLTest PRIVATE cxx_std_17)
-target_include_directories(GLTest PRIVATE 
-    ${SFML_DIR}/include
-    ${GLEW_DIR}/include
-    ${GLM_DIR}
-    ${FREETYPE_DIR}/include
-)
-target_link_libraries(GLTest PRIVATE
-    sfml-graphics-d sfml-window-d sfml-system-d
-    freetyped
-    ${GLEW_DIR}/lib/glew32.lib
-    opengl32
-    gdi32
-)
+add_subdirectory("src/testing")

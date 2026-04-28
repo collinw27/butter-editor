@@ -41,7 +41,7 @@ CommandResult CommandParser::parse(std::string source)
         if (source.length() == 0)
             throw ParseException("Empty command");
         if (source.at(0) == ' ')
-            throw ParseException("Unexpected whitespace at beginning");
+            throw ParseException("Unexpected leading whitespace");
 
         // Split at spaces
         // Quotes allow grouping strings together
@@ -81,7 +81,7 @@ CommandResult CommandParser::parse(std::string source)
 
         std::vector<CommandResult::Field> result_fields {};
         if (parameters.size() != tokens.size() - 1)
-            throw ParseException("Invalid number of arguments");
+            throw ParseException("Incorrect number of arguments");
         
         for (int i = 0; i < parameters.size(); ++i)
         {
@@ -218,7 +218,6 @@ std::string CommandParser::lex_argument(std::stringstream& stream)
 {
     std::string output = "";
     char start = stream.get();
-    output += start;
 
     // Lex quote
 
@@ -229,11 +228,12 @@ std::string CommandParser::lex_argument(std::stringstream& stream)
             char c = stream.get();
             if (stream.eof())
                 throw ParseException("Unclosed quote");
-            if (c == '\\')
-                output += lex_escape(stream);
-            output += c;
-            if (c == start)
+            else if (c == start)
                 break;
+            else if (c == '\\')
+                output += lex_escape(stream);
+            else
+                output += c;
         }
     }
 
@@ -241,6 +241,7 @@ std::string CommandParser::lex_argument(std::stringstream& stream)
     
     else
     {
+        output += start;
         while (!stream.eof())
         {
             char c = stream.peek();
@@ -260,5 +261,5 @@ std::string CommandParser::lex_escape(std::stringstream& stream)
         throw ParseException("Invalid escape, unexpected end");
     if (c != '\\' && c != '\"' && c != '\'')
         throw ParseException(std::string("Invalid escape '\\") + c + "'");
-    return std::string("\\") + c;
+    return std::string(1, c);
 }
