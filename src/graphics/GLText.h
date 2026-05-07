@@ -1,10 +1,12 @@
 #ifndef GL_TEXT_H
 #define GL_TEXT_H
 
+#include <map>
 #include <GL/glew.h>
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 #include "graphics/GLNode.h"
+#include "graphics/text_formatting/TextFormat.h"
 
 // Created with help from https://learnopengl.com/In-Practice/Text-Rendering
 
@@ -18,6 +20,9 @@ class GLText : public GLNode
     float line_spacing = 4.f;
     sf::Color text_color {sf::Color::White};
 
+    bool do_special_formatting = false;
+    std::map<unsigned, TextFormat::Instruction*> formatting_body {};
+
     GLuint shader_program;
     GLuint VAO;
     GLuint vertex_VBO;
@@ -29,6 +34,7 @@ class GLText : public GLNode
 protected:
     
     GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str);
+    ~GLText();
     virtual void init();
 
 public:
@@ -45,6 +51,12 @@ public:
 
     void set_string(std::string str);
     std::string get_string();
+
+    void enable_special_formatting();
+    void reset_formatting();
+    void add_string(std::string text);
+    void add_color(sf::Color color);
+    void add_color(sf::Color color, unsigned position);
 
     unsigned get_char_size();
     void set_char_size(unsigned new_size);

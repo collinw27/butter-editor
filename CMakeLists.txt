@@ -65,6 +65,7 @@ file(
     "src/editor/*.cpp"
     "src/editor/**/*.cpp"
     "src/graphics/*.cpp"
+    "src/graphics/**/*.cpp"
     "src/utility/*.cpp"
     "src/command/*.cpp"
 )

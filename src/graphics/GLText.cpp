@@ -19,6 +19,11 @@ GLText::GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str
     u_color = {1, 1, 1};
 }
 
+GLText::~GLText()
+{
+    reset_formatting();
+}
+
 void GLText::init()
 {
     GLNode::init();
@@ -51,16 +56,33 @@ void GLText::draw()
 
     // Since each glyph is its own distinct texture, we need to re-bind
     // the vertex data for every glyph we draw
-    // In the future, it would be beneficial to have GLFont stitch all
-    // glyphs together into a single sprite sheet
-    // (I think sf::Font does this already)
+    // This could be solved by stitching all glyphs together into a
+    // single sprite sheet (like sf::Font)
+    // This would also require reworking color parameters, though
 
     std::map<char, FontChar>& char_map = font->get_char_map(char_size);
     float char_height = char_map.find('|')->second.size.y;
     float x_offset = 0;
     float y_offset = char_height;
+
     for (int i = 0; i < str.length(); ++i)
     {
+        // Change color if necessary (formatting only)
+
+        if (do_special_formatting)
+        {
+            auto next_format = formatting_body.find((unsigned) i);
+            if (next_format != formatting_body.end())
+            {
+                if (auto f_color = dynamic_cast<TextFormat::Color*>(next_format->second))
+                {
+                    glm::vec3 current_color = to_gl3(f_color->get_color());
+                    GLuint color_loc = glGetUniformLocation(shader_program, "text_color");
+                    glUniform3fv(color_loc, 1, glm::value_ptr(current_color));
+                }
+            }
+        }
+
         // Special case for newline
         // Line spacing of 10 equals the height of 1 char
 
@@ -117,6 +139,35 @@ void GLText::set_string(std::string str)
 std::string GLText::get_string()
 {
     return str;
+}
+
+void GLText::enable_special_formatting()
+{
+    do_special_formatting = true;
+}
+
+void GLText::reset_formatting()
+{
+    for (auto instruction : formatting_body)
+    {
+        delete instruction.second;
+    }
+    formatting_body.clear();
+}
+
+void GLText::add_string(std::string str)
+{
+    this->str += str;
+}
+
+void GLText::add_color(sf::Color color)
+{
+    add_color(color, str.length());
+}
+
+void GLText::add_color(sf::Color color, unsigned position)
+{
+    formatting_body.emplace(position, new TextFormat::Color(color));
 }
 
 unsigned GLText::get_char_size()
