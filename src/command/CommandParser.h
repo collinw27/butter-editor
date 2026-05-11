@@ -8,6 +8,7 @@
 #include <regex>
 
 #include "command/CommandResult.h"
+#include "command/CommandStructure.h"
 
 class CommandParser
 {
@@ -60,6 +61,7 @@ public:
     void define_command(Definition definition);
 
     CommandResult parse(std::string source);
+    CommandStructure parse_structure(std::string source);
     CommandResult::Field parse_arg(ParamType param_type, std::string token);
 
     // Argument validation

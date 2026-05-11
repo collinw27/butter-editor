@@ -73,17 +73,17 @@ TEST(Formatting, MultipleArgs)
 
 TEST(Formatting, TooManyArgs)
 {
-    ASSERT_TRUE(test_error("fn2 a b c d", "Incorrect number of arguments"));
+    ASSERT_TRUE(test_error("fn2 a b c d", "Too many arguments provided"));
 }
 
 TEST(Formatting, TooFewArgs)
 {
-    ASSERT_TRUE(test_error("fn2 a b", "Incorrect number of arguments"));
+    ASSERT_TRUE(test_error("fn2 a b", "Too few arguments provided"));
 }
 
 TEST(Formatting, NoArgs)
 {
-    ASSERT_TRUE(test_error("fn2", "Incorrect number of arguments"));
+    ASSERT_TRUE(test_error("fn2", "Too few arguments provided"));
 }
 
 TEST(Formatting, NoArgsValid)
@@ -125,7 +125,7 @@ TEST(String, OneArgument)
 
 TEST(String, TwoArguments)
 {
-    ASSERT_TRUE(test_error("fn1 a b", "Incorrect number of arguments"));
+    ASSERT_TRUE(test_error("fn1 a b", "Too many arguments provided"));
 }
 
 TEST(String, QuotedArgument)

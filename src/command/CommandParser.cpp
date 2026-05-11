@@ -38,6 +38,44 @@ CommandResult CommandParser::parse(std::string source)
 {
     try
     {
+        CommandStructure structure = parse_structure(source);
+        if (structure.error.has_value())
+            throw ParseException(structure.error.value());
+            
+        std::string root = structure.tokens.at(0).string;
+        auto command_definition = defined_commands.find(root);
+        if (command_definition == defined_commands.end())
+            throw ParseException("Unknown command '" + root + "'");
+        std::vector<Parameter>& parameters = command_definition->second.parameters;
+
+        CommandResult result {};
+        result.is_valid = true;
+
+        for (int i = 0; i < parameters.size(); ++i)
+        {
+            std::string token = structure.tokens.at(1 + i).string;
+            ParamType param_type = parameters.at(i).param_type;
+            result.fields.push_back(parse_arg(param_type, token));
+        }
+
+        return result;
+    }
+    catch (ParseException error)
+    {
+        CommandResult result {};
+        result.is_valid = false;
+        result.error = error.message();
+        return result;
+    }
+}
+
+CommandStructure CommandParser::parse_structure(std::string source)
+{
+    // Fatal errors throw an exception and exit prematurely
+    // Non-fatal errors simply store the error
+
+    try
+    {
         if (source.length() == 0)
             throw ParseException("Empty command");
         if (source.at(0) == ' ')
@@ -64,37 +102,65 @@ CommandResult CommandParser::parse(std::string source)
         // Initialize the result structure
         // Other properties will be initialized later
 
-        CommandResult result {};
+        CommandStructure result {};
         result.is_valid = true;
 
         // Get the signature of this command
         
         std::string root = tokens.at(0);
-        result.root = root;
-        std::vector<Parameter> parameters {};
         auto command_definition = defined_commands.find(root);
         if (command_definition == defined_commands.end())
             throw ParseException("Unknown command '" + root + "'");
-        parameters = command_definition->second.parameters;
+        std::vector<Parameter>& parameters = command_definition->second.parameters;
 
-        // Validate the number and type of arguments
+        // Associate the defined type with each token
+        // Extra tokens will be given an error type (non-fatal)
 
         std::vector<CommandResult::Field> result_fields {};
-        if (parameters.size() != tokens.size() - 1)
-            throw ParseException("Incorrect number of arguments");
+        if (parameters.size() > tokens.size() - 1)
+            result.error = result.error.has_value() ? result.error : "Too few arguments provided";
+        if (parameters.size() < tokens.size() - 1)
+            result.error = result.error.has_value() ? result.error : "Too many arguments provided";
         
-        for (int i = 0; i < parameters.size(); ++i)
+        CommandStructure::Token root_token {};
+        root_token.type = CommandStructure::TokenType::ROOT;
+        root_token.start_index = 0;
+        root_token.string = tokens.at(0);
+        result.tokens.push_back(root_token);
+
+        for (int i = 0; i < tokens.size() - 1; ++i)
         {
-            std::string token = tokens.at(1 + i);
-            ParamType param_type = parameters.at(i).param_type;
-            result.fields.push_back(parse_arg(param_type, token));
+            CommandStructure::Token arg_token {};
+            arg_token.string = tokens.at(i + 1);
+            arg_token.type = CommandStructure::TokenType::INVALID;
+            if (i < parameters.size())
+            {
+                switch (parameters.at(i).param_type)
+                {
+                case ParamType::BOOL:
+                    arg_token.type = CommandStructure::TokenType::BOOL;
+                break;
+                case ParamType::INT:
+                case ParamType::U_INT:
+                    arg_token.type = CommandStructure::TokenType::INT;
+                break;
+                case ParamType::FLOAT:
+                case ParamType::U_FLOAT:
+                    arg_token.type = CommandStructure::TokenType::FLOAT;
+                break;
+                case ParamType::STRING:
+                    arg_token.type = CommandStructure::TokenType::STRING;
+                break;
+                }
+            }
+            result.tokens.push_back(arg_token);
         }
 
         return result;
     }
     catch (ParseException error)
     {
-        CommandResult result {};
+        CommandStructure result {};
         result.is_valid = false;
         result.error = error.message();
         return result;
