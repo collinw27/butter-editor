@@ -48,6 +48,7 @@ private:
 
 public:
 
+    bool check_valid();
     unsigned get_size();
     TokenType get_token_type(unsigned index);
     unsigned get_token_start(unsigned index);

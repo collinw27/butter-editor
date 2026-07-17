@@ -2,6 +2,11 @@
 
 #include "utility/core.h"
 
+bool CommandStructure::check_valid()
+{
+    return is_valid;
+}
+
 unsigned CommandStructure::get_size()
 {
     return tokens.size();

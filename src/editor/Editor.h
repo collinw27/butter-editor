@@ -81,6 +81,7 @@ public:
 
     void set_cursor(sf::Cursor::Type cursor_type);
     float get_delta_time();
+    CommandParser& get_command_parser();
 
 private:
 

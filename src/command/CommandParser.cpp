@@ -3,6 +3,7 @@
 #include <sstream>
 #include "utility/core.h"
 #include "command/exceptions.h"
+#include "utility/Logger.h"
 
 CommandParser::Definition::Definition(std::string root)
 {
@@ -87,12 +88,15 @@ CommandStructure CommandParser::parse_structure(std::string source)
         // In the future, will allow parenthesis for mathematical expressions
 
         std::vector<std::string> tokens {};
+        std::vector<int> token_starts {};
         std::stringstream stream {source};
+        int token_start = 0;
         while (true)
         {
             if (stream.eof())
                 break;
-            tokens.push_back(lex_argument(stream));
+            tokens.push_back(lex_argument(stream, token_start));
+            token_starts.push_back(token_start);
             lex_separator(stream);
         }
 
@@ -124,15 +128,16 @@ CommandStructure CommandParser::parse_structure(std::string source)
         
         CommandStructure::Token root_token {};
         root_token.type = CommandStructure::TokenType::ROOT;
-        root_token.start_index = 0;
         root_token.string = tokens.at(0);
+        root_token.start_index = token_starts.at(0);
         result.tokens.push_back(root_token);
 
         for (int i = 0; i < tokens.size() - 1; ++i)
         {
             CommandStructure::Token arg_token {};
-            arg_token.string = tokens.at(i + 1);
             arg_token.type = CommandStructure::TokenType::INVALID;
+            arg_token.string = tokens.at(i + 1);
+            arg_token.start_index = token_starts.at(i + 1);
             if (i < parameters.size())
             {
                 switch (parameters.at(i).param_type)
@@ -280,10 +285,11 @@ void CommandParser::lex_separator(std::stringstream& stream)
     }
 }
 
-std::string CommandParser::lex_argument(std::stringstream& stream)
+std::string CommandParser::lex_argument(std::stringstream& stream, int& out_token_start)
 {
     std::string output = "";
     char start = stream.get();
+    out_token_start = (int) stream.tellg() - 1;
 
     // Lex quote
 

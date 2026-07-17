@@ -87,7 +87,13 @@ Editor::Editor()
         .add_parameter("value", CommandParser::ParamType::STRING)
         .add_parameter("value2", CommandParser::ParamType::STRING)
     );
-    
+    command_parser.define_command(command_parser.new_command("type_test")
+        .add_parameter("int_value", CommandParser::ParamType::INT)
+        .add_parameter("uint_value", CommandParser::ParamType::U_INT)
+        .add_parameter("string_value", CommandParser::ParamType::STRING)
+        .add_parameter("float_value", CommandParser::ParamType::FLOAT)
+        .add_parameter("bool_value", CommandParser::ParamType::BOOL)
+    );
 }
 
 Editor::~Editor()
@@ -225,6 +231,11 @@ void Editor::set_cursor(sf::Cursor::Type cursor_type)
 float Editor::get_delta_time()
 {
     return delta_time;
+}
+
+CommandParser& Editor::get_command_parser()
+{
+    return command_parser;
 }
 
 void Editor::on_resized(sf::Vector2i new_size)

@@ -27,6 +27,7 @@ CommandBar::CommandBar(Editor &editor) :
     cursor_rect = GLRectangle::create(container);
     cursor_rect->set_fill_color(sf::Color::White);
 
+    command_text->enable_special_formatting();
     command_text->set_visible(false);
     cursor_rect->set_visible(false);
     selection_rect->set_visible(false);
@@ -67,7 +68,9 @@ void CommandBar::update(const std::string& typed_string)
     // Update visuals
 
     invalid_command = invalid_command && (prev_command == command);
-    render_text();
+    if (text_updated)
+        render_text();
+    text_updated = false;
     cursor_time += editor.get_delta_time();
 }
 
@@ -106,6 +109,7 @@ bool CommandBar::attempt_clear()
     cursor_end = -1;
     cursor_time = 0.f;
     invalid_command = false;
+    text_updated = true;
     render_text();
     return true;
 }
@@ -135,7 +139,7 @@ void CommandBar::submit_valid()
 void CommandBar::submit_error()
 {
     invalid_command = true;
-    render_text();
+    text_updated = true;
 }
 
 void CommandBar::set_typing(bool value)
@@ -179,6 +183,7 @@ void CommandBar::append(const std::string& raw_text)
         cursor_start = std::min(cursor_start + new_text.length(), command.length());
         cursor_time = 0.f;
     }
+    text_updated = true;
 }
 
 // Don't tell anyone, but for more complex deletions, it
@@ -202,6 +207,7 @@ void CommandBar::backspace(bool delete_word)
         }
         cursor_time = 0.f;
     }
+    text_updated = true;
 }
 
 void CommandBar::delete_ahead(bool delete_word)
@@ -221,6 +227,7 @@ void CommandBar::delete_ahead(bool delete_word)
         }
         cursor_time = 0.f;
     }
+    text_updated = true;
 }
 
 void CommandBar::remove_selected_chars()
@@ -231,6 +238,7 @@ void CommandBar::remove_selected_chars()
     cursor_start = start;
     cursor_end = -1;
     cursor_time = 0.f;
+    text_updated = true;
 }
 
 void CommandBar::move_cursor(bool forward, MoveMode mode, bool do_select)
@@ -274,11 +282,13 @@ void CommandBar::move_cursor(bool forward, MoveMode mode, bool do_select)
     if (cursor_start == cursor_end)
         reset_selection();
     cursor_time = 0.f;
+    text_updated = true;
 }
 
 void CommandBar::reset_selection()
 {
     cursor_end = -1;
+    text_updated = true;
 }
 
 void CommandBar::select_all()
@@ -286,6 +296,7 @@ void CommandBar::select_all()
     cursor_time = 0.f;
     cursor_end = 0;
     cursor_start = command.length();
+    text_updated = true;
 }
 
 void CommandBar::traverse_history(int delta)
@@ -302,8 +313,41 @@ void CommandBar::traverse_history(int delta)
 
 void CommandBar::render_text()
 {
-    command_text->set_color(invalid_command ? Editor::C_INVALID : sf::Color::White);
+    CommandStructure structure = editor.get_command_parser().parse_structure(command);
+
+    // In the case that there is an error in the command, text formatting is simple
+
+    command_text->reset_formatting();
     command_text->set_string("> " + command);
+    if ((invalid_command || !structure.check_valid()) && !command.empty())
+    {
+        command_text->add_color(Editor::C_INVALID, 0);
+    }
+    else
+    {
+        for (int i = 0; i < structure.get_size(); ++i)
+        {
+            CommandStructure::TokenType this_type = structure.get_token_type(i);
+            sf::Color this_color = sf::Color::White;
+            switch (this_type)
+            {
+            case CommandStructure::TokenType::BOOL:
+                this_color = sf::Color(249, 135, 255);
+            break;
+            case CommandStructure::TokenType::INT:
+            case CommandStructure::TokenType::FLOAT:
+                this_color = sf::Color(122, 198, 255);
+            break;
+            case CommandStructure::TokenType::STRING:
+                this_color = sf::Color(107, 255, 127);
+            break;
+            case CommandStructure::TokenType::INVALID:
+                this_color = Editor::C_INVALID;
+            break;
+            }
+            command_text->add_color(this_color, structure.get_token_start(i) + 2);
+        }
+    }
     float start_x = command_text->find_char_pos(2 + cursor_start).x;
     cursor_rect->set_position(command_text->get_position() + sf::Vector2f(start_x, -2 + ui_scale));
     if (cursor_end != -1)

@@ -36,6 +36,10 @@ class CommandBar
 
     bool invalid_command = false;
 
+    // Text graphics are only updated when necessary
+
+    bool text_updated = true;
+
 public:
 
     CommandBar(Editor& editor);

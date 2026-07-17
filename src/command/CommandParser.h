@@ -75,7 +75,7 @@ private:
     // Lexing helper methods
 
     void lex_separator(std::stringstream& stream);
-    std::string lex_argument(std::stringstream& stream);
+    std::string lex_argument(std::stringstream& stream, int& out_token_start);
     std::string lex_escape(std::stringstream& stream);
 };
 
