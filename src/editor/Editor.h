@@ -23,6 +23,7 @@ public:
     static const sf::Color C_FG;
     static const sf::Color C_HOVER;
     static const sf::Color C_HIGHLIGHT;
+    static const sf::Color C_HIGHLIGHT_SUBTLE;
     static const sf::Color C_FG_DESELECTED;
     static const sf::Color C_INVALID;
 

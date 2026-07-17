@@ -20,6 +20,7 @@ const sf::Color Editor::C_BG{0, 0, 0};
 const sf::Color Editor::C_FG{90, 90, 90};
 const sf::Color Editor::C_HOVER{130, 130, 130};
 const sf::Color Editor::C_HIGHLIGHT{90, 90, 90};
+const sf::Color Editor::C_HIGHLIGHT_SUBTLE{50, 50, 50};
 const sf::Color Editor::C_FG_DESELECTED{50, 50, 50};
 const sf::Color Editor::C_INVALID{255, 120, 120};
 
@@ -85,7 +86,6 @@ Editor::Editor()
     command_parser = CommandParser();
     command_parser.define_command(command_parser.new_command("log")
         .add_parameter("value", CommandParser::ParamType::STRING)
-        .add_parameter("value2", CommandParser::ParamType::STRING)
     );
     command_parser.define_command(command_parser.new_command("type_test")
         .add_parameter("int_value", CommandParser::ParamType::INT)
@@ -183,6 +183,8 @@ void Editor::run()
             {
                 command_bar->submit_valid();
                 log_module->push_command("Ran command: " + command.get_root());
+                if (command.get_root() == "log")
+                    log_module->push_command(command.get_string(0));
             }
         }
         if (Input().check_key_press(SF_KEY::P, KeyMod::CTRL))

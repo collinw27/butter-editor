@@ -51,6 +51,7 @@ CommandResult CommandParser::parse(std::string source)
 
         CommandResult result {};
         result.is_valid = true;
+        result.root = structure.get_token(0);
 
         for (int i = 0; i < parameters.size(); ++i)
         {
@@ -75,7 +76,7 @@ CommandStructure CommandParser::parse_structure(std::string source)
     // Fatal errors throw an exception and exit prematurely
     // Non-fatal errors simply store the error
 
-    // TODO: New workflow
+    // Workflow:
     // 1) Fatal error if pure nonsense (ex. empty command)
     // 2) Lex/parse into token instances
     //    - This step includes per-token parsing errors (ex. unclosed quote)
@@ -163,6 +164,14 @@ CommandStructure CommandParser::parse_structure(std::string source)
                 case ParamType::STRING:
                     arg_token.type = CommandStructure::TokenType::STRING;
                 break;
+                }
+                try
+                {
+                    parse_arg(parameters.at(i).param_type, arg_token.string);
+                }
+                catch (ParseException)
+                {
+                    arg_token.type = CommandStructure::TokenType::INVALID;
                 }
             }
         }
@@ -254,7 +263,32 @@ CommandResult::Field CommandParser::parse_arg(ParamType param_type, std::string 
     break;
     case ParamType::STRING:
 
-        field.string_arg = token;
+        if (token.length() == 0)
+            throw ParseException("Invalid string (empty)");
+        if (token.at(0) == '"' || token.at(0) == '\'')
+        {
+            if (token.at(0) != token.at(token.length() - 1))
+                throw ParseException("Invalid string (mismatched quotes)");
+            token = token.substr(1, token.length() - 2);
+            field.string_arg = "";
+            bool escaped = false;
+            for (char c : token)
+            {
+                if (escaped)
+                {
+                    if (c != '\\' && c != '\"' && c != '\'')
+                        throw ParseException(std::string("Invalid escape '\\") + c + "'");
+                    field.string_arg += c;
+                    escaped = false;
+                }
+                else if (c == '\\')
+                    escaped = true;
+                else
+                    field.string_arg += c;
+            }
+        }
+        else
+            field.string_arg = token;
 
     break;
     }
@@ -304,6 +338,7 @@ std::string CommandParser::lex_argument(std::stringstream& stream, int& ret_toke
 
     // Lex quote
 
+    output += start;
     if (start == '"' || start == '\'')
     {
         while (true)
@@ -320,16 +355,20 @@ std::string CommandParser::lex_argument(std::stringstream& stream, int& ret_toke
                 break;
             }
             else if (c == start)
+            {
+                output += c;
                 break;
+            }
             else if (c == '\\')
             {
-                char c2 = stream.get();
+                output += c;
+                c = stream.get();
                 if (stream.eof())
                 {
                     ret_error = "Invalid escape, unexpected end";
                     break;
                 }
-                output += c2;
+                output += c;
             }
             else
                 output += c;
@@ -340,7 +379,6 @@ std::string CommandParser::lex_argument(std::stringstream& stream, int& ret_toke
     
     else
     {
-        output += start;
         while (!stream.eof())
         {
             char c = stream.peek();

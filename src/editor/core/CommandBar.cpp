@@ -323,6 +323,9 @@ void CommandBar::render_text()
     {
         command_text->add_color(Editor::C_INVALID, 0);
     }
+
+    // Otherwise, color breakpoints are added based on argument type
+
     else
     {
         for (int i = 0; i < structure.get_size(); ++i)
@@ -348,13 +351,49 @@ void CommandBar::render_text()
             command_text->add_color(this_color, structure.get_token_start(i) + 2);
         }
     }
+
+    // Move cursor
+
     float start_x = command_text->find_char_pos(2 + cursor_start).x;
     cursor_rect->set_position(command_text->get_position() + sf::Vector2f(start_x, -2 + ui_scale));
+
+    // Two situations in which a highlight is shown:
+    // 1) User has highlighted text
+    // 2) Used to indicate range of current argument when not highlighted
+    // Only one of these can be present at once, and it's possible for neither
+    // to be present
+    
     if (cursor_end != -1)
     {
         float end_x = command_text->find_char_pos(2 + cursor_end).x;
         selection_rect->set_position(command_text->get_position() + sf::Vector2f(std::min(start_x, end_x), -2 + ui_scale));
         selection_rect->set_size(sf::Vector2f(std::max(start_x, end_x) - std::min(start_x, end_x), cursor_rect->get_size().y));
+        selection_rect->set_visible(true);
+        selection_rect->set_fill_color(Editor::C_HIGHLIGHT);
     }
-    selection_rect->set_visible(cursor_end != -1);
+    else if (structure.check_valid())
+    {
+        // Find if there's a token we're inside of
+
+        selection_rect->set_visible(false);
+        for (int i = 0; i < structure.get_size(); ++i)
+        {
+            if (structure.get_token_start(i) <= cursor_start &&
+                structure.get_token_start(i) + structure.get_token(i).length() >= cursor_start
+            )
+            {
+                start_x = command_text->find_char_pos(2 + structure.get_token_start(i)).x;
+                float end_x = command_text->find_char_pos(2 + structure.get_token_start(i) + structure.get_token(i).length()).x;
+                selection_rect->set_position(command_text->get_position() + sf::Vector2f(std::min(start_x, end_x), -2 + ui_scale));
+                selection_rect->set_size(sf::Vector2f(std::max(start_x, end_x) - std::min(start_x, end_x), cursor_rect->get_size().y));
+                selection_rect->set_visible(true);
+                selection_rect->set_fill_color(Editor::C_HIGHLIGHT_SUBTLE);
+                break;
+            }
+        }
+    }
+    else
+    {
+        selection_rect->set_visible(false);
+    }
 }
