@@ -75,6 +75,14 @@ CommandStructure CommandParser::parse_structure(std::string source)
     // Fatal errors throw an exception and exit prematurely
     // Non-fatal errors simply store the error
 
+    // TODO: New workflow
+    // 1) Fatal error if pure nonsense (ex. empty command)
+    // 2) Lex/parse into token instances
+    //    - This step includes per-token parsing errors (ex. unclosed quote)
+    // 3) Resolve command signature, creating a fatal error if nonexistent
+    // 4) Associate each token with its given type, preserving any errors from before
+    // 5) (Optionally) call parse_arg() on each token to see if it is valid
+
     try
     {
         if (source.length() == 0)
@@ -82,36 +90,40 @@ CommandStructure CommandParser::parse_structure(std::string source)
         if (source.at(0) == ' ')
             throw ParseException("Unexpected leading whitespace");
 
-        // Split at spaces
-        // Quotes allow grouping strings together
-        // Quotes allow with them escape sequences \' \" \\
-        // In the future, will allow parenthesis for mathematical expressions
-
-        std::vector<std::string> tokens {};
-        std::vector<int> token_starts {};
-        std::stringstream stream {source};
-        int token_start = 0;
-        while (true)
-        {
-            if (stream.eof())
-                break;
-            tokens.push_back(lex_argument(stream, token_start));
-            token_starts.push_back(token_start);
-            lex_separator(stream);
-        }
-
-        if (tokens.size() == 0)
-            throw ParseException("Empty command");
-
         // Initialize the result structure
         // Other properties will be initialized later
 
         CommandStructure result {};
         result.is_valid = true;
 
+        // Split at spaces
+        // Quotes allow grouping strings together
+        // Quotes allow with them escape sequences \' \" \\
+        // In the future, will allow parenthesis for mathematical expressions
+
+        std::stringstream stream {source};
+        int ret_token_start = 0;
+        std::string ret_error = "";
+        while (true)
+        {
+            if (stream.eof())
+                break;
+            CommandStructure::Token new_token {};
+            new_token.string = lex_argument(stream, ret_token_start, ret_error);
+            new_token.start_index = ret_token_start;
+            if (!ret_error.empty())
+                result.error = result.error.has_value() ? result.error : ret_error;
+            new_token.type = ret_error.empty() ? CommandStructure::TokenType::OTHER : CommandStructure::TokenType::INVALID;
+            result.tokens.push_back(new_token);
+            lex_separator(stream);
+        }
+
+        if (result.tokens.size() == 0)
+            throw ParseException("Empty command");
+
         // Get the signature of this command
         
-        std::string root = tokens.at(0);
+        std::string root = result.tokens.at(0).string;
         auto command_definition = defined_commands.find(root);
         if (command_definition == defined_commands.end())
             throw ParseException("Unknown command '" + root + "'");
@@ -121,23 +133,18 @@ CommandStructure CommandParser::parse_structure(std::string source)
         // Extra tokens will be given an error type (non-fatal)
 
         std::vector<CommandResult::Field> result_fields {};
-        if (parameters.size() > tokens.size() - 1)
+        if (parameters.size() > result.tokens.size() - 1)
             result.error = result.error.has_value() ? result.error : "Too few arguments provided";
-        if (parameters.size() < tokens.size() - 1)
+        if (parameters.size() < result.tokens.size() - 1)
             result.error = result.error.has_value() ? result.error : "Too many arguments provided";
-        
-        CommandStructure::Token root_token {};
-        root_token.type = CommandStructure::TokenType::ROOT;
-        root_token.string = tokens.at(0);
-        root_token.start_index = token_starts.at(0);
-        result.tokens.push_back(root_token);
 
-        for (int i = 0; i < tokens.size() - 1; ++i)
+        result.tokens.at(0).type = CommandStructure::TokenType::ROOT;
+        for (int i = 0; i < result.tokens.size() - 1; ++i)
         {
-            CommandStructure::Token arg_token {};
+            CommandStructure::Token& arg_token = result.tokens.at(i + 1);
+            if (arg_token.type == CommandStructure::TokenType::INVALID)
+                continue;
             arg_token.type = CommandStructure::TokenType::INVALID;
-            arg_token.string = tokens.at(i + 1);
-            arg_token.start_index = token_starts.at(i + 1);
             if (i < parameters.size())
             {
                 switch (parameters.at(i).param_type)
@@ -158,7 +165,6 @@ CommandStructure CommandParser::parse_structure(std::string source)
                 break;
                 }
             }
-            result.tokens.push_back(arg_token);
         }
 
         return result;
@@ -285,11 +291,16 @@ void CommandParser::lex_separator(std::stringstream& stream)
     }
 }
 
-std::string CommandParser::lex_argument(std::stringstream& stream, int& out_token_start)
+// Additional information is returned with out parameters
+// `ret_error` is an empty string if no error was encountered,
+// and non-empty if a non-fatal error was encountered
+
+std::string CommandParser::lex_argument(std::stringstream& stream, int& ret_token_start, std::string& ret_error)
 {
     std::string output = "";
     char start = stream.get();
-    out_token_start = (int) stream.tellg() - 1;
+    ret_token_start = (int) stream.tellg() - 1;
+    ret_error = "";
 
     // Lex quote
 
@@ -297,13 +308,29 @@ std::string CommandParser::lex_argument(std::stringstream& stream, int& out_toke
     {
         while (true)
         {
+            // Two cases where we can encounter an error:
+            // 1) EOF with unclosed quote
+            // 2) EOF with unfinished escape sequence
+            // Both of these error out this token without throwing a fatal error
+
             char c = stream.get();
             if (stream.eof())
-                throw ParseException("Unclosed quote");
+            {
+                ret_error = "Unclosed quote";
+                break;
+            }
             else if (c == start)
                 break;
             else if (c == '\\')
-                output += lex_escape(stream);
+            {
+                char c2 = stream.get();
+                if (stream.eof())
+                {
+                    ret_error = "Invalid escape, unexpected end";
+                    break;
+                }
+                output += c2;
+            }
             else
                 output += c;
         }
@@ -324,14 +351,4 @@ std::string CommandParser::lex_argument(std::stringstream& stream, int& out_toke
         }
     }
     return output;
-}
-
-std::string CommandParser::lex_escape(std::stringstream& stream)
-{
-    char c = stream.get();
-    if (stream.eof())
-        throw ParseException("Invalid escape, unexpected end");
-    if (c != '\\' && c != '\"' && c != '\'')
-        throw ParseException(std::string("Invalid escape '\\") + c + "'");
-    return std::string(1, c);
 }
