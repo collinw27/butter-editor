@@ -150,6 +150,8 @@ void CommandBar::set_typing(bool value)
     command_text->set_visible(typing);
     cursor_rect->set_visible(typing);
     selection_rect->set_visible(typing);
+    if (typing)
+        render_text();
 }
 
 std::string CommandBar::get_command()

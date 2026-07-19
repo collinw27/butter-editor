@@ -1,11 +1,11 @@
 #include "editor/core/LogModule.h"
 
+#include "utility/core.h"
 #include "utility/Graphics.h"
 #include "utility/Logger.h"
 #include "editor/Editor.h"
 
 constexpr int MAX_HISTORY = 8;
-constexpr float T_HEIGHT = 22;
 
 LogModule::LogModule(Editor& editor)
     : EditorModule(editor)
@@ -26,14 +26,17 @@ LogModule::LogModule(Editor& editor)
 
 void LogModule::apply_bounds()
 {
-    highlight_rect->set_size(sf::Vector2f(bounds.size.x, T_HEIGHT * ui_scale));
+    highlight_rect->set_size(sf::Vector2f(bounds.size.x, unit_height * ui_scale));
+    highlight_rect->set_visible(false);
 }
 
 void LogModule::apply_ui_scale()
 {
-    highlight_rect->set_size(sf::Vector2f(bounds.size.x, T_HEIGHT * ui_scale));
+    unit_height = lerp_remap(0.6, 2.0, 21.2, 22.2, ui_scale);
+    highlight_rect->set_size(sf::Vector2f(bounds.size.x, unit_height * ui_scale));
     history_text->set_char_size((unsigned)(16.f * ui_scale));
     error_text->set_char_size((unsigned)(16.f * ui_scale));
+    highlight_rect->set_visible(false);
 }
 
 void LogModule::push_command(std::string command)
@@ -83,5 +86,5 @@ void LogModule::render_text()
 
 sf::IntRect LogModule::get_item_bounds(int index)
 {
-    return sf::IntRect({0, 8 + (int)(T_HEIGHT * ui_scale * index)}, {bounds.size.x, (int)(T_HEIGHT * ui_scale)});
+    return sf::IntRect({0, 8 + (int)(unit_height * ui_scale * index)}, {bounds.size.x, (int)(unit_height * ui_scale)});
 }

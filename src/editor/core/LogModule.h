@@ -13,6 +13,7 @@ class LogModule : public EditorModule
     GLText* history_text;
     GLText* error_text;
     GLRectangle* highlight_rect;
+    float unit_height;
 
     // Draws the last-executed commands
     // Shows the error message at the top, if applicable

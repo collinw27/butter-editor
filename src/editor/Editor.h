@@ -82,7 +82,9 @@ public:
 
     void set_cursor(sf::Cursor::Type cursor_type);
     float get_delta_time();
+
     CommandParser& get_command_parser();
+    std::string run_command(std::string command, bool throw_errors = false);
 
 private:
 
@@ -93,6 +95,8 @@ private:
     sf::Vector2i get_mouse_position();
 
     void resize_modules();
+    
+    std::string execute_command(CommandResult command);
 };
 
 #endif

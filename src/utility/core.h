@@ -68,6 +68,23 @@ inline std::string to_upper(std::string source)
     return uppercase;
 }
 
+inline float lerp(float start, float end, float value)
+{
+    return (1.0 - value) * start + value * end;
+}
+
+inline float inv_lerp(float start, float end, float value)
+{
+    return (value - start) / (end - start);
+}
+
+// Inverse lerp on (old, value) followed by lerp on (new, inverse_lerped_value)
+
+inline float lerp_remap(float old_start, float old_end, float new_start, float new_end, float value)
+{
+    return lerp(new_start, new_end, inv_lerp(old_start, old_end, value));
+}
+
 class ButterException
 {
     std::string error_string;

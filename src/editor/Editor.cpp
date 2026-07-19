@@ -11,6 +11,8 @@
 #include "utility/UserSettings.h"
 #include "utility/Debugger.h"
 
+#include "command/exceptions.h"
+
 constexpr int MODULE_MARGIN = 100;
 constexpr int TAB_HEIGHT = 30;
 constexpr int TAB_WIDTH = 90;
@@ -86,6 +88,9 @@ Editor::Editor()
     command_parser = CommandParser();
     command_parser.define_command(command_parser.new_command("log")
         .add_parameter("value", CommandParser::ParamType::STRING)
+    );
+    command_parser.define_command(command_parser.new_command("ui_scale")
+        .add_parameter("value", CommandParser::ParamType::INT)
     );
     command_parser.define_command(command_parser.new_command("type_test")
         .add_parameter("int_value", CommandParser::ParamType::INT)
@@ -181,10 +186,16 @@ void Editor::run()
             }
             else
             {
-                command_bar->submit_valid();
-                log_module->push_command("Ran command: " + command.get_root());
-                if (command.get_root() == "log")
-                    log_module->push_command(command.get_string(0));
+                try
+                {
+                    log_module->push_command(execute_command(command));
+                    command_bar->submit_valid();
+                }
+                catch (ExecuteException error)
+                {
+                    command_bar->submit_error();
+                    log_module->push_error(error.message());
+                }
             }
         }
         if (Input().check_key_press(SF_KEY::P, KeyMod::CTRL))
@@ -238,6 +249,23 @@ float Editor::get_delta_time()
 CommandParser& Editor::get_command_parser()
 {
     return command_parser;
+}
+
+std::string Editor::run_command(std::string command, bool throw_errors)
+{
+    CommandResult result = command_parser.parse(command_bar->get_command());
+    if (!result.valid())
+        return "";
+    try
+    {
+        return execute_command(result);
+    }
+    catch (ExecuteException error)
+    {
+        if (throw_errors)
+            throw error;
+        return "";
+    }
 }
 
 void Editor::on_resized(sf::Vector2i new_size)
@@ -378,4 +406,30 @@ void Editor::resize_modules()
     temp_menu_bar->set_size(sf::Vector2f(x_divider, tab_height));
     menu_bar_text->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
     menu_bar_text->set_char_size((unsigned)(19.f * ui_scale));
+}
+    
+std::string Editor::execute_command(CommandResult command)
+{
+    std::string root = command.get_root();
+
+    if (root == "log")
+    {
+        return "* " + command.get_string(0);
+    }
+
+    else if (root == "ui_scale")
+    {
+        command_parser.validate_range(command.get_int(0), -3, 10);
+        ui_scale_index = command.get_int(0);
+        ui_scale = 1.f + (float)ui_scale_index * 0.1f;
+        resize_modules();
+        return "Set UI scale to " + std::to_string(ui_scale_index) + ".";
+    }
+
+    else if (root == "type_test")
+    {
+        command_parser.validate_range(command.get_float(3), 0.0, 99999.0);
+    }
+
+    return "Execution was successful.";
 }

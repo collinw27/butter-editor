@@ -298,17 +298,17 @@ CommandResult::Field CommandParser::parse_arg(ParamType param_type, std::string 
 void CommandParser::validate_range(int arg, int min_val, int max_val)
 {
     if (arg < min_val)
-        throw ParseException((std::stringstream("Integer out of range: ") << arg << " < " << min_val).str());
+        throw ExecuteException((std::stringstream{} << "Integer out of range: " << arg << " < " << min_val).str());
     if (arg > max_val)
-        throw ParseException((std::stringstream("Integer out of range: ") << arg << " > " << max_val).str());
+        throw ExecuteException((std::stringstream{} << "Integer out of range: " << arg << " > " << max_val).str());
 }
 
 void CommandParser::validate_range(float arg, float min_val, float max_val)
 {
     if (arg < min_val)
-        throw ParseException((std::stringstream("Float out of range: ") << arg << " < " << min_val).str());
+        throw ExecuteException((std::stringstream{} << "Float out of range: " << arg << " < " << min_val).str());
     if (arg > max_val)
-        throw ParseException((std::stringstream("Float out of range: ") << arg << " > " << max_val).str());
+        throw ExecuteException((std::stringstream{} << "Float out of range: " << arg << " > " << max_val).str());
 }
 
 void CommandParser::lex_separator(std::stringstream& stream)
