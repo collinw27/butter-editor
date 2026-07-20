@@ -65,6 +65,8 @@ private:
     inline void backspace(bool delete_word);
     inline void delete_ahead(bool delete_word);
     void remove_selected_chars();
+    void copy();
+    void paste();
     void move_cursor(bool forward, MoveMode mode, bool do_select);
     inline void reset_selection();
     void select_all();

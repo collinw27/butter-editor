@@ -36,7 +36,6 @@ private:
     {
         std::string root;
         std::vector<Parameter> parameters;
-        std::unordered_set<std::string> flags;
 
         Definition(std::string root);
 
@@ -58,11 +57,17 @@ public:
 
     CommandParser();
     Definition new_command(std::string root);
-    void define_command(Definition definition);
+    void define_command(Definition definition);    
 
     CommandResult parse(std::string source);
     CommandStructure parse_structure(std::string source);
     CommandResult::Field parse_arg(ParamType param_type, std::string token);
+
+    // Command info
+    
+    unsigned get_param_count(std::string root);
+    std::string get_param_name(std::string root, unsigned index);
+    ParamType get_param_type(std::string root, unsigned index);
 
     // Argument validation
     // Caveat: Performs validation on PARSED result, not token itself

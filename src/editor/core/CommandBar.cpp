@@ -53,6 +53,15 @@ void CommandBar::update(const std::string& typed_string)
         move_cursor(pressed_r, (Input().check_ctrl() ? MoveMode::WORD : MoveMode::ONE), Input().check_shift());
     if (pressed_home || pressed_end)
         move_cursor(pressed_end, MoveMode::ALL, Input().check_shift());
+    if (Input().check_key_press(SF_KEY::C, KeyMod::CTRL) && cursor_end != -1)
+        copy();
+    if (Input().check_key_press(SF_KEY::X, KeyMod::CTRL) && cursor_end != -1)
+    {
+        copy();
+        remove_selected_chars();
+    }
+    if (Input().check_key_press(SF_KEY::V, KeyMod::CTRL))
+        paste();
     if (Input().check_key_press(SF_KEY::A, KeyMod::CTRL))
         (Input().check_shift() ? reset_selection() : select_all());
     if (Input().check_key_press(SF_KEY::Up))
@@ -175,7 +184,7 @@ void CommandBar::append(const std::string& raw_text)
         // Remove any selected text
         
         if (cursor_end != -1)
-        remove_selected_chars();
+            remove_selected_chars();
         
         // Add the text
 
@@ -241,6 +250,21 @@ void CommandBar::remove_selected_chars()
     cursor_end = -1;
     cursor_time = 0.f;
     text_updated = true;
+}
+
+void CommandBar::copy()
+{
+    if (cursor_end == -1)
+        return;
+    int start = std::min(cursor_start, cursor_end);
+    int end = std::max(cursor_start, cursor_end);
+    std::string selection = command.substr(start, end - start);
+    sf::Clipboard::setString(selection);
+}
+
+void CommandBar::paste()
+{
+    append(sf::Clipboard::getString());
 }
 
 void CommandBar::move_cursor(bool forward, MoveMode mode, bool do_select)
@@ -315,7 +339,8 @@ void CommandBar::traverse_history(int delta)
 
 void CommandBar::render_text()
 {
-    CommandStructure structure = editor.get_command_parser().parse_structure(command);
+    CommandParser& parser = editor.get_command_parser();
+    CommandStructure structure = parser.parse_structure(command);
 
     // In the case that there is an error in the command, text formatting is simple
 
@@ -337,11 +362,13 @@ void CommandBar::render_text()
             switch (this_type)
             {
             case CommandStructure::TokenType::BOOL:
-                this_color = sf::Color(249, 135, 255);
+                this_color = sf::Color(255, 239, 115);
             break;
             case CommandStructure::TokenType::INT:
-            case CommandStructure::TokenType::FLOAT:
                 this_color = sf::Color(122, 198, 255);
+            break;
+            case CommandStructure::TokenType::FLOAT:
+                this_color = sf::Color(249, 135, 255);
             break;
             case CommandStructure::TokenType::STRING:
                 this_color = sf::Color(107, 255, 127);
@@ -351,6 +378,21 @@ void CommandBar::render_text()
             break;
             }
             command_text->add_color(this_color, structure.get_token_start(i) + 2);
+        }
+        
+        // Hints are shown for remaining arguments
+
+        if (structure.get_size() >= 1)
+        {
+            command_text->add_color(Editor::C_HIGHLIGHT_SUBTLE);
+            if (command_text->get_string().back() != ' ')
+                command_text->add_string(" ");
+            std::string root = structure.get_token(0);
+            for (int i = structure.get_size() - 1; i < parser.get_param_count(root); ++i)
+            {
+                std::string p_name = parser.get_param_name(root, i);
+                command_text->add_string("<" + p_name + "> ");
+            }
         }
     }
 

@@ -3,7 +3,6 @@
 #include <sstream>
 #include "utility/core.h"
 #include "command/exceptions.h"
-#include "utility/Logger.h"
 
 CommandParser::Definition::Definition(std::string root)
 {
@@ -293,6 +292,30 @@ CommandResult::Field CommandParser::parse_arg(ParamType param_type, std::string 
     break;
     }
     return field;
+}
+
+unsigned CommandParser::get_param_count(std::string root)
+{
+    auto definition = defined_commands.find(root);
+    if (definition == defined_commands.end())
+        throw ButterException("Nonexistent command");
+    return definition->second.parameters.size();
+}
+
+std::string CommandParser::get_param_name(std::string root, unsigned index)
+{
+    auto definition = defined_commands.find(root);
+    if (definition == defined_commands.end())
+        throw ButterException("Nonexistent command");
+    return definition->second.parameters.at(index).name;
+}
+
+CommandParser::ParamType CommandParser::get_param_type(std::string root, unsigned index)
+{
+    auto definition = defined_commands.find(root);
+    if (definition == defined_commands.end())
+        throw ButterException("Nonexistent command");
+    return definition->second.parameters.at(index).param_type;
 }
 
 void CommandParser::validate_range(int arg, int min_val, int max_val)
