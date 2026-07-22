@@ -10,6 +10,7 @@
 #include "editor/core/CommandBar.h"
 #include "editor/core/DragMouse.h"
 #include "editor/core/LogModule.h"
+#include "editor/project/Project.h"
 
 class Editor
 {
@@ -73,6 +74,10 @@ private:
 
     int y_divider;
     int x_divider;
+
+    // Project
+
+    Project* project;
 
 public:
 

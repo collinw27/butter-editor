@@ -20,12 +20,14 @@ class CommandResult
     bool is_valid = false;
     std::string error = "";
     std::string root = "";
+    int root_id = -1;
     std::vector<Field> fields {};
 
 public:
 
-    bool valid();
+    bool check_valid();
     std::string get_root();
+    int get_root_id();
     std::string get_error();
 
     // There is very little type safety when extracting values

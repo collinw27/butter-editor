@@ -1,13 +1,15 @@
+#ifndef COMMAND_STRUCTURE_H
+#define COMMAND_STRUCTURE_H
+
+#include <vector>
+#include <string>
+#include <optional>
 
 // Instead of actually parsing the command using the
 // command definition, this class is responsible for breaking
 // the input into tokens and returning a datatype for each
 
 // Constructed in-place using friend class CommandParser
-
-#include <vector>
-#include <string>
-#include <optional>
 
 class CommandParser;
 
@@ -56,3 +58,5 @@ public:
 
     friend CommandParser;
 };
+
+#endif

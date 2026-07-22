@@ -67,6 +67,7 @@ file(
     "src/graphics/*.cpp"
     "src/graphics/**/*.cpp"
     "src/utility/*.cpp"
+    "src/utility/**/*.cpp"
     "src/command/*.cpp"
 )
 

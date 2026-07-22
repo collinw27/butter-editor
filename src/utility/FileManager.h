@@ -1,11 +1,11 @@
 #ifndef FILE_MANAGER_H
 #define FILE_MANAGER_H
 
-#include <SFML/Graphics.hpp>
 #include <filesystem>
 #include <string>
 #include <utility> // for std::pair
-#include "utility/UserSettings.h"
+#include <SFML/Graphics.hpp>
+#include "utility/file_formats/UserSettings.h"
 
 class FileManagerSingleton;
 
@@ -41,8 +41,11 @@ public:
 private:
 
     void load_user_settings();
-    std::pair<std::string, std::string> file_read_data_line(std::ifstream& file);
-    int32_t file_read_int(std::string input, int32_t min_val = INT32_MIN, int32_t max_val = INT32_MAX);
+
+public:
+
+    static std::pair<std::string, std::string> file_read_data_line(std::ifstream& file);
+    static int32_t file_read_int(std::string input, int32_t min_val = INT32_MIN, int32_t max_val = INT32_MAX);
 };
 
 #endif

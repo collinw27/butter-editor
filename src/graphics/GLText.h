@@ -1,5 +1,5 @@
-#ifndef GL_TEXT_H
-#define GL_TEXT_H
+#ifndef BUTTERGL_TEXT_H
+#define BUTTERGL_TEXT_H
 
 #include <map>
 #include <GL/glew.h>

@@ -1,5 +1,5 @@
-#ifndef GL_ROOT_NODE_H
-#define GL_ROOT_NODE_H
+#ifndef BUTTERGL_ROOT_NODE_H
+#define BUTTERGL_ROOT_NODE_H
 
 #include "graphics/GLNode.h"
 

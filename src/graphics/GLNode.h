@@ -1,5 +1,5 @@
-#ifndef GLNODE_H
-#define GLNODE_H
+#ifndef BUTTERGL_NODE_H
+#define BUTTERGL_NODE_H
 
 #include <vector>
 #include <SFML/Graphics.hpp>

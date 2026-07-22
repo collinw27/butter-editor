@@ -48,6 +48,7 @@ public:
     
     void set_bounds(const sf::IntRect& new_bounds);
     void set_ui_scale(float new_scale);
+    void set_status_text(std::string name);
 
     bool attempt_clear();
     void submit_valid();

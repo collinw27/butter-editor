@@ -4,9 +4,10 @@
 #include "utility/core.h"
 #include "command/exceptions.h"
 
-CommandParser::Definition::Definition(std::string root)
+CommandParser::Definition::Definition(std::string root, int id)
 {
     this->root = root;
+    this->id = id;
 }
 
 CommandParser::Definition& CommandParser::Definition::add_parameter(std::string param_name, ParamType param_type)
@@ -22,9 +23,9 @@ CommandParser::CommandParser()
     float_regex = std::regex("-?[0-9]*(\\.[0-9]+)?((e|E)-?[0-9]+)?");
 }
 
-CommandParser::Definition CommandParser::new_command(std::string root)
+CommandParser::Definition CommandParser::new_command(std::string root, int id)
 {
-    return CommandParser::Definition(root);
+    return CommandParser::Definition(root, id);
 }
 
 void CommandParser::define_command(CommandParser::Definition definition)
@@ -51,6 +52,7 @@ CommandResult CommandParser::parse(std::string source)
         CommandResult result {};
         result.is_valid = true;
         result.root = structure.get_token(0);
+        result.root_id = command_definition->second.id;
 
         for (int i = 0; i < parameters.size(); ++i)
         {

@@ -107,6 +107,11 @@ void CommandBar::set_ui_scale(float new_scale)
     render_text();
 }
 
+void CommandBar::set_status_text(std::string name)
+{
+    status_text->set_string(name + "  |  00h 00m 00s 000ms");
+}
+
 // Returns whether anything was cleared
 
 bool CommandBar::attempt_clear()
@@ -365,7 +370,7 @@ void CommandBar::render_text()
                 this_color = sf::Color(255, 239, 115);
             break;
             case CommandStructure::TokenType::INT:
-                this_color = sf::Color(122, 198, 255);
+                this_color = sf::Color(122, 246, 255);
             break;
             case CommandStructure::TokenType::FLOAT:
                 this_color = sf::Color(249, 135, 255);

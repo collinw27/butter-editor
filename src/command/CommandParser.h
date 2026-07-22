@@ -35,9 +35,10 @@ private:
     class Definition
     {
         std::string root;
+        int id;
         std::vector<Parameter> parameters;
 
-        Definition(std::string root);
+        Definition(std::string root, int id);
 
     public:
 
@@ -56,7 +57,7 @@ private:
 public:
 
     CommandParser();
-    Definition new_command(std::string root);
+    Definition new_command(std::string root, int id);
     void define_command(Definition definition);    
 
     CommandResult parse(std::string source);

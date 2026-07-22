@@ -1,5 +1,5 @@
-#ifndef GL_CONTAINER_H
-#define GL_CONTAINER_H
+#ifndef BUTTERGL_CONTAINER_H
+#define BUTTERGL_CONTAINER_H
 
 #include "graphics/GLNode.h"
 

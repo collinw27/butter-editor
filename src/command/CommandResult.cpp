@@ -2,7 +2,7 @@
 
 #include "utility/core.h"
 
-bool CommandResult::valid()
+bool CommandResult::check_valid()
 {
     return is_valid;
 }
@@ -10,6 +10,11 @@ bool CommandResult::valid()
 std::string CommandResult::get_root()
 {
     return is_valid ? root : "";
+}
+
+int CommandResult::get_root_id()
+{
+    return is_valid ? root_id : -1;
 }
 
 std::string CommandResult::get_error()

@@ -1,5 +1,5 @@
-#ifndef GL_OUTLINED_RECTANGLE_H
-#define GL_OUTLINED_RECTANGLE_H
+#ifndef BUTTERGL_OUTLINED_RECTANGLE_H
+#define BUTTERGL_OUTLINED_RECTANGLE_H
 
 #include <GL/glew.h>
 #include <SFML/Graphics.hpp>

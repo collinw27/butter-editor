@@ -1,5 +1,5 @@
-#ifndef EDITOR_PANE_H
-#define EDITOR_PANE_H
+#ifndef EDITOR_MODULE_H
+#define EDITOR_MODULE_H
 
 #include "graphics/nodes.h"
 

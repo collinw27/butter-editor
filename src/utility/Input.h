@@ -1,5 +1,5 @@
-#ifndef InputSingleton_MANAGER_H
-#define InputSingleton_MANAGER_H
+#ifndef INPUT_H
+#define INPUT_H
 
 #include <vector>
 #include <SFML/Graphics.hpp>

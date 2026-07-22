@@ -1,5 +1,5 @@
-#ifndef GL_RECTANGLE_H
-#define GL_RECTANGLE_H
+#ifndef BUTTERGL_RECTANGLE_H
+#define BUTTERGL_RECTANGLE_H
 
 #include <GL/glew.h>
 #include <SFML/Graphics.hpp>

@@ -8,7 +8,7 @@
 #include "utility/Input.h"
 #include "utility/Logger.h"
 #include "utility/FileManager.h"
-#include "utility/UserSettings.h"
+#include "utility/file_formats/UserSettings.h"
 #include "utility/Debugger.h"
 
 #include "command/exceptions.h"
@@ -16,7 +16,7 @@
 constexpr int MODULE_MARGIN = 100;
 constexpr int TAB_HEIGHT = 30;
 constexpr int TAB_WIDTH = 90;
-constexpr int CMD_HEIGHT = 20;
+constexpr int C_BAR_HEIGHT = 20;
 
 const sf::Color Editor::C_BG{0, 0, 0};
 const sf::Color Editor::C_FG{90, 90, 90};
@@ -25,6 +25,16 @@ const sf::Color Editor::C_HIGHLIGHT{90, 90, 90};
 const sf::Color Editor::C_HIGHLIGHT_SUBTLE{50, 50, 50};
 const sf::Color Editor::C_FG_DESELECTED{50, 50, 50};
 const sf::Color Editor::C_INVALID{255, 120, 120};
+
+enum {
+    CMD_LOG,
+    CMD_UI_SCALE,
+    CMD_TYPE_TEST,
+    CMD_NEW,
+    CMD_SAVE,
+    CMD_SAVE_AS,
+    CMD_LOAD
+};
 
 Editor::Editor()
 {
@@ -86,19 +96,31 @@ Editor::Editor()
     // Command setup
 
     command_parser = CommandParser();
-    command_parser.define_command(command_parser.new_command("log")
+    command_parser.define_command(command_parser.new_command("log", (int) CMD_LOG)
         .add_parameter("value", CommandParser::ParamType::STRING)
     );
-    command_parser.define_command(command_parser.new_command("ui_scale")
+    command_parser.define_command(command_parser.new_command("ui_scale", (int) CMD_UI_SCALE)
         .add_parameter("value", CommandParser::ParamType::INT)
     );
-    command_parser.define_command(command_parser.new_command("type_test")
+    command_parser.define_command(command_parser.new_command("type_test", (int) CMD_TYPE_TEST)
         .add_parameter("int_value", CommandParser::ParamType::INT)
         .add_parameter("uint_value", CommandParser::ParamType::U_INT)
         .add_parameter("string_value", CommandParser::ParamType::STRING)
         .add_parameter("float_value", CommandParser::ParamType::FLOAT)
         .add_parameter("bool_value", CommandParser::ParamType::BOOL)
     );
+    command_parser.define_command(command_parser.new_command("new", (int) CMD_NEW));
+    command_parser.define_command(command_parser.new_command("save", (int) CMD_SAVE));
+    command_parser.define_command(command_parser.new_command("save_as", (int) CMD_SAVE_AS)
+        .add_parameter("name", CommandParser::ParamType::STRING)
+    );
+    command_parser.define_command(command_parser.new_command("load", (int) CMD_LOAD)
+        .add_parameter("name", CommandParser::ParamType::STRING)
+    );
+
+    // Create default project
+
+    project = new Project();
 }
 
 Editor::~Editor()
@@ -179,7 +201,7 @@ void Editor::run()
                 using_terminal = false;
                 command_bar->set_typing(false);
             }
-            else if (!command.valid())
+            else if (!command.check_valid())
             {
                 command_bar->submit_error();
                 log_module->push_error(command.get_error());
@@ -254,7 +276,7 @@ CommandParser& Editor::get_command_parser()
 std::string Editor::run_command(std::string command, bool throw_errors)
 {
     CommandResult result = command_parser.parse(command_bar->get_command());
-    if (!result.valid())
+    if (!result.check_valid())
         return "";
     try
     {
@@ -378,7 +400,7 @@ sf::Vector2i Editor::get_mouse_position()
 void Editor::resize_modules()
 {
     int tab_height = (int)(TAB_HEIGHT * ui_scale);
-    int cmd_height = (int)(CMD_HEIGHT * ui_scale);
+    int cmd_height = (int)(C_BAR_HEIGHT * ui_scale);
     int tab_width = (int)(TAB_WIDTH * ui_scale);
 
     // Modules
@@ -410,25 +432,61 @@ void Editor::resize_modules()
     
 std::string Editor::execute_command(CommandResult command)
 {
-    std::string root = command.get_root();
+    // Command ID allows switch to be used, which is better practice
+    // than a long chain of if-else with strings
 
-    if (root == "log")
+    int root = command.get_root_id();
+
+    switch (root)
     {
+    case CMD_LOG:
+    
         return "* " + command.get_string(0);
-    }
 
-    else if (root == "ui_scale")
-    {
+    case CMD_UI_SCALE:
+    
         command_parser.validate_range(command.get_int(0), -3, 10);
         ui_scale_index = command.get_int(0);
         ui_scale = 1.f + (float)ui_scale_index * 0.1f;
         resize_modules();
         return "Set UI scale to " + std::to_string(ui_scale_index) + ".";
-    }
 
-    else if (root == "type_test")
-    {
+    case CMD_TYPE_TEST:
+    
         command_parser.validate_range(command.get_float(3), 0.0, 99999.0);
+        break;
+
+    case CMD_NEW:
+
+        if (project)
+            delete project;
+        project = new Project();
+        command_bar->set_status_text(project->get_name());
+        return "Created new project.";
+
+    case CMD_SAVE:
+
+        if (!project->check_named())
+            throw ExecuteException("Unnamed projects must use `save_as`.");
+        project->save();
+        return "Saved project \"" + project->get_name() + "\"";
+
+    case CMD_SAVE_AS:
+    
+        project->set_name(command.get_string(0));
+        command_bar->set_status_text(project->get_name());
+        project->save();
+        return "Saved project \"" + project->get_name() + "\"";
+
+    case CMD_LOAD:
+    
+        if (!Project::exists(command.get_string(0)))
+            throw ExecuteException("Nonexistent project \"" + command.get_string(0) + "\"");
+        if (project)
+            delete project;
+        project = new Project(command.get_string(0));
+        command_bar->set_status_text(project->get_name());
+        return "Loaded project \"" + project->get_name() + "\"";
     }
 
     return "Execution was successful.";
