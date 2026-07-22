@@ -12,7 +12,7 @@
 
 class Project
 {
-    std::optional<std::string> name;
+    std::optional<std::string> name; 
     int test_number;
 
 public:
@@ -20,7 +20,7 @@ public:
     Project();
     Project(std::string name);
 
-    bool check_named();
+    bool named();
     std::string get_name();
     void set_name(std::string name);
 

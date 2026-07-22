@@ -10,7 +10,7 @@
 #include "editor/core/CommandBar.h"
 #include "editor/core/DragMouse.h"
 #include "editor/core/LogModule.h"
-#include "editor/project/Project.h"
+#include "project/Project.h"
 
 class Editor
 {
@@ -101,6 +101,7 @@ private:
 
     void resize_modules();
     
+    void initialize_commands();
     std::string execute_command(CommandResult command);
 };
 

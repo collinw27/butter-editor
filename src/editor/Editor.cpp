@@ -26,16 +26,6 @@ const sf::Color Editor::C_HIGHLIGHT_SUBTLE{50, 50, 50};
 const sf::Color Editor::C_FG_DESELECTED{50, 50, 50};
 const sf::Color Editor::C_INVALID{255, 120, 120};
 
-enum {
-    CMD_LOG,
-    CMD_UI_SCALE,
-    CMD_TYPE_TEST,
-    CMD_NEW,
-    CMD_SAVE,
-    CMD_SAVE_AS,
-    CMD_LOAD
-};
-
 Editor::Editor()
 {
     // SFML setup
@@ -95,28 +85,7 @@ Editor::Editor()
 
     // Command setup
 
-    command_parser = CommandParser();
-    command_parser.define_command(command_parser.new_command("log", (int) CMD_LOG)
-        .add_parameter("value", CommandParser::ParamType::STRING)
-    );
-    command_parser.define_command(command_parser.new_command("ui_scale", (int) CMD_UI_SCALE)
-        .add_parameter("value", CommandParser::ParamType::INT)
-    );
-    command_parser.define_command(command_parser.new_command("type_test", (int) CMD_TYPE_TEST)
-        .add_parameter("int_value", CommandParser::ParamType::INT)
-        .add_parameter("uint_value", CommandParser::ParamType::U_INT)
-        .add_parameter("string_value", CommandParser::ParamType::STRING)
-        .add_parameter("float_value", CommandParser::ParamType::FLOAT)
-        .add_parameter("bool_value", CommandParser::ParamType::BOOL)
-    );
-    command_parser.define_command(command_parser.new_command("new", (int) CMD_NEW));
-    command_parser.define_command(command_parser.new_command("save", (int) CMD_SAVE));
-    command_parser.define_command(command_parser.new_command("save_as", (int) CMD_SAVE_AS)
-        .add_parameter("name", CommandParser::ParamType::STRING)
-    );
-    command_parser.define_command(command_parser.new_command("load", (int) CMD_LOAD)
-        .add_parameter("name", CommandParser::ParamType::STRING)
-    );
+    initialize_commands();
 
     // Create default project
 
@@ -201,7 +170,7 @@ void Editor::run()
                 using_terminal = false;
                 command_bar->set_typing(false);
             }
-            else if (!command.check_valid())
+            else if (!command.valid())
             {
                 command_bar->submit_error();
                 log_module->push_error(command.get_error());
@@ -276,7 +245,7 @@ CommandParser& Editor::get_command_parser()
 std::string Editor::run_command(std::string command, bool throw_errors)
 {
     CommandResult result = command_parser.parse(command_bar->get_command());
-    if (!result.check_valid())
+    if (!result.valid())
         return "";
     try
     {
@@ -428,66 +397,4 @@ void Editor::resize_modules()
     temp_menu_bar->set_size(sf::Vector2f(x_divider, tab_height));
     menu_bar_text->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
     menu_bar_text->set_char_size((unsigned)(19.f * ui_scale));
-}
-    
-std::string Editor::execute_command(CommandResult command)
-{
-    // Command ID allows switch to be used, which is better practice
-    // than a long chain of if-else with strings
-
-    int root = command.get_root_id();
-
-    switch (root)
-    {
-    case CMD_LOG:
-    
-        return "* " + command.get_string(0);
-
-    case CMD_UI_SCALE:
-    
-        command_parser.validate_range(command.get_int(0), -3, 10);
-        ui_scale_index = command.get_int(0);
-        ui_scale = 1.f + (float)ui_scale_index * 0.1f;
-        resize_modules();
-        return "Set UI scale to " + std::to_string(ui_scale_index) + ".";
-
-    case CMD_TYPE_TEST:
-    
-        command_parser.validate_range(command.get_float(3), 0.0, 99999.0);
-        break;
-
-    case CMD_NEW:
-
-        if (project)
-            delete project;
-        project = new Project();
-        command_bar->set_status_text(project->get_name());
-        return "Created new project.";
-
-    case CMD_SAVE:
-
-        if (!project->check_named())
-            throw ExecuteException("Unnamed projects must use `save_as`.");
-        project->save();
-        return "Saved project \"" + project->get_name() + "\"";
-
-    case CMD_SAVE_AS:
-    
-        project->set_name(command.get_string(0));
-        command_bar->set_status_text(project->get_name());
-        project->save();
-        return "Saved project \"" + project->get_name() + "\"";
-
-    case CMD_LOAD:
-    
-        if (!Project::exists(command.get_string(0)))
-            throw ExecuteException("Nonexistent project \"" + command.get_string(0) + "\"");
-        if (project)
-            delete project;
-        project = new Project(command.get_string(0));
-        command_bar->set_status_text(project->get_name());
-        return "Loaded project \"" + project->get_name() + "\"";
-    }
-
-    return "Execution was successful.";
 }

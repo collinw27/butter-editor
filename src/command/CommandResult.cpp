@@ -2,7 +2,7 @@
 
 #include "utility/core.h"
 
-bool CommandResult::check_valid()
+bool CommandResult::valid()
 {
     return is_valid;
 }

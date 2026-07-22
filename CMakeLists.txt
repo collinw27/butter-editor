@@ -62,13 +62,15 @@ target_link_libraries(common INTERFACE
 target_compile_features(common INTERFACE cxx_std_17)
 file(
     GLOB butter_SRC
+    "src/command/*.cpp"
     "src/editor/*.cpp"
     "src/editor/**/*.cpp"
     "src/graphics/*.cpp"
     "src/graphics/**/*.cpp"
+    "src/project/*.cpp"
+    "src/project/**/*.cpp"
     "src/utility/*.cpp"
     "src/utility/**/*.cpp"
-    "src/command/*.cpp"
 )
 
 # MAIN EXECUTABLE

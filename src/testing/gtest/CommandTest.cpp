@@ -9,7 +9,7 @@ CommandParser* command_parser;
 bool test_success(std::string command, std::vector<std::string> expected)
 {
     CommandResult result = command_parser->parse(command);
-    if (!result.check_valid())
+    if (!result.valid())
     {
         std::cout << "Unexpected failure: " << result.get_error() << std::endl;
         return false;
@@ -58,7 +58,7 @@ bool test_error(std::string command, std::string error_name)
 bool test_error(std::string command)
 {
     CommandResult result = command_parser->parse(command);
-    if (!result.check_valid())
+    if (!result.valid())
         return true;
     std::cout << "Unexpected success" << std::endl;
     return false;

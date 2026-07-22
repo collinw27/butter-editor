@@ -1,4 +1,4 @@
-#include "Project.h"
+#include "project/Project.h"
 
 #include "utility/core.h"
 #include "utility/FileManager.h"
@@ -20,7 +20,7 @@ Project::Project(std::string name)
     file >> test_number;
 }
 
-bool Project::check_named()
+bool Project::named()
 {
     return name.has_value();
 }

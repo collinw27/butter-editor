@@ -351,7 +351,7 @@ void CommandBar::render_text()
 
     command_text->reset_formatting();
     command_text->set_string("> " + command);
-    if ((invalid_command || !structure.check_valid()) && !command.empty())
+    if ((invalid_command || !structure.valid()) && !command.empty())
     {
         command_text->add_color(Editor::C_INVALID, 0);
     }
@@ -420,7 +420,7 @@ void CommandBar::render_text()
         selection_rect->set_visible(true);
         selection_rect->set_fill_color(Editor::C_HIGHLIGHT);
     }
-    else if (structure.check_valid())
+    else if (structure.valid())
     {
         // Find if there's a token we're inside of
 

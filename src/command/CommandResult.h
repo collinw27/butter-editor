@@ -25,7 +25,7 @@ class CommandResult
 
 public:
 
-    bool check_valid();
+    bool valid();
     std::string get_root();
     int get_root_id();
     std::string get_error();
