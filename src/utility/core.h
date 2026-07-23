@@ -4,7 +4,14 @@
 #include <string>
 #include <algorithm>
 #include <glm/glm.hpp>
+#include <cstdint>
+#include <iomanip>
+#include <sstream>
 #include "SFML/Graphics.hpp"
+
+// Type aliases
+
+using TimelinePos = std::uint32_t;
 
 // Doesn't validate that a < b
 
@@ -52,6 +59,31 @@ inline glm::vec4 to_gl(sf::Color col, float alpha)
 inline glm::vec3 to_gl3(sf::Color col)
 {
     return glm::vec3(col.r / 255.0, col.g / 255.0, col.b / 255.0);
+}
+
+// This method doesn't perform any validation on the string
+// Use a regex if accepting user input
+// Expects "#------"
+
+inline sf::Color hex_to_color(std::string hex)
+{
+    // ((___ << 8) + 255) used to set opacity to full
+    // Did you know that + takes precedence over << ? I didn't!
+    // What an interesting design choice!
+    // That was a cool debugging session
+
+    return sf::Color((((std::uint32_t) std::stoi(hex.substr(1, 6), 0, 16)) << 8) + 255);
+}
+
+// Omits the # symbol
+
+inline std::string color_to_hex(sf::Color color)
+{
+    return (std::stringstream{} << std::hex << std::setfill('0') << std::setw(2)
+        << ((std::uint32_t) color.r)
+        << ((std::uint32_t) color.g)
+        << ((std::uint32_t) color.b)
+    ).str();
 }
 
 inline std::string to_lower(std::string source)

@@ -2,27 +2,38 @@
 #define PROJECT_H
 
 #include <string>
+#include <vector>
 #include <optional>
 #include <filesystem>
 
+#include "utility/core.h"
+#include "project/timeline/TimelineClip.h"
+
 // All project loading logic is within this class instead of FileManager
-// This does require duplicating some logic, but this strategy provides much more
-// speed since the load function can be tailored to the class structure itself
+// This does require duplicating some logic, but this strategy is much quicker
+// since the load function can be tailored to the class structure itself,
+// and it doesn't require as many intermediate steps
 // Efficiency is important here because project files can be arbitrarily large
 
 class Project
 {
     std::optional<std::string> name; 
-    int test_number;
+    std::vector<TimelineClip*> timeline;
 
 public:
 
     Project();
     Project(std::string name);
+    ~Project();
 
     bool named();
     std::string get_name();
     void set_name(std::string name);
+
+    void add_color_clip(TimelinePos start_time, TimelinePos length, sf::Color color);
+    unsigned get_clip_total();
+    TimelineClip* get_clip_at_index(unsigned index);
+    TimelineClip* get_clip_at_time(TimelinePos time);
 
     void save();
 

@@ -9,7 +9,8 @@ enum {
     CMD_NEW,
     CMD_SAVE,
     CMD_SAVE_AS,
-    CMD_LOAD
+    CMD_LOAD,
+    CMD_CREATE_CLIP
 };
 
 void Editor::initialize_commands()
@@ -35,6 +36,10 @@ void Editor::initialize_commands()
     );
     command_parser.define_command(command_parser.new_command("load", (int) CMD_LOAD)
         .add_parameter("name", CommandParser::ParamType::STRING)
+    );
+    command_parser.define_command(command_parser.new_command("create_clip", (int) CMD_CREATE_CLIP)
+        .add_parameter("start", CommandParser::ParamType::U_INT)
+        .add_parameter("color", CommandParser::ParamType::STRING)
     );
 }
 
@@ -95,7 +100,24 @@ std::string Editor::execute_command(CommandResult command)
         project = new Project(command.get_string(0));
         command_bar->set_status_text(project->get_name());
         return "Loaded project \"" + project->get_name() + "\"";
-    }
+        
+    case CMD_CREATE_CLIP:
 
+        int c_index = -1;
+        std::string provided_name = command.get_string(1);
+        std::vector<std::string> c_names = {"red", "orange", "yellow", "green", "blue", "purple"};
+        for (int i = 0; i < c_names.size(); ++i)
+        {
+            if (provided_name == c_names.at(i) || (provided_name.length() == 1 && provided_name.at(0) == c_names.at(i).at(0)))
+                c_index = i;
+        }
+        if (c_index == -1)
+            throw ExecuteException("Invalid color");
+        std::vector<std::string> colors = {"#ff5959", "#ffa75e", "#ffec5e", "#63ff73", "#73beff", "#e678ff"};
+        project->add_color_clip(command.get_int(0), 0, hex_to_color(colors.at(c_index)));
+        return "Created clip.";
+    
+    }
+        
     return "Execution was successful.";
 }
