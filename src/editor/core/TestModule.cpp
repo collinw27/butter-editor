@@ -13,5 +13,5 @@ TestModule::TestModule(Editor& editor, std::string sample_text)
 
 void TestModule::apply_ui_scale()
 {
-    text->set_char_size((unsigned)(30.f * ui_scale));
+    text->set_char_size((unsigned int)(30.f * ui_scale));
 }

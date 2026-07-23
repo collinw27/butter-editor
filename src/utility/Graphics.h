@@ -43,7 +43,7 @@ class GraphicsSingleton
     sf::RenderWindow* window = nullptr;
     std::vector<std::string> builtin_shaders {};
     std::stack<sf::IntRect> scissors {};
-    unsigned window_active_state = 0u;
+    unsigned int window_active_state = 0u;
 
     GLFont* main_font_obj;
     GLFont* mono_font_obj;
@@ -79,8 +79,8 @@ public:
     void check_gl_errors();
     FT_Library& ft_lib();
 
-    unsigned push_scissor(sf::IntRect bounds);
-    void pop_scissor(unsigned check_index);
+    unsigned int push_scissor(sf::IntRect bounds);
+    void pop_scissor(unsigned int check_index);
 
 
     friend GraphicsSingleton& Graphics();

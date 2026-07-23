@@ -34,10 +34,10 @@ public:
     // In practice, this is fine, since the caller of these functions
     // should already know the command signature with 100% certainty
 
-    bool get_bool(unsigned arg_index);
-    int get_int(unsigned arg_index);
-    float get_float(unsigned arg_index);
-    std::string get_string(unsigned arg_index);
+    bool get_bool(unsigned int arg_index);
+    int get_int(unsigned int arg_index);
+    float get_float(unsigned int arg_index);
+    std::string get_string(unsigned int arg_index);
 
     friend CommandParser;
 };

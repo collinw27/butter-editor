@@ -34,8 +34,8 @@ void LogModule::apply_ui_scale()
 {
     unit_height = lerp_remap(0.6, 2.0, 21.2, 22.2, ui_scale);
     highlight_rect->set_size(sf::Vector2f(bounds.size.x, unit_height * ui_scale));
-    history_text->set_char_size((unsigned)(16.f * ui_scale));
-    error_text->set_char_size((unsigned)(16.f * ui_scale));
+    history_text->set_char_size((unsigned int)(16.f * ui_scale));
+    error_text->set_char_size((unsigned int)(16.f * ui_scale));
     highlight_rect->set_visible(false);
 }
 

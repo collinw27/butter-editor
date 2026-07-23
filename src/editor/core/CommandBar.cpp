@@ -100,7 +100,7 @@ void CommandBar::set_bounds(const sf::IntRect& new_bounds)
 void CommandBar::set_ui_scale(float new_scale)
 {
     ui_scale = new_scale;
-    float text_size = (unsigned)(16.f * ui_scale);
+    float text_size = (unsigned int)(16.f * ui_scale);
     status_text->set_char_size(text_size);
     command_text->set_char_size(text_size);
     cursor_rect->set_size(sf::Vector2f(2, text_size + 7));

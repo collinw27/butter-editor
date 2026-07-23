@@ -240,7 +240,7 @@ FT_Library& GraphicsSingleton::ft_lib()
 // `push_scissor_world()` is the same, but converts world to screen coordinates
 // `pop_scissor()` ensure the same state is being popped as was pushed
 
-unsigned GraphicsSingleton::push_scissor(sf::IntRect bounds)
+unsigned int GraphicsSingleton::push_scissor(sf::IntRect bounds)
 {
     scissors.push(bounds);
     glEnable(GL_SCISSOR_TEST);
@@ -248,7 +248,7 @@ unsigned GraphicsSingleton::push_scissor(sf::IntRect bounds)
     return scissors.size();
 }
 
-void GraphicsSingleton::pop_scissor(unsigned check_index)
+void GraphicsSingleton::pop_scissor(unsigned int check_index)
 {
     if (scissors.size() != check_index)
         throw ButterException("Mismatched scissor stack index");

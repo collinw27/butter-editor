@@ -53,7 +53,7 @@ private:
 
     CommandBar* command_bar;
     std::vector<FlexTab*> flex_tabs;
-    unsigned current_flex_tab;
+    unsigned int current_flex_tab;
     GLContainer* temp_menu_bar;
     GLText* menu_bar_text;
 

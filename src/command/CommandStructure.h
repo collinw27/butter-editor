@@ -33,7 +33,7 @@ private:
     struct Token
     {
         TokenType type;
-        unsigned start_index;
+        unsigned int start_index;
         std::string string;
     };
 
@@ -51,10 +51,10 @@ private:
 public:
 
     bool valid();
-    unsigned get_size();
-    TokenType get_token_type(unsigned index);
-    unsigned get_token_start(unsigned index);
-    std::string get_token(unsigned index);
+    unsigned int get_size();
+    TokenType get_token_type(unsigned int index);
+    unsigned int get_token_start(unsigned int index);
+    std::string get_token(unsigned int index);
 
     friend CommandParser;
 };

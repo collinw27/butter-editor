@@ -44,7 +44,7 @@ void FlexTab::set_ui_scale(float new_scale)
 {
     ui_scale = new_scale;
     text->set_position(sf::Vector2f(bounds.position + sf::Vector2i(4 * ui_scale, 2 * ui_scale)));
-    text->set_char_size((unsigned)(19.f * ui_scale));
+    text->set_char_size((unsigned int)(19.f * ui_scale));
 }
 
 void FlexTab::set_hovering(bool hovering)

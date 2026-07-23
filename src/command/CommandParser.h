@@ -66,9 +66,9 @@ public:
 
     // Command info
     
-    unsigned get_param_count(std::string root);
-    std::string get_param_name(std::string root, unsigned index);
-    ParamType get_param_type(std::string root, unsigned index);
+    unsigned int get_param_count(std::string root);
+    std::string get_param_name(std::string root, unsigned int index);
+    ParamType get_param_type(std::string root, unsigned int index);
 
     // Argument validation
     // Caveat: Performs validation on PARSED result, not token itself

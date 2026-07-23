@@ -31,7 +31,7 @@ void GLContainer::draw()
     glm::vec4 point_a = world_to_screen * global_matrix * glm::vec4(0, 0, 0, 1);
     glm::vec4 point_b = world_to_screen * global_matrix * glm::vec4(size.x, -size.y, 0, 1);
     sf::IntRect bounds = sf::IntRect(sf::Vector2i(point_a.x, window_height + point_b.y), sf::Vector2i(point_b.x - point_a.x, point_a.y - point_b.y));
-    unsigned check_index = Graphics().push_scissor(bounds);
+    unsigned int check_index = Graphics().push_scissor(bounds);
     GLNode::draw();
     Graphics().pop_scissor(check_index);
 }

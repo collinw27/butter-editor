@@ -21,7 +21,7 @@ GLFont::~GLFont()
     FT_Done_Face(font_face);
 }
 
-void GLFont::load_char_map(unsigned char_size)
+void GLFont::load_char_map(unsigned int char_size)
 {
     Graphics().window_set_active(true);
 
@@ -83,7 +83,7 @@ void GLFont::load_char_map(unsigned char_size)
     Graphics().window_set_active(false);
 }
 
-std::map<char, FontChar>& GLFont::get_char_map(unsigned char_size)
+std::map<char, FontChar>& GLFont::get_char_map(unsigned int char_size)
 {
     if (loaded_chars.find(char_size) == loaded_chars.end())
         load_char_map(char_size);

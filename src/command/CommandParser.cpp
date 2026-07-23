@@ -296,7 +296,7 @@ CommandResult::Field CommandParser::parse_arg(ParamType param_type, std::string 
     return field;
 }
 
-unsigned CommandParser::get_param_count(std::string root)
+unsigned int CommandParser::get_param_count(std::string root)
 {
     auto definition = defined_commands.find(root);
     if (definition == defined_commands.end())
@@ -304,7 +304,7 @@ unsigned CommandParser::get_param_count(std::string root)
     return definition->second.parameters.size();
 }
 
-std::string CommandParser::get_param_name(std::string root, unsigned index)
+std::string CommandParser::get_param_name(std::string root, unsigned int index)
 {
     auto definition = defined_commands.find(root);
     if (definition == defined_commands.end())
@@ -312,7 +312,7 @@ std::string CommandParser::get_param_name(std::string root, unsigned index)
     return definition->second.parameters.at(index).name;
 }
 
-CommandParser::ParamType CommandParser::get_param_type(std::string root, unsigned index)
+CommandParser::ParamType CommandParser::get_param_type(std::string root, unsigned int index)
 {
     auto definition = defined_commands.find(root);
     if (definition == defined_commands.end())

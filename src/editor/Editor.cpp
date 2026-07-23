@@ -396,5 +396,5 @@ void Editor::resize_modules()
 
     temp_menu_bar->set_size(sf::Vector2f(x_divider, tab_height));
     menu_bar_text->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
-    menu_bar_text->set_char_size((unsigned)(19.f * ui_scale));
+    menu_bar_text->set_char_size((unsigned int)(19.f * ui_scale));
 }

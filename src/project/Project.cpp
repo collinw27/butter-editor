@@ -101,12 +101,12 @@ void Project::add_color_clip(TimelinePos start_time, TimelinePos length, sf::Col
         timeline.push_back(new_clip);
 }
 
-unsigned Project::get_clip_total()
+unsigned int Project::get_clip_total()
 {
     return timeline.size();
 }
 
-TimelineClip* Project::get_clip_at_index(unsigned index)
+TimelineClip* Project::get_clip_at_index(unsigned int index)
 {
     try
     {

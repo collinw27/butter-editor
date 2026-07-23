@@ -7,7 +7,7 @@
 #include "utility/Graphics.h"
 #include "graphics/GLFont.h"
 
-GLText::GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str)
+GLText::GLText(GLNode* parent, GLFont* font, unsigned int char_size, std::string str)
     : GLNode(parent)
 {
     this->font = font;
@@ -30,7 +30,7 @@ void GLText::init()
     setup_GL();
 }
 
-GLText* GLText::create(GLNode* parent, GLFont* font, unsigned char_size, std::string str)
+GLText* GLText::create(GLNode* parent, GLFont* font, unsigned int char_size, std::string str)
 {
     GLText* instance = new GLText(parent, font, char_size, str);
     instance->init();
@@ -71,7 +71,7 @@ void GLText::draw()
 
         if (do_special_formatting)
         {
-            auto next_format = formatting_body.find((unsigned) i);
+            auto next_format = formatting_body.find((unsigned int) i);
             if (next_format != formatting_body.end())
             {
                 if (auto f_color = dynamic_cast<TextFormat::Color*>(next_format->second))
@@ -165,17 +165,17 @@ void GLText::add_color(sf::Color color)
     add_color(color, str.length());
 }
 
-void GLText::add_color(sf::Color color, unsigned position)
+void GLText::add_color(sf::Color color, unsigned int position)
 {
     formatting_body.emplace(position, new TextFormat::Color(color));
 }
 
-unsigned GLText::get_char_size()
+unsigned int GLText::get_char_size()
 {
     return char_size;
 }
 
-void GLText::set_char_size(unsigned new_size)
+void GLText::set_char_size(unsigned int new_size)
 {
     char_size = new_size;
 }
@@ -204,7 +204,7 @@ void GLText::set_color(sf::Color color)
 // Returns the offset from within this object
 // If index is outside the range of the string, applies to last char
 
-sf::Vector2f GLText::find_char_pos(unsigned index)
+sf::Vector2f GLText::find_char_pos(unsigned int index)
 {
     // See `draw()` for more info on calculations
 
@@ -212,7 +212,7 @@ sf::Vector2f GLText::find_char_pos(unsigned index)
     float x_offset = 0;
     const float y_offset = char_map.find('A')->second.size.y;
     float last_y = 0;
-    for (int i = 0; i < std::min((unsigned)str.length(), index); ++i)
+    for (int i = 0; i < std::min((unsigned int)str.length(), index); ++i)
     {
         auto ch_it = char_map.find(str.at(i));
         if (ch_it == char_map.end())

@@ -16,12 +16,12 @@ class GLText : public GLNode
 {
     GLFont* font;
     std::string str;
-    unsigned char_size;
+    unsigned int char_size;
     float line_spacing = 4.f;
     sf::Color text_color {sf::Color::White};
 
     bool do_special_formatting = false;
-    std::map<unsigned, TextFormat::Instruction*> formatting_body {};
+    std::map<unsigned int, TextFormat::Instruction*> formatting_body {};
 
     GLuint shader_program;
     GLuint VAO;
@@ -33,13 +33,13 @@ class GLText : public GLNode
 
 protected:
     
-    GLText(GLNode* parent, GLFont* font, unsigned char_size, std::string str);
+    GLText(GLNode* parent, GLFont* font, unsigned int char_size, std::string str);
     ~GLText();
     virtual void init();
 
 public:
 
-    static GLText* create(GLNode* parent, GLFont* font, unsigned char_size, std::string str = "");
+    static GLText* create(GLNode* parent, GLFont* font, unsigned int char_size, std::string str = "");
 
 protected:
 
@@ -56,17 +56,17 @@ public:
     void reset_formatting();
     void add_string(std::string text);
     void add_color(sf::Color color);
-    void add_color(sf::Color color, unsigned position);
+    void add_color(sf::Color color, unsigned int position);
 
-    unsigned get_char_size();
-    void set_char_size(unsigned new_size);
+    unsigned int get_char_size();
+    void set_char_size(unsigned int new_size);
     float get_line_spacing();
     void set_line_spacing(float new_spacing);
     
     sf::Color get_color();
     void set_color(sf::Color color);
 
-    sf::Vector2f find_char_pos(unsigned index);
+    sf::Vector2f find_char_pos(unsigned int index);
 
 private: 
 
