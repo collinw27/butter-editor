@@ -30,7 +30,7 @@ public:
     std::string get_name();
     void set_name(std::string name);
 
-    void add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
+    bool add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
     unsigned int get_clip_total();
     TimelineClip* get_clip_at_index(unsigned int index);
     TimelineClip* get_clip_at_time(TimelineUnit time);

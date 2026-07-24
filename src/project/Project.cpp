@@ -75,28 +75,51 @@ void Project::set_name(std::string name)
     this->name = name;
 }
 
+// Returns whether the operation was successful
+// It can fail if there's no space to insert the clip
 
-void Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color)
+bool Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color)
 {
     // Add the color clip to the timeline
     // Find the first position it can slot in before something
     // If this doesn't exist, insert it at the end
 
-    // TODO: Logic for cutting into other clips
-
     ColorClip* new_clip = new ColorClip(start_time, length, color);
-    auto clip = timeline.begin();
-    while (clip < timeline.end())
+    auto next_clip = timeline.begin();
+    while (next_clip < timeline.end())
     {
-        if (start_time < (*clip)->get_start_time())
+        if (start_time < (*next_clip)->get_start_time())
         {
-            timeline.insert(clip, new_clip);
+            // The clip afterward can trim the length of the clip
+            // (0 length = no clip inserted)
+
+            TimelineUnit new_length = std::min(length, (*next_clip)->get_start_time() - start_time);
+            if (new_length <= 0)
+                return false;
+            new_clip->set_length(new_length);
+
+            // If this passed, proceed to clip inserting logic
+            // (Takes place after loop to also account for case where the clip
+            // is inserted at the end of the vector)
+
             break;
         }
-        ++clip;
+        ++next_clip;
     }
-    if (clip == timeline.end())
-        timeline.push_back(new_clip);
+
+    // If the start is placed inside another clip, no clip is created
+
+    if (next_clip != timeline.begin())
+    {
+        auto prev_clip = next_clip - 1;
+        if ((*prev_clip)->get_end_time() > start_time)
+            return false;
+    }
+
+    // If all checks passed, insert clip
+    
+    timeline.insert(next_clip, new_clip);
+    return true;
 }
 
 unsigned int Project::get_clip_total()
