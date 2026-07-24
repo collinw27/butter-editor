@@ -13,7 +13,7 @@ int main()
 {
     try
     {
-        FileManagerSingleton* resource_manager = new FileManagerSingleton();
+        FileManagerSingleton* file_manager = new FileManagerSingleton();
         GraphicsSingleton* graphics = new GraphicsSingleton();
         LoggerSingleton* logger = new LoggerSingleton();
         InputSingleton* input_manager = new InputSingleton();
@@ -23,7 +23,7 @@ int main()
         editor->run();
         
         delete editor;
-        delete resource_manager;
+        delete file_manager;
         delete graphics;
         delete logger;
         delete input_manager;

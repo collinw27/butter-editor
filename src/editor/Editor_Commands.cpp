@@ -75,6 +75,7 @@ std::string Editor::execute_command(CommandResult command)
             delete project;
         project = new Project();
         command_bar->set_status_text(project->get_name());
+        timeline_module->refresh_clips();
         return "Created new project.";
 
     case CMD_SAVE:
@@ -99,6 +100,7 @@ std::string Editor::execute_command(CommandResult command)
             delete project;
         project = new Project(command.get_string(0));
         command_bar->set_status_text(project->get_name());
+        timeline_module->refresh_clips();
         return "Loaded project \"" + project->get_name() + "\"";
         
     case CMD_CREATE_CLIP:
@@ -114,7 +116,8 @@ std::string Editor::execute_command(CommandResult command)
         if (c_index == -1)
             throw ExecuteException("Invalid color");
         std::vector<std::string> colors = {"#ff5959", "#ffa75e", "#ffec5e", "#63ff73", "#73beff", "#e678ff"};
-        project->add_color_clip(command.get_int(0), 0, hex_to_color(colors.at(c_index)));
+        project->add_color_clip(command.get_int(0), 10, hex_to_color(colors.at(c_index)));
+        timeline_module->refresh_clips();
         return "Created clip.";
     
     }

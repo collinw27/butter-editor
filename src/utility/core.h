@@ -11,7 +11,7 @@
 
 // Type aliases
 
-using TimelinePos = std::uint32_t;
+using TimelineUnit = std::uint32_t;
 
 // Doesn't validate that a < b
 

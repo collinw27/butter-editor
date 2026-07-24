@@ -2,14 +2,14 @@
 
 #include "utility/core.h"
 
-ColorClip::ColorClip(TimelinePos start_time, sf::Color color)
-    : TimelineClip(start_time)
+ColorClip::ColorClip(TimelineUnit start_time, TimelineUnit length, sf::Color color)
+    : TimelineClip(start_time, length)
 {
     this->color = color;
 }
 
-ColorClip::ColorClip(TimelinePos start_time, std::ifstream& file)
-    : TimelineClip(start_time)
+ColorClip::ColorClip(TimelineUnit start_time, TimelineUnit length, std::ifstream& file)
+    : TimelineClip(start_time, length)
 {
     std::string hex_color;
     file >> hex_color;

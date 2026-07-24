@@ -16,15 +16,18 @@ enum class TimelineClipType
 
 class TimelineClip
 {
-    TimelinePos start_time;
+    TimelineUnit start_time;
+    TimelineUnit length;
 
 public:
 
-    TimelineClip(TimelinePos start_time);
+    TimelineClip(TimelineUnit start_time, TimelineUnit length);
     virtual ~TimelineClip();
 
     virtual int get_clip_type() = 0;
-    TimelinePos get_start_time();
+    TimelineUnit get_start_time();
+    TimelineUnit get_end_time();
+    TimelineUnit get_length();
 
     virtual void save(std::ofstream& file);
 };

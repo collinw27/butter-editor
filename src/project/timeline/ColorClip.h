@@ -12,8 +12,8 @@ class ColorClip : public TimelineClip
 
 public:
 
-    ColorClip(TimelinePos start_time, sf::Color color);
-    ColorClip(TimelinePos start_time, std::ifstream& file);
+    ColorClip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
+    ColorClip(TimelineUnit start_time, TimelineUnit length, std::ifstream& file);
     
     virtual int get_clip_type() override;
     virtual void save(std::ofstream& file) override;

@@ -10,6 +10,7 @@
 #include "editor/core/CommandBar.h"
 #include "editor/core/DragMouse.h"
 #include "editor/core/LogModule.h"
+#include "editor/core/TimelineModule.h"
 #include "project/Project.h"
 
 class Editor
@@ -36,12 +37,13 @@ private:
     // For now, the editor has 3 modules visible at all times
     // Flex modules can be toggled between each other using
     // a list of tabs that appear over it
-    // `visible_modules` uses double pointers to automatically switch
-    // between flex modules without needing to modify the vector
+    // `visible_modules` holds the address of the module variable
+    // This allows the actual module each variable references to be
+    // switched out without having to update `visible_modules`
 
     EditorModule* preview_module;
     EditorModule* flex_module;
-    EditorModule* timeline_module;
+    TimelineModule* timeline_module;
     std::vector<EditorModule**> visible_modules;
     LogModule* log_module;
 
@@ -90,6 +92,8 @@ public:
 
     CommandParser& get_command_parser();
     std::string run_command(std::string command, bool throw_errors = false);
+
+    Project& get_project();
 
 private:
 

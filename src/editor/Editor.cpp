@@ -1,6 +1,7 @@
 #include "editor/Editor.h"
 
 #include "editor/core/DragDivider.h"
+#include "editor/core/TimelineModule.h"
 #include "editor/core/TestModule.h"
 #include "editor/core/LogModule.h"
 
@@ -41,10 +42,10 @@ Editor::Editor()
     // Module setup
 
     preview_module = new EditorModule(*this);
-    timeline_module = new EditorModule(*this);
+    timeline_module = new TimelineModule(*this);
     command_bar = new CommandBar(*this);
     log_module = new LogModule(*this);
-    visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, &timeline_module});
+    visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, (EditorModule**) &timeline_module});
 
     // Flex module setup
     // Like the modules themselves, tab parameters are set during `resize_modules()`
@@ -257,6 +258,11 @@ std::string Editor::run_command(std::string command, bool throw_errors)
             throw error;
         return "";
     }
+}
+
+Project& Editor::get_project()
+{
+    return *project;
 }
 
 void Editor::on_resized(sf::Vector2i new_size)
