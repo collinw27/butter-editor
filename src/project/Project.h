@@ -5,6 +5,7 @@
 #include <vector>
 #include <optional>
 #include <filesystem>
+#include <SFML/Graphics.hpp>
 
 #include "utility/core.h"
 #include "project/timeline/TimelineClip.h"
@@ -19,6 +20,9 @@ class Project
 {
     std::optional<std::string> name; 
     std::vector<TimelineClip*> timeline;
+
+    int framerate = 30;
+    sf::Vector2u resolution {400, 300};
 
 public:
 
@@ -36,8 +40,13 @@ public:
     TimelineClip* get_clip_at_time(TimelineUnit time);
 
     void save();
+    void export_video(std::filesystem::path filepath);
 
     static bool exists(std::string name);
+
+private:
+
+    void write_frame_rgb24(TimelineUnit time, std::uint8_t* buffer);
 };
 
 #endif

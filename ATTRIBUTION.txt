@@ -4,5 +4,6 @@ The following libraries are bundled with the program code:
 2. FreeType
 3. GLEW
 4. GLM
+5. benman64/subprocess
 
 All relevant license information can be found in lib/

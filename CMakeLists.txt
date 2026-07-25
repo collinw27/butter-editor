@@ -13,6 +13,7 @@ set(GLEW_DIR ${PROJECT_DIR}/lib/GLEW)
 link_directories(${GLEW_DIR}/lib)
 set(GLM_DIR ${PROJECT_DIR}/lib/GLM)
 link_directories(${GLM_DIR}/lib)
+set(SUBPROC_DIR ${PROJECT_DIR}/lib/Subprocess)
 
 # Freetype: Note that only the include path is used
 # The library file is provided as part of SFML
@@ -28,6 +29,7 @@ target_include_directories(common INTERFACE
     ${GLEW_DIR}/include
     ${GLM_DIR}
     ${FREETYPE_DIR}/include
+    ${SUBPROC_DIR}
 )
 target_link_libraries(common INTERFACE
     sfml-graphics-d sfml-window-d sfml-system-d
@@ -49,10 +51,14 @@ file(
     "src/utility/*.cpp"
     "src/utility/**/*.cpp"
 )
+file(
+    GLOB butter_LINK
+    "${SUBPROC_DIR}/subprocess/*.cpp"
+)
 
 # MAIN EXECUTABLE
 
-add_executable(Butter src/main.cpp ${butter_SRC})
+add_executable(Butter src/main.cpp ${butter_SRC} ${butter_LINK})
 target_link_libraries(Butter PRIVATE common)
 
 add_subdirectory("src/testing")

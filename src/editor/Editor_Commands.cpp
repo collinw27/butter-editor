@@ -1,6 +1,7 @@
 #include "editor/Editor.h"
 
 #include "command/exceptions.h"
+#include <stdlib.h>
 
 enum {
     CMD_LOG,
@@ -10,7 +11,8 @@ enum {
     CMD_SAVE,
     CMD_SAVE_AS,
     CMD_LOAD,
-    CMD_CREATE_CLIP
+    CMD_CREATE_CLIP,
+    CMD_EXPORT
 };
 
 void Editor::initialize_commands()
@@ -42,6 +44,9 @@ void Editor::initialize_commands()
         .add_parameter("length", CommandParser::ParamType::U_INT)
         .add_parameter("color", CommandParser::ParamType::STRING)
     );
+    command_parser.define_command(command_parser.new_command("export", (int) CMD_EXPORT)
+        .add_parameter("filepath", CommandParser::ParamType::STRING)
+    );
 }
 
 std::string Editor::execute_command(CommandResult command)
@@ -54,47 +59,47 @@ std::string Editor::execute_command(CommandResult command)
     switch (root)
     {
     case CMD_LOG:
-    
+    {
         return "* " + command.get_string(0);
-
+    }
     case CMD_UI_SCALE:
-    
+    {
         command_parser.validate_range(command.get_int(0), -3, 10);
         ui_scale_index = command.get_int(0);
         ui_scale = 1.f + (float)ui_scale_index * 0.1f;
         resize_modules();
         return "Set UI scale to " + std::to_string(ui_scale_index) + ".";
-
+    }
     case CMD_TYPE_TEST:
-    
+    {
         command_parser.validate_range(command.get_float(3), 0.0, 99999.0);
         break;
-
+    }
     case CMD_NEW:
-
+    {
         if (project)
             delete project;
         project = new Project();
         command_bar->set_status_text(project->get_name());
         timeline_module->refresh_clips();
         return "Created new project.";
-
+    }
     case CMD_SAVE:
-
+    {
         if (!project->named())
             throw ExecuteException("Unnamed projects must use `save_as`.");
         project->save();
         return "Saved project \"" + project->get_name() + "\".";
-
+    }
     case CMD_SAVE_AS:
-    
+    {
         project->set_name(command.get_string(0));
         command_bar->set_status_text(project->get_name());
         project->save();
         return "Saved project \"" + project->get_name() + "\".";
-
+    }
     case CMD_LOAD:
-    
+    {
         if (!Project::exists(command.get_string(0)))
             throw ExecuteException("Nonexistent project \"" + command.get_string(0) + "\".");
         if (project)
@@ -103,9 +108,9 @@ std::string Editor::execute_command(CommandResult command)
         command_bar->set_status_text(project->get_name());
         timeline_module->refresh_clips();
         return "Loaded project \"" + project->get_name() + "\".";
-        
+    }
     case CMD_CREATE_CLIP:
-
+    {
         int c_index = -1;
         std::string provided_name = command.get_string(2);
         std::vector<std::string> c_names = {"red", "orange", "yellow", "green", "blue", "purple"};
@@ -122,7 +127,23 @@ std::string Editor::execute_command(CommandResult command)
         bool successful = project->add_color_clip(command.get_int(0), command.get_int(1), hex_to_color(colors.at(c_index)));
         timeline_module->refresh_clips();
         return successful ? "Created clip." : "Could not create clip.";
-    
+    }
+    case CMD_EXPORT:
+    {
+        // Default name for debug purposes can be defined as BUTTER_EXPORT_PATH
+        // Error if not defined
+        
+        std::string export_path = command.get_string(0);
+        if (export_path == "0")
+        {
+            const char* path = std::getenv("BUTTER_EXPORT_PATH");
+            if (path == nullptr)
+                throw ExecuteException("BUTTER_EXPORT_PATH not defined.");
+            export_path = path;
+        }
+        project->export_video(std::filesystem::path(export_path));
+        return "Exported video.";
+    }
     }
         
     return "Execution was successful.";

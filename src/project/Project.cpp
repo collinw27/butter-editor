@@ -1,8 +1,10 @@
 #include "project/Project.h"
 
+#include <subprocess.hpp>
+#include <fstream>
 #include "utility/core.h"
 #include "utility/FileManager.h"
-#include <fstream>
+#include "utility/Logger.h"
 
 #include "project/timeline/ColorClip.h"
 
@@ -192,7 +194,65 @@ void Project::save()
     file.close();
 }
 
+void Project::export_video(std::filesystem::path filepath)
+{
+    // Open FFMPEG pipe
+    // Most of these arguments are sourced from:
+    // https://zulko.github.io/blog/2013/09/27/read-and-write-video-frames-in-python-using-ffmpeg/
+    // (Fun fact: it appears Manim's FFMPEG implementation is also sourced from here)
+
+    subprocess::Popen ffmpeg_pipe = subprocess::RunBuilder({
+        "ffmpeg",
+        "-y",
+        "-f", "rawvideo",
+        "-vcodec", "rawvideo",
+        "-s", std::to_string(resolution.x) + "x" + std::to_string(resolution.y),
+        "-r", std::to_string(framerate),
+        "-pix_fmt", "rgb24",
+        "-i", "pipe:",
+        "-an",
+        "-pix_fmt", "yuv420p",
+        "-vcodec", "libx264",
+        filepath.string()
+    }).cin(subprocess::PipeOption::pipe).popen();
+
+    // For now, write 100 frames total
+
+    std::size_t buffer_size = 3 * resolution.x * resolution.y;
+    std::uint8_t buffer[buffer_size];
+    for (int f = 0; f < 100; ++f)
+    {
+        write_frame_rgb24(f, buffer);
+        std::size_t result = subprocess::pipe_write(ffmpeg_pipe.cin, buffer, buffer_size);
+    }
+
+    ffmpeg_pipe.close_cin();
+    ffmpeg_pipe.close();
+}
+
 bool Project::exists(std::string name)
 {
     return std::filesystem::exists(FileManager().get_data_path("projects/" + name + ".proj"));
+}
+
+void Project::write_frame_rgb24(TimelineUnit time, std::uint8_t* buffer)
+{
+    // For now, the entire frame is just one color
+
+    TimelineClip* current_clip = get_clip_at_time(time);
+    sf::Color color = (current_clip == nullptr) ? sf::Color::Black : (dynamic_cast<ColorClip*>(current_clip)->get_color());
+
+    // Buffer size = (width * height * 3) chars
+
+    int w = resolution.x;
+    int h = resolution.y;
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x)
+        {
+            buffer[3 * (x + y * w) + 0] = color.r;
+            buffer[3 * (x + y * w) + 1] = color.g;
+            buffer[3 * (x + y * w) + 2] = color.b;
+        }
+    }
 }
