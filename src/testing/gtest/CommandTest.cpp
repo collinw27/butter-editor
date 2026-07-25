@@ -303,28 +303,30 @@ TEST(Float, InvalidForm8)
     ASSERT_TRUE(test_error("fn6 1.0e10aaa", "Invalid float '1.0e10aaa'"));
 }
 
+constexpr int ID_NONE = -1;
+
 int main(int argc, char** argv)
 {
     command_parser = new CommandParser();
-    command_parser->define_command(command_parser->new_command("fn"));
-    command_parser->define_command(command_parser->new_command("fn1")
+    command_parser->define_command(command_parser->new_command("fn", ID_NONE));
+    command_parser->define_command(command_parser->new_command("fn1", ID_NONE)
         .add_parameter("param1", CommandParser::ParamType::STRING)
     );
-    command_parser->define_command(command_parser->new_command("fn2")
+    command_parser->define_command(command_parser->new_command("fn2", ID_NONE)
         .add_parameter("param1", CommandParser::ParamType::STRING)
         .add_parameter("param2", CommandParser::ParamType::STRING)
         .add_parameter("param3", CommandParser::ParamType::STRING)
     );
-    command_parser->define_command(command_parser->new_command("fn3")
+    command_parser->define_command(command_parser->new_command("fn3", ID_NONE)
         .add_parameter("param1", CommandParser::ParamType::INT)
     );
-    command_parser->define_command(command_parser->new_command("fn4")
+    command_parser->define_command(command_parser->new_command("fn4", ID_NONE)
         .add_parameter("param1", CommandParser::ParamType::U_INT)
     );
-    command_parser->define_command(command_parser->new_command("fn5")
+    command_parser->define_command(command_parser->new_command("fn5", ID_NONE)
         .add_parameter("param1", CommandParser::ParamType::FLOAT)
     );
-    command_parser->define_command(command_parser->new_command("fn6")
+    command_parser->define_command(command_parser->new_command("fn6", ID_NONE)
         .add_parameter("param1", CommandParser::ParamType::U_FLOAT)
     );
 

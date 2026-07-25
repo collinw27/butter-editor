@@ -58,7 +58,7 @@ public:
 
     CommandParser();
     Definition new_command(std::string root, int id);
-    void define_command(Definition definition);    
+    void define_command(Definition definition);
 
     CommandResult parse(std::string source);
     CommandStructure parse_structure(std::string source);

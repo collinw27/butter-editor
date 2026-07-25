@@ -2,45 +2,22 @@ cmake_minimum_required(VERSION 3.28)
 project(ButterProject LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(PROJECT_DIR ${CMAKE_BINARY_DIR}/../)
 
-# Expects this directory structure:
-# 
-# build
-# └─ lib
-#    ├─ SFML
-#    │  ├─ bin
-#    │  ├─ include
-#    │  └─ lib
-#    ├─ GLEW
-#    │  ├─ include
-#    │  └─ lib
-#    ├─ GLM
-#    │  └─ glm
-#    └─ FreeType
-#       └─ include
+# Currently, all necessary libraries are included in the lib/ folder
+# !!! All DLLs from lib/bin must be copied to the executable's directory
 
-# User must manually download SFML 3.0 (https://github.com/SFML/SFML/releases)
-# Then, it is dynamically linked, meaning all DLLs must be copied to bin
-
-set(SFML_DIR ${CMAKE_BINARY_DIR}/lib/SFML)
+set(SFML_DIR ${PROJECT_DIR}/lib/SFML)
 link_directories(${SFML_DIR}/lib)
-
-# User must manually download GLEW (https://glew.sourceforge.net/ binaries)
-# Then, it is dynamically linked, meaning glew32.dll must be copied to bin
-
-set(GLEW_DIR ${CMAKE_BINARY_DIR}/lib/GLEW)
+set(GLEW_DIR ${PROJECT_DIR}/lib/GLEW)
 link_directories(${GLEW_DIR}/lib)
-
-# User must manually download GLM (https://github.com/g-truc/glm)
-
-set(GLM_DIR ${CMAKE_BINARY_DIR}/lib/GLM)
+set(GLM_DIR ${PROJECT_DIR}/lib/GLM)
 link_directories(${GLM_DIR}/lib)
 
-# User must manually download FreeType 2.14.1 (https://download.savannah.gnu.org/releases/freetype/)
-# Note that only the include path is used
+# Freetype: Note that only the include path is used
 # The library file is provided as part of SFML
 
-set(FREETYPE_DIR ${CMAKE_BINARY_DIR}/lib/FreeType)
+set(FREETYPE_DIR ${PROJECT_DIR}/lib/FreeType)
 
 # Link files & generate executables
 

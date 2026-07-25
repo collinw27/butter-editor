@@ -1,0 +1,8 @@
+The following libraries are bundled with the program code:
+
+1. SFML
+2. FreeType
+3. GLEW
+4. GLM
+
+All relevant license information can be found in lib/
