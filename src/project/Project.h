@@ -21,8 +21,8 @@ class Project
     std::optional<std::string> name; 
     std::vector<TimelineClip*> timeline;
 
-    int framerate = 30;
-    sf::Vector2u resolution {400, 300};
+    int framerate;
+    sf::Vector2u resolution;
 
 public:
 
@@ -34,18 +34,24 @@ public:
     std::string get_name();
     void set_name(std::string name);
 
+    int get_framerate();
+    sf::Vector2u get_resolution();
+
     bool add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
     unsigned int get_clip_total();
     TimelineClip* get_clip_at_index(unsigned int index);
     TimelineClip* get_clip_at_time(TimelineUnit time);
-
+    TimelineUnit get_project_length();
+    std::string get_project_length_approx();
+    
     void save();
     void export_video(std::filesystem::path filepath);
-
+    
     static bool exists(std::string name);
 
 private:
 
+    void proj_assert(bool condition, std::string fail_msg);
     void write_frame_rgb24(TimelineUnit time, std::uint8_t* buffer);
 };
 

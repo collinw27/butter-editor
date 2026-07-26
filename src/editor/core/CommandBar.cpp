@@ -22,7 +22,7 @@ CommandBar::CommandBar(Editor &editor) :
     container = GLContainer::create(nullptr, sf::Vector2f(bounds.position), sf::Vector2f(1000, 1000));
     selection_rect = GLRectangle::create(container);
     selection_rect->set_fill_color(Editor::C_HIGHLIGHT);
-    status_text = GLText::create(container, Graphics().mono_font(), 16u, "Untitled project  |  00h 00m 00s 000ms");
+    status_text = GLText::create(container, Graphics().mono_font(), 16u, "");
     command_text = GLText::create(container, Graphics().mono_font(), 16u, "> ");
     cursor_rect = GLRectangle::create(container);
     cursor_rect->set_fill_color(sf::Color::White);
@@ -107,9 +107,16 @@ void CommandBar::set_ui_scale(float new_scale)
     render_text();
 }
 
-void CommandBar::set_status_text(std::string name)
+void CommandBar::set_status_name(std::string name)
 {
-    status_text->set_string(name + "  |  00h 00m 00s 000ms");
+    status_name = name;
+    status_text->set_string(status_name + "  |  " + status_length);
+}
+
+void CommandBar::set_status_length(std::string length)
+{
+    status_length = length;
+    status_text->set_string(status_name + "  |  " + status_length);
 }
 
 // Returns whether anything was cleared

@@ -1,20 +1,21 @@
-#ifndef TEST_MODULE_H
-#define TEST_MODULE_H
+#ifndef PROJECT_MODULE_H
+#define PROJECT_MODULE_H
 
 #include "editor/EditorModule.h"
 
 #include <string>
 #include "graphics/nodes.h"
 
-class TestModule : public EditorModule
+class ProjectModule : public EditorModule
 {
     GLText* text;
 
 public:
 
-    TestModule(Editor& editor, std::string sample_text);
+    ProjectModule(Editor& editor);
 
     virtual void apply_ui_scale() override;
+    void refresh_info();
 };
 
 #endif

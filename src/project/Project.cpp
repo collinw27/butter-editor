@@ -2,15 +2,25 @@
 
 #include <subprocess.hpp>
 #include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+
 #include "utility/core.h"
 #include "utility/FileManager.h"
 #include "utility/Logger.h"
+#include "project/exceptions.h"
 
 #include "project/timeline/ColorClip.h"
 
 Project::Project()
 {
-    name.reset();
+    name = std::nullopt;
+
+    // Use default project parameters
+
+    framerate = 30;
+    resolution = sf::Vector2u(400, 300);
 }
 
 Project::Project(std::string name)
@@ -18,8 +28,20 @@ Project::Project(std::string name)
     this->name = name;
     
     std::ifstream file {FileManager().get_data_path("projects/" + this->name.value() + ".proj")};
-    if (!file.is_open())
-        throw ButterException("Could not find project");
+    proj_assert(file.is_open(), "Could not find project");
+
+    // Load project parameters
+
+    int int_buffer;
+    file >> int_buffer;
+    resolution.x = int_buffer;
+    proj_assert(framerate > 0, "Invalid resolution");
+    file >> int_buffer;
+    resolution.y = int_buffer;
+    proj_assert(framerate > 0, "Invalid resolution");
+    file >> int_buffer;
+    framerate = int_buffer;
+    proj_assert(framerate > 0, "Invalid framerate");
 
     // Individually load each clip
 
@@ -75,6 +97,16 @@ std::string Project::get_name()
 void Project::set_name(std::string name)
 {
     this->name = name;
+}
+
+int Project::get_framerate()
+{
+    return framerate;
+}
+
+sf::Vector2u Project::get_resolution()
+{
+    return resolution;
 }
 
 // Returns whether the operation was successful
@@ -164,6 +196,30 @@ TimelineClip* Project::get_clip_at_time(TimelineUnit time)
     return nullptr;
 }
 
+TimelineUnit Project::get_project_length()
+{
+    // Return the end time of the final clip
+    // If the timeline is empty, return length of 1
+
+    return (timeline.empty() ? 0 : timeline.back()->get_end_time());
+}
+
+std::string Project::get_project_length_approx()
+{
+    int time = (int) get_project_length();
+    time = std::ceil(time / ((float) framerate));
+    int sec = time % 60;
+    time = (time - sec) / 60;
+    int min = time % 60;
+    time = (time - min) / 60;
+    int hr = time;
+    return (std::stringstream{} << std::setfill('0')
+        << std::setw(2) << hr << "h "
+        << std::setw(2) << min << "m "
+        << std::setw(2) << sec << "s"
+    ).str();
+}
+
 void Project::save()
 {
     // Must have name to save
@@ -178,6 +234,11 @@ void Project::save()
     // (or at least show a confirmation dialog)
 
     std::ofstream file {FileManager().get_data_path("projects/" + name.value() + ".proj")};
+
+    // Write project parameters
+
+    file << resolution.x << " " << resolution.y << " ";
+    file << framerate << " ";
 
     // Timeline starts with a number specifying the number of clips
     // Then, each clip begins with its clip type (enum value), start position, and length
@@ -216,15 +277,18 @@ void Project::export_video(std::filesystem::path filepath)
         filepath.string()
     }).cin(subprocess::PipeOption::pipe).popen();
 
-    // For now, write 100 frames total
+    // Write frames in specified format
 
     std::size_t buffer_size = 3 * resolution.x * resolution.y;
     std::uint8_t buffer[buffer_size];
-    for (int f = 0; f < 100; ++f)
+    TimelineUnit last_frame = std::max<TimelineUnit>(get_project_length(), 1);
+    for (int f = 0; f < last_frame; ++f)
     {
         write_frame_rgb24(f, buffer);
         std::size_t result = subprocess::pipe_write(ffmpeg_pipe.cin, buffer, buffer_size);
     }
+
+    // Close pipe & conclude export
 
     ffmpeg_pipe.close_cin();
     ffmpeg_pipe.close();
@@ -233,6 +297,12 @@ void Project::export_video(std::filesystem::path filepath)
 bool Project::exists(std::string name)
 {
     return std::filesystem::exists(FileManager().get_data_path("projects/" + name + ".proj"));
+}
+
+void Project::proj_assert(bool condition, std::string fail_msg)
+{
+    if (!condition)
+        throw ProjectLoadException(fail_msg);
 }
 
 void Project::write_frame_rgb24(TimelineUnit time, std::uint8_t* buffer)

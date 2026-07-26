@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include "graphics/nodes.h"
-#include "command/CommandParser.h"
 
 class Editor;
 
@@ -18,6 +17,11 @@ class CommandBar
     GLRectangle* selection_rect;
     GLText* status_text;
     GLText* command_text;
+
+    // Status text information
+
+    std::string status_name;
+    std::string status_length;
 
     // Note: `cursor_start` isn't necessarily less than `cursor_end`
 
@@ -48,7 +52,9 @@ public:
     
     void set_bounds(const sf::IntRect& new_bounds);
     void set_ui_scale(float new_scale);
-    void set_status_text(std::string name);
+
+    void set_status_name(std::string name);
+    void set_status_length(std::string length);
 
     bool attempt_clear();
     void submit_valid();

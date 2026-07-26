@@ -10,7 +10,9 @@
 #include "editor/core/CommandBar.h"
 #include "editor/core/DragMouse.h"
 #include "editor/core/LogModule.h"
+#include "editor/core/ProjectModule.h"
 #include "editor/core/TimelineModule.h"
+#include "command/CommandParser.h"
 #include "project/Project.h"
 
 class Editor
@@ -46,6 +48,7 @@ private:
     TimelineModule* timeline_module;
     std::vector<EditorModule**> visible_modules;
     LogModule* log_module;
+    ProjectModule* project_module;
 
     // Command processing
     
@@ -104,6 +107,8 @@ private:
     sf::Vector2i get_mouse_position();
 
     void resize_modules();
+
+    void on_timeline_update();
     
     void initialize_commands();
     std::string execute_command(CommandResult command);

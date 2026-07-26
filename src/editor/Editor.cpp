@@ -2,7 +2,7 @@
 
 #include "editor/core/DragDivider.h"
 #include "editor/core/TimelineModule.h"
-#include "editor/core/TestModule.h"
+#include "editor/core/ProjectModule.h"
 #include "editor/core/LogModule.h"
 
 #include "utility/Graphics.h"
@@ -45,6 +45,7 @@ Editor::Editor()
     timeline_module = new TimelineModule(*this);
     command_bar = new CommandBar(*this);
     log_module = new LogModule(*this);
+    project_module = new ProjectModule(*this);
     visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, (EditorModule**) &timeline_module});
 
     // Flex module setup
@@ -52,7 +53,7 @@ Editor::Editor()
 
     current_flex_tab = 0;
     flex_tabs.push_back(new FlexTab(*this, log_module, "Log"));
-    flex_tabs.push_back(new FlexTab(*this, new TestModule(*this, "Test module #2"), "Test 2"));
+    flex_tabs.push_back(new FlexTab(*this, project_module, "Project"));
     flex_tabs.at(current_flex_tab)->set_selected(true);
     flex_module = &flex_tabs.at(current_flex_tab)->get_module();
 
@@ -91,6 +92,9 @@ Editor::Editor()
     // Create default project
 
     project = new Project();
+    project_module->refresh_info();
+    command_bar->set_status_name(project->get_name());
+    command_bar->set_status_length(project->get_project_length_approx());
 }
 
 Editor::~Editor()
@@ -403,4 +407,11 @@ void Editor::resize_modules()
     temp_menu_bar->set_size(sf::Vector2f(x_divider, tab_height));
     menu_bar_text->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
     menu_bar_text->set_char_size((unsigned int)(19.f * ui_scale));
+}
+
+void Editor::on_timeline_update()
+{
+    timeline_module->refresh_clips();
+    project_module->refresh_info();
+    command_bar->set_status_length(project->get_project_length_approx());
 }

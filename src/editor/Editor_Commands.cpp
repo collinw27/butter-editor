@@ -1,6 +1,7 @@
 #include "editor/Editor.h"
 
 #include "command/exceptions.h"
+#include "project/exceptions.h"
 #include <stdlib.h>
 
 enum {
@@ -80,8 +81,8 @@ std::string Editor::execute_command(CommandResult command)
         if (project)
             delete project;
         project = new Project();
-        command_bar->set_status_text(project->get_name());
-        timeline_module->refresh_clips();
+        command_bar->set_status_name(project->get_name());
+        on_timeline_update();
         return "Created new project.";
     }
     case CMD_SAVE:
@@ -94,8 +95,9 @@ std::string Editor::execute_command(CommandResult command)
     case CMD_SAVE_AS:
     {
         project->set_name(command.get_string(0));
-        command_bar->set_status_text(project->get_name());
+        command_bar->set_status_name(project->get_name());
         project->save();
+        project_module->refresh_info();
         return "Saved project \"" + project->get_name() + "\".";
     }
     case CMD_LOAD:
@@ -104,10 +106,17 @@ std::string Editor::execute_command(CommandResult command)
             throw ExecuteException("Nonexistent project \"" + command.get_string(0) + "\".");
         if (project)
             delete project;
-        project = new Project(command.get_string(0));
-        command_bar->set_status_text(project->get_name());
-        timeline_module->refresh_clips();
-        return "Loaded project \"" + project->get_name() + "\".";
+        try
+        {
+            project = new Project(command.get_string(0));
+            command_bar->set_status_name(project->get_name());
+            on_timeline_update();
+            return "Loaded project \"" + project->get_name() + "\".";
+        }
+        catch (ProjectLoadException error)
+        {
+            throw ExecuteException("Could not load project; malformed file");
+        }
     }
     case CMD_CREATE_CLIP:
     {
@@ -125,13 +134,12 @@ std::string Editor::execute_command(CommandResult command)
         if (command.get_int(1) <= 0)
             throw ExecuteException("Clip length must be positive.");
         bool successful = project->add_color_clip(command.get_int(0), command.get_int(1), hex_to_color(colors.at(c_index)));
-        timeline_module->refresh_clips();
+        on_timeline_update();
         return successful ? "Created clip." : "Could not create clip.";
     }
     case CMD_EXPORT:
     {
-        // Default name for debug purposes can be defined as BUTTER_EXPORT_PATH
-        // Error if not defined
+        // Default name exists for debug purposes
         
         std::string export_path = command.get_string(0);
         if (export_path == "0")
