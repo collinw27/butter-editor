@@ -7,7 +7,6 @@
 #include "utility/FileManager.h"
 #include "utility/Graphics.h"
 #include "command/CommandParser.h"
-#include "utility/Logger.h"
 
 constexpr int CHAR_LIMIT = 1024;
 constexpr int HISTORY_LIMIT = 64;
@@ -110,13 +109,19 @@ void CommandBar::set_ui_scale(float new_scale)
 void CommandBar::set_status_name(std::string name)
 {
     status_name = name;
-    status_text->set_string(status_name + "  |  " + status_length);
+    refresh_status();
 }
 
 void CommandBar::set_status_length(std::string length)
 {
     status_length = length;
-    status_text->set_string(status_name + "  |  " + status_length);
+    refresh_status();
+}
+
+void CommandBar::set_status_exporting(std::string percentage)
+{
+    status_exporting = percentage;
+    refresh_status();
 }
 
 // Returns whether anything was cleared
@@ -178,6 +183,14 @@ void CommandBar::set_typing(bool value)
 std::string CommandBar::get_command()
 {
     return command;
+}
+
+void CommandBar::refresh_status()
+{
+    std::string status_str = status_name + "  |  " + status_length;
+    if (status_exporting != "")
+        status_str += "  |  " + status_exporting;
+    status_text->set_string(status_str);
 }
 
 void CommandBar::append(const std::string& raw_text)

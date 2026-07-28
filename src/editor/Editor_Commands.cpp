@@ -16,6 +16,14 @@ enum {
     CMD_EXPORT
 };
 
+// Prevent certain operations while exporting
+
+void block_if_exporting(Project* project)
+{
+    if (project == nullptr)
+        throw ExecuteException("This operation is currently unavailable.");
+}
+
 void Editor::initialize_commands()
 {
     command_parser = CommandParser();
@@ -78,15 +86,17 @@ std::string Editor::execute_command(CommandResult command)
     }
     case CMD_NEW:
     {
-        if (project)
+        block_if_exporting(project);
+        if (project != nullptr)
             delete project;
-        project = new Project();
+        create_project(new Project());
         command_bar->set_status_name(project->get_name());
         on_timeline_update();
         return "Created new project.";
     }
     case CMD_SAVE:
     {
+        block_if_exporting(project);
         if (!project->named())
             throw ExecuteException("Unnamed projects must use `save_as`.");
         project->save();
@@ -94,6 +104,7 @@ std::string Editor::execute_command(CommandResult command)
     }
     case CMD_SAVE_AS:
     {
+        block_if_exporting(project);
         project->set_name(command.get_string(0));
         command_bar->set_status_name(project->get_name());
         project->save();
@@ -102,13 +113,17 @@ std::string Editor::execute_command(CommandResult command)
     }
     case CMD_LOAD:
     {
+        block_if_exporting(project);
+        if (project->is_exporting())
+            throw ExecuteException("Cannot switch project while exporting.");
         if (!Project::exists(command.get_string(0)))
             throw ExecuteException("Nonexistent project \"" + command.get_string(0) + "\".");
-        if (project)
+        if (project != nullptr)
             delete project;
         try
         {
-            project = new Project(command.get_string(0));
+            create_project(new Project(command.get_string(0)));
+            locked_project = (LockedProject*) project;
             command_bar->set_status_name(project->get_name());
             on_timeline_update();
             return "Loaded project \"" + project->get_name() + "\".";
@@ -120,6 +135,7 @@ std::string Editor::execute_command(CommandResult command)
     }
     case CMD_CREATE_CLIP:
     {
+        block_if_exporting(project);
         int c_index = -1;
         std::string provided_name = command.get_string(2);
         std::vector<std::string> c_names = {"red", "orange", "yellow", "green", "blue", "purple"};
@@ -139,6 +155,8 @@ std::string Editor::execute_command(CommandResult command)
     }
     case CMD_EXPORT:
     {
+        block_if_exporting(project);
+
         // Default name exists for debug purposes
         
         std::string export_path = command.get_string(0);
@@ -150,7 +168,9 @@ std::string Editor::execute_command(CommandResult command)
             export_path = path;
         }
         project->export_video(std::filesystem::path(export_path));
-        return "Exported video.";
+        exporting = project->is_exporting();
+        lock_project();
+        return "Now beginning export task.";
     }
     }
         

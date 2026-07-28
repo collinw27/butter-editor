@@ -22,6 +22,7 @@ class CommandBar
 
     std::string status_name;
     std::string status_length;
+    std::string status_exporting = "";
 
     // Note: `cursor_start` isn't necessarily less than `cursor_end`
 
@@ -55,6 +56,7 @@ public:
 
     void set_status_name(std::string name);
     void set_status_length(std::string length);
+    void set_status_exporting(std::string percentage);
 
     bool attempt_clear();
     void submit_valid();
@@ -67,6 +69,8 @@ private:
     // Functions to make the update loop cleaner
 
     enum class MoveMode { ONE, WORD, ALL };
+
+    void refresh_status();
 
     void append(const std::string& new_text);
     inline void backspace(bool delete_word);

@@ -91,7 +91,8 @@ Editor::Editor()
 
     // Create default project
 
-    project = new Project();
+    create_project(new Project());
+    locked_project = (LockedProject*) project;
     project_module->refresh_info();
     command_bar->set_status_name(project->get_name());
     command_bar->set_status_length(project->get_project_length_approx());
@@ -228,6 +229,25 @@ void Editor::run()
             FileManager().update_user_settings(user_settings);
         }
 
+        // Update export display (if applicable)
+
+        if (exporting)
+        {
+            if (locked_project->is_exporting())
+            {
+                std::string export_string = "Exporting: " + std::to_string(locked_project->get_export_percentage()) + "%";
+                command_bar->set_status_exporting(export_string);
+            }
+            else
+            {
+                exporting = false;
+                command_bar->set_status_exporting("");
+                unlock_project();
+            }
+        }
+
+        // Display the root, which will propogate to all other GLNode children
+
         Graphics().display(root);
     }
 }
@@ -264,9 +284,14 @@ std::string Editor::run_command(std::string command, bool throw_errors)
     }
 }
 
-Project& Editor::get_project()
+Project* Editor::get_project()
 {
-    return *project;
+    return project;
+}
+
+LockedProject* Editor::get_locked_project()
+{
+    return locked_project;
 }
 
 void Editor::on_resized(sf::Vector2i new_size)
@@ -413,5 +438,25 @@ void Editor::on_timeline_update()
 {
     timeline_module->refresh_clips();
     project_module->refresh_info();
-    command_bar->set_status_length(project->get_project_length_approx());
+    if (project)
+        command_bar->set_status_length(project->get_project_length_approx());
+}
+
+void Editor::create_project(Project* new_project)
+{
+    project = new_project;
+    locked_project = (LockedProject*) project;
+}
+
+void Editor::lock_project()
+{
+    project = nullptr;
+}
+
+void Editor::unlock_project()
+{
+    Project* downcast = dynamic_cast<Project*>(locked_project);
+    if (downcast == nullptr)
+        throw ButterException("Attempted to unlock invalid project");
+    project = downcast;
 }

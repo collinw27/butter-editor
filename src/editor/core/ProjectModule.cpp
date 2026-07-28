@@ -19,12 +19,12 @@ void ProjectModule::apply_ui_scale()
 
 void ProjectModule::refresh_info()
 {
-    Project& project = editor.get_project();
+    Project* project = editor.get_project();
     std::string info = "";
-    info += "Name: " + project.get_name();
-    info += "\nFPS: " + std::to_string(project.get_framerate());
-    info += "\nResolution: " + std::to_string(project.get_resolution().x) + "x";
-    info += std::to_string(project.get_resolution().y);
-    info += "\nLength: " + editor.get_project().get_project_length_approx();
+    info += "Name: " + project->get_name();
+    info += "\nFPS: " + std::to_string(project->get_framerate());
+    info += "\nResolution: " + std::to_string(project->get_resolution().x) + "x";
+    info += std::to_string(project->get_resolution().y);
+    info += "\nLength: " + project->get_project_length_approx();
     text->set_string(info);
 }

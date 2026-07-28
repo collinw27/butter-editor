@@ -81,8 +81,14 @@ private:
     int x_divider;
 
     // Project
+    // See Project.h for explanation of project "locking"
 
+    LockedProject* locked_project;
     Project* project;
+
+    // Special information for asynchronous export task
+
+    bool exporting = false;
 
 public:
 
@@ -96,7 +102,8 @@ public:
     CommandParser& get_command_parser();
     std::string run_command(std::string command, bool throw_errors = false);
 
-    Project& get_project();
+    Project* get_project();
+    LockedProject* get_locked_project();
 
 private:
 
@@ -109,6 +116,10 @@ private:
     void resize_modules();
 
     void on_timeline_update();
+
+    void create_project(Project* new_project);
+    void lock_project();
+    void unlock_project();
     
     void initialize_commands();
     std::string execute_command(CommandResult command);

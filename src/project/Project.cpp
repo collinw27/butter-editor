@@ -1,10 +1,10 @@
 #include "project/Project.h"
 
-#include <subprocess.hpp>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
+#include <chrono>
 
 #include "utility/core.h"
 #include "utility/FileManager.h"
@@ -13,7 +13,25 @@
 
 #include "project/timeline/ColorClip.h"
 
-Project::Project()
+void export_async();
+
+LockedProject::LockedProject() : basic_mutex{} {}
+
+LockedProject::~LockedProject() {}
+
+bool LockedProject::is_exporting()
+{
+    std::lock_guard<std::mutex> lock {basic_mutex};
+    return !export_finished;
+}
+
+int LockedProject::get_export_percentage()
+{
+    std::lock_guard<std::mutex> lock {basic_mutex};
+    return export_finished ? 100 : export_progress;
+}
+
+Project::Project() : LockedProject{}
 {
     name = std::nullopt;
 
@@ -23,7 +41,7 @@ Project::Project()
     resolution = sf::Vector2u(400, 300);
 }
 
-Project::Project(std::string name)
+Project::Project(std::string name) : LockedProject{}
 {
     this->name = name;
     
@@ -35,10 +53,10 @@ Project::Project(std::string name)
     int int_buffer;
     file >> int_buffer;
     resolution.x = int_buffer;
-    proj_assert(framerate > 0, "Invalid resolution");
+    proj_assert(resolution.x > 0, "Invalid resolution");
     file >> int_buffer;
     resolution.y = int_buffer;
-    proj_assert(framerate > 0, "Invalid resolution");
+    proj_assert(resolution.y > 0, "Invalid resolution");
     file >> int_buffer;
     framerate = int_buffer;
     proj_assert(framerate > 0, "Invalid framerate");
@@ -257,12 +275,31 @@ void Project::save()
 
 void Project::export_video(std::filesystem::path filepath)
 {
+    // Accessing thread safe data, use a mutex
+    // (Probably not necessary, but let's be safe)
+
+    std::unique_lock<std::mutex> lock {basic_mutex, std::defer_lock};
+    lock.lock();
+
+    // Export task is stored persistently in this object
+    // This, among other things, allows easy read/write access to
+    // export state while it's running in a separate thread
+
+    if (!export_finished)
+        throw ButterException("Export task already in progress");
+
+    // Reset export task
+
+    export_finished = false;
+    export_progress = 0;
+    lock.unlock();
+
     // Open FFMPEG pipe
     // Most of these arguments are sourced from:
     // https://zulko.github.io/blog/2013/09/27/read-and-write-video-frames-in-python-using-ffmpeg/
     // (Fun fact: it appears Manim's FFMPEG implementation is also sourced from here)
 
-    subprocess::Popen ffmpeg_pipe = subprocess::RunBuilder({
+    export_task.ffmpeg_pipe = subprocess::RunBuilder({
         "ffmpeg",
         "-y",
         "-f", "rawvideo",
@@ -277,26 +314,14 @@ void Project::export_video(std::filesystem::path filepath)
         filepath.string()
     }).cin(subprocess::PipeOption::pipe).popen();
 
-    // Write frames in specified format
+    export_task.buffer_size = 3 * resolution.x * resolution.y;
+    export_task.buffer = new uint8_t[export_task.buffer_size];
+    export_task.final_frame = std::max<TimelineUnit>(get_project_length(), 1);
+    
+    // Open thread using predefined function
 
-    std::size_t buffer_size = 3 * resolution.x * resolution.y;
-    std::uint8_t buffer[buffer_size];
-    TimelineUnit last_frame = std::max<TimelineUnit>(get_project_length(), 1);
-    for (int f = 0; f < last_frame; ++f)
-    {
-        write_frame_rgb24(f, buffer);
-        std::size_t result = subprocess::pipe_write(ffmpeg_pipe.cin, buffer, buffer_size);
-    }
-
-    // Close pipe & conclude export
-
-    ffmpeg_pipe.close_cin();
-    ffmpeg_pipe.close();
-}
-
-bool Project::exists(std::string name)
-{
-    return std::filesystem::exists(FileManager().get_data_path("projects/" + name + ".proj"));
+    export_task.thread = std::thread(&Project::export_async, this);
+    export_task.thread.detach();
 }
 
 void Project::proj_assert(bool condition, std::string fail_msg)
@@ -325,4 +350,39 @@ void Project::write_frame_rgb24(TimelineUnit time, std::uint8_t* buffer)
             buffer[3 * (x + y * w) + 2] = color.b;
         }
     }
+}
+
+void Project::export_async()
+{
+    // Write frames in specified format
+    
+    std::unique_lock<std::mutex> lock {basic_mutex, std::defer_lock};
+    for (int f = 0; f < export_task.final_frame; ++f)
+    {
+        Logger().log("Exporting frame " + std::to_string(f));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        write_frame_rgb24(f, export_task.buffer);
+        std::size_t result = subprocess::pipe_write(export_task.ffmpeg_pipe.cin, export_task.buffer, export_task.buffer_size);
+
+        // Lock while writing to thread-safe members
+
+        lock.lock();
+        export_progress = (int) std::floor(f / ((float) export_task.final_frame) * 100.0);
+        lock.unlock();
+    }
+
+    // Close pipe & conclude export
+
+    lock.lock();
+    export_finished = true;
+    export_task.ffmpeg_pipe.close_cin();
+    export_task.ffmpeg_pipe.close();
+    delete[] export_task.buffer;
+    lock.unlock();
+}
+
+bool Project::exists(std::string name)
+{
+    return std::filesystem::exists(FileManager().get_data_path("projects/" + name + ".proj"));
 }

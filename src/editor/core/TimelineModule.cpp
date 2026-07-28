@@ -33,10 +33,10 @@ void TimelineModule::refresh_clips()
         delete clip;
     clips.clear();
 
-    Project& project = editor.get_project();
-    for (int i = 0; i < project.get_clip_total(); ++i)
+    Project* project = editor.get_project();
+    for (int i = 0; i < project->get_clip_total(); ++i)
     {
-        TimelineClip* clip_data = project.get_clip_at_index(i);
+        TimelineClip* clip_data = project->get_clip_at_index(i);
         GLRectangle* new_clip = GLRectangle::create(
             container,
             sf::Vector2f(clip_data->get_start_time() * 10, 0),
