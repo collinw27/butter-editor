@@ -34,11 +34,11 @@ class GLText : public GLNode
 protected:
     
     GLText(GLNode* parent, GLFont* font, unsigned int char_size, std::string str);
-    ~GLText();
     virtual void init();
-
+    
 public:
-
+    
+    ~GLText();
     static GLText* create(GLNode* parent, GLFont* font, unsigned int char_size, std::string str = "");
 
 protected:

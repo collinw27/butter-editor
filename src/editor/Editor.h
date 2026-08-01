@@ -8,13 +8,15 @@
 #include "graphics/nodes.h"
 #include "editor/core/EditorModule.h"
 #include "editor/core/FlexTab.h"
+#include "command/CommandParser.h"
+#include "project/Project.h"
+
 #include "editor/core/CommandBar.h"
 #include "editor/core/DragMouse.h"
 #include "editor/core/LogModule.h"
+#include "editor/core/MediaModule.h"
 #include "editor/core/ProjectModule.h"
 #include "editor/timeline/TimelineModule.h"
-#include "command/CommandParser.h"
-#include "project/Project.h"
 
 class Editor
 {
@@ -52,6 +54,7 @@ private:
     TimelineModule* timeline_module;
     std::vector<EditorModule**> visible_modules;
     LogModule* log_module;
+    MediaModule* media_module;
     ProjectModule* project_module;
 
     // Command processing

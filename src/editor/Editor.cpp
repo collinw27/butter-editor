@@ -1,9 +1,6 @@
 #include "editor/Editor.h"
 
 #include "editor/core/DragDivider.h"
-#include "editor/timeline/TimelineModule.h"
-#include "editor/core/ProjectModule.h"
-#include "editor/core/LogModule.h"
 
 #include "utility/Graphics.h"
 #include "utility/Input.h"
@@ -48,6 +45,7 @@ Editor::Editor()
     timeline_module = new TimelineModule(*this);
     command_bar = new CommandBar(*this);
     log_module = new LogModule(*this);
+    media_module = new MediaModule(*this);
     project_module = new ProjectModule(*this);
     visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, (EditorModule**) &timeline_module});
 
@@ -56,6 +54,7 @@ Editor::Editor()
 
     current_flex_tab = 0;
     flex_tabs.push_back(new FlexTab(*this, log_module, "Log"));
+    flex_tabs.push_back(new FlexTab(*this, media_module, "Media"));
     flex_tabs.push_back(new FlexTab(*this, project_module, "Project"));
     flex_tabs.at(current_flex_tab)->set_selected(true);
     flex_module = &flex_tabs.at(current_flex_tab)->get_module();
@@ -229,7 +228,7 @@ void Editor::run()
             user_settings.ui_scale_index = ui_scale_index;
             FileManager().update_user_settings(user_settings);
         }
-        
+
         // Update export display (if applicable)
 
         if (exporting)

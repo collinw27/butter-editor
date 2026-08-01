@@ -19,15 +19,15 @@ GLText::GLText(GLNode* parent, GLFont* font, unsigned int char_size, std::string
     u_color = {1, 1, 1};
 }
 
-GLText::~GLText()
-{
-    reset_formatting();
-}
-
 void GLText::init()
 {
     GLNode::init();
     setup_GL();
+}
+
+GLText::~GLText()
+{
+    reset_formatting();
 }
 
 GLText* GLText::create(GLNode* parent, GLFont* font, unsigned int char_size, std::string str)
