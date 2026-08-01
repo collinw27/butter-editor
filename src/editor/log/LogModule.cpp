@@ -1,4 +1,4 @@
-#include "editor/core/LogModule.h"
+#include "editor/log/LogModule.h"
 
 #include "utility/core.h"
 #include "utility/Graphics.h"

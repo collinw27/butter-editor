@@ -1,4 +1,4 @@
-#include "editor/core/ProjectModule.h"
+#include "editor/project/ProjectModule.h"
 
 #include "utility/FileManager.h"
 #include "utility/Graphics.h"

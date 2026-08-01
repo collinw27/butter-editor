@@ -1,4 +1,4 @@
-#include "editor/core/CommandBar.h"
+#include "editor/command_bar/CommandBar.h"
 
 #include <cmath>
 #include "editor/Editor.h"

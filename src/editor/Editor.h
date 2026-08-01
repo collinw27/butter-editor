@@ -11,11 +11,11 @@
 #include "command/CommandParser.h"
 #include "project/Project.h"
 
-#include "editor/core/CommandBar.h"
+#include "editor/command_bar/CommandBar.h"
 #include "editor/core/DragMouse.h"
-#include "editor/core/LogModule.h"
-#include "editor/core/MediaModule.h"
-#include "editor/core/ProjectModule.h"
+#include "editor/log/LogModule.h"
+#include "editor/media/MediaModule.h"
+#include "editor/project/ProjectModule.h"
 #include "editor/timeline/TimelineModule.h"
 
 class Editor
