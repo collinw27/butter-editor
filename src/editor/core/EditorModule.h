@@ -4,6 +4,7 @@
 #include "graphics/nodes.h"
 
 class Editor;
+class DragMouse;
 
 class EditorModule
 {
@@ -36,8 +37,11 @@ public:
     // Because of this, `focused` should be checked in cases where an event should only
     // trigger when the cursor is in this module
     // `position` is given relative to the top-left of the module
+    // `event` is only passed if the current mouse event is targeted toward this module
     
-    virtual void on_mouse_moved(sf::Vector2f position, bool focused) {}
+    virtual void on_mouse_press(sf::Vector2i position, bool focused) {}
+    virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) {}
+    virtual void on_mouse_release(sf::Vector2i position, bool focused, DragMouse* drag_event) {}
 };
 
 #endif

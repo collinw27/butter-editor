@@ -2,7 +2,7 @@
 
 #include "utility/Graphics.h"
 
-GLRootNode::GLRootNode() : GLNode(nullptr)
+GLRootNode::GLRootNode() : GLNode{nullptr}
 {
     is_root_node = true;
     sf::Vector2u window_size = Graphics().get_window().getSize();

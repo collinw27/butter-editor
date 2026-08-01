@@ -1,7 +1,7 @@
 #include "editor/Editor.h"
 
 #include "editor/core/DragDivider.h"
-#include "editor/core/TimelineModule.h"
+#include "editor/timeline/TimelineModule.h"
 #include "editor/core/ProjectModule.h"
 #include "editor/core/LogModule.h"
 
@@ -26,6 +26,9 @@ const sf::Color Editor::C_HIGHLIGHT{90, 90, 90};
 const sf::Color Editor::C_HIGHLIGHT_SUBTLE{50, 50, 50};
 const sf::Color Editor::C_FG_DESELECTED{50, 50, 50};
 const sf::Color Editor::C_INVALID{255, 120, 120};
+const sf::Color Editor::C_SCROLL_STILL{255, 255, 255, 60};
+const sf::Color Editor::C_SCROLL_HOVER{255, 255, 255, 110};
+const sf::Color Editor::C_SCROLL_DRAG{255, 255, 255, 180};
 
 Editor::Editor()
 {
@@ -101,8 +104,6 @@ Editor::Editor()
 Editor::~Editor()
 {
     delete root;
-    if (drag_mouse_event != nullptr)
-        delete drag_mouse_event;
 }
 
 void Editor::run()
@@ -126,20 +127,20 @@ void Editor::run()
             }
             else if (const auto* mouse_moved = event->getIf<sf::Event::MouseMoved>())
             {
-                on_mouse_moved(mouse_moved->position);
+                on_mouse_move(mouse_moved->position);
             }
             else if (const auto* mouse_clicked = event->getIf<sf::Event::MouseButtonPressed>())
             {
                 if (mouse_clicked->button == sf::Mouse::Button::Left)
                 {
-                    on_mouse_pressed();
+                    on_mouse_press();
                 }
             }
             else if (const auto* mouse_clicked = event->getIf<sf::Event::MouseButtonReleased>())
             {
                 if (mouse_clicked->button == sf::Mouse::Button::Left)
                 {
-                    on_mouse_released();
+                    on_mouse_release();
                 }
             }
             else if (const auto* key_pressed = event->getIf<sf::Event::KeyPressed>())
@@ -228,7 +229,7 @@ void Editor::run()
             user_settings.ui_scale_index = ui_scale_index;
             FileManager().update_user_settings(user_settings);
         }
-
+        
         // Update export display (if applicable)
 
         if (exporting)
@@ -252,14 +253,24 @@ void Editor::run()
     }
 }
 
+float Editor::get_delta_time()
+{
+    return delta_time;
+}
+
 void Editor::set_cursor(sf::Cursor::Type cursor_type)
 {
     window->setMouseCursor(sf::Cursor{cursor_type});
 }
 
-float Editor::get_delta_time()
+bool Editor::set_drag_event(std::unique_ptr<DragMouse> new_event)
 {
-    return delta_time;
+    if (drag_mouse_event != nullptr)
+        return false;
+    drag_mouse_event = std::move(new_event);
+    drag_mouse_event->source_pos = mouse_position;
+    drag_mouse_event->current_pos = mouse_position;
+    return true;
 }
 
 CommandParser& Editor::get_command_parser()
@@ -305,15 +316,26 @@ void Editor::on_resized(sf::Vector2i new_size)
     resize_modules();
 }
 
-void Editor::on_mouse_moved(sf::Vector2i position)
+void Editor::on_mouse_move(sf::Vector2i position)
 {
     mouse_position = position;
+
+    // Update mouse drag event, if applicable
+
+    if (drag_mouse_event != nullptr)
+    {
+        drag_mouse_event->current_pos = mouse_position;
+        drag_mouse_event->on_move();
+    }
+
+    // Special behavior for dragging divider between modules
     
     DragDivider* drag_divider_event = nullptr;
     if (drag_mouse_event != nullptr)
-        drag_divider_event = dynamic_cast<DragDivider*>(drag_mouse_event);
+        drag_divider_event = dynamic_cast<DragDivider*>(drag_mouse_event.get());
 
     // Highlight modules & tabs (but not if moving dividers)
+    // Also run module-defined update callbacks
 
     if (drag_divider_event == nullptr)
     {
@@ -322,7 +344,8 @@ void Editor::on_mouse_moved(sf::Vector2i position)
             sf::IntRect module_bounds = (*module)->get_bounds();
             bool mouse_overlaps = module_bounds.contains(mouse_position);
             (*module)->set_hover_highlight(mouse_overlaps);
-            (*module)->on_mouse_moved(sf::Vector2f(mouse_position - module_bounds.position), mouse_overlaps);
+            DragMouse* event_ptr = (drag_mouse_event && drag_mouse_event->target == *module) ? drag_mouse_event.get() : nullptr;
+            (*module)->on_mouse_move(mouse_position - module_bounds.position, mouse_overlaps, event_ptr);
         }
         for (FlexTab* tab : flex_tabs)
         {
@@ -362,14 +385,14 @@ void Editor::on_mouse_moved(sf::Vector2i position)
     }
 }
 
-void Editor::on_mouse_pressed()
+void Editor::on_mouse_press()
 {
     // Start scaling dividers if they were clicked
 
     if (abs(mouse_position.y - y_divider) < 6)
-        drag_mouse_event = new DragDivider(mouse_position, true);
+        set_drag_event(std::unique_ptr<DragMouse>(new DragDivider(true)));
     else if (mouse_position.y < y_divider && abs(mouse_position.x - x_divider) < 6)
-        drag_mouse_event = new DragDivider(mouse_position, false);
+        set_drag_event(std::unique_ptr<DragMouse>(new DragDivider(false)));
 
     // Switch tabs if clicked
     // In the future, it might be desirable to have this occur
@@ -386,12 +409,36 @@ void Editor::on_mouse_pressed()
             flex_module = &tab->get_module();
         }
     }
+    
+    // Trigger callback for each module
+
+    for (EditorModule** module : visible_modules)
+    {
+        sf::IntRect module_bounds = (*module)->get_bounds();
+        bool mouse_overlaps = module_bounds.contains(mouse_position);
+        (*module)->on_mouse_press(mouse_position - module_bounds.position, mouse_overlaps);
+    }
 }
 
-void Editor::on_mouse_released()
+void Editor::on_mouse_release()
 {
-    delete drag_mouse_event;
-    drag_mouse_event = nullptr;
+    // A little confusing, but the call to release() is freeing the pointer,
+    // not simulating a mouse release :)
+
+    if (drag_mouse_event != nullptr)
+        drag_mouse_event->on_release();
+
+    // Trigger callback for each module
+
+    for (EditorModule** module : visible_modules)
+    {
+        sf::IntRect module_bounds = (*module)->get_bounds();
+        bool mouse_overlaps = module_bounds.contains(mouse_position);
+        DragMouse* event_ptr = (drag_mouse_event && drag_mouse_event->target == *module) ? drag_mouse_event.get() : nullptr;
+        (*module)->on_mouse_release(mouse_position - module_bounds.position, mouse_overlaps, event_ptr);
+    }
+    
+    drag_mouse_event.release();
 }
 
 sf::Vector2i Editor::get_mouse_position()

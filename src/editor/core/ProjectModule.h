@@ -1,7 +1,7 @@
 #ifndef PROJECT_MODULE_H
 #define PROJECT_MODULE_H
 
-#include "editor/EditorModule.h"
+#include "editor/core/EditorModule.h"
 
 #include <string>
 #include "graphics/nodes.h"

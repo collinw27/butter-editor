@@ -54,7 +54,7 @@ void LogModule::push_error(std::string error)
     render_text();
 }
 
-void LogModule::on_mouse_moved(sf::Vector2f position, bool focused)
+void LogModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event)
 {
     highlight_rect->set_visible(false);
     if (focused)
@@ -62,7 +62,7 @@ void LogModule::on_mouse_moved(sf::Vector2f position, bool focused)
         int total = history.size() + (error.has_value() ? 1 : 0);
         for (int i = 0; i < total; ++i)
         {
-            if (get_item_bounds(i).contains(sf::Vector2i(position)))
+            if (get_item_bounds(i).contains(position))
             {
                 highlight_rect->set_visible(true);
                 highlight_rect->set_position(sf::Vector2f(get_item_bounds(i).position));

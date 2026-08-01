@@ -2,7 +2,7 @@
 #define FLEX_TAB_H
 
 #include "graphics/nodes.h"
-#include "editor/EditorModule.h"
+#include "editor/core/EditorModule.h"
 
 class FlexTab
 {

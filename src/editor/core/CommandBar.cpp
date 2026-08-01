@@ -200,7 +200,7 @@ void CommandBar::append(const std::string& raw_text)
     std::string new_text = "";
     for (auto c : raw_text)
     {
-        if ((int)c >= 32)
+        if ((int) c >= 32)
             new_text += c;
     }
 

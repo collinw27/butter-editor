@@ -10,7 +10,6 @@
 #include <SFML/Graphics.hpp>
 #include <subprocess.hpp>
 #include "utility/core.h"
-#include "project/ExportTask.h"
 #include "project/timeline/TimelineClip.h"
 
 // All project loading logic is within this class instead of FileManager
@@ -41,6 +40,15 @@
 // The Editor class then has two different variables:
 // `locked_project`: Always contains a pointer to the LockedProject* portion of the Project
 // `project`: Contains a full-on Project* pointer, but only when unlocked (nullptr otherwise)
+
+struct ExportTask
+{
+    subprocess::Popen ffmpeg_pipe;
+    std::thread thread;
+    std::size_t buffer_size;
+    std::uint8_t* buffer;
+    TimelineUnit final_frame;
+};
 
 class LockedProject
 {

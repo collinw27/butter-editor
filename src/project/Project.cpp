@@ -311,6 +311,7 @@ void Project::export_video(std::filesystem::path filepath)
         "-an",
         "-pix_fmt", "yuv420p",
         "-vcodec", "libx264",
+        "-loglevel", "quiet",
         filepath.string()
     }).cin(subprocess::PipeOption::pipe).popen();
 
@@ -359,9 +360,6 @@ void Project::export_async()
     std::unique_lock<std::mutex> lock {basic_mutex, std::defer_lock};
     for (int f = 0; f < export_task.final_frame; ++f)
     {
-        Logger().log("Exporting frame " + std::to_string(f));
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
         write_frame_rgb24(f, export_task.buffer);
         std::size_t result = subprocess::pipe_write(export_task.ffmpeg_pipe.cin, export_task.buffer, export_task.buffer_size);
 

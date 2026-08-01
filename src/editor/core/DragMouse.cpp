@@ -1,14 +1,18 @@
 #include "editor/core/DragMouse.h"
 
-DragMouse::DragMouse(sf::Vector2i source_pos) :
-    source_pos{source_pos}
+#include "editor/core/EditorModule.h"
+
+sf::Vector2i DragMouse::get_source_pos()
 {
+    return source_pos;
 }
 
-void DragMouse::on_move(sf::Vector2i mouse_pos)
+sf::Vector2i DragMouse::get_current_pos()
 {
+    return current_pos;
 }
 
-void DragMouse::draw(sf::RenderWindow& window)
+sf::Vector2i DragMouse::get_total_offset()
 {
+    return current_pos - source_pos;
 }

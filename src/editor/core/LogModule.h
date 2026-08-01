@@ -1,7 +1,7 @@
 #ifndef LOG_MODULE_H
 #define LOG_MODULE_H
 
-#include "editor/EditorModule.h"
+#include "editor/core/EditorModule.h"
 
 #include <string>
 #include <vector>
@@ -32,7 +32,7 @@ public:
     void push_command(std::string command);
     void push_error(std::string error);
     
-    virtual void on_mouse_moved(sf::Vector2f position, bool focused) override;
+    virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) override;
 
 private:
 

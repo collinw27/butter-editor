@@ -9,7 +9,7 @@ class DragDivider : public DragMouse
 
 public:
 
-    DragDivider(sf::Vector2i source_pos, bool vertical);
+    DragDivider(bool vertical);
     bool is_vertical();
 };
 
