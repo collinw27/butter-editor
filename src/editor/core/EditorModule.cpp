@@ -39,6 +39,11 @@ void EditorModule::set_ui_scale(float new_scale)
     apply_ui_scale();
 }
 
+sf::Vector2i EditorModule::to_local_pos(sf::Vector2i position)
+{
+    return position - bounds.position;
+}
+
 void EditorModule::set_visible(bool visible)
 {
     visible_rect->set_visible(visible);

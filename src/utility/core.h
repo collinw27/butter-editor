@@ -29,6 +29,13 @@ inline T mod(T a, T b)
     return (a % b + b) % b;
 }
 
+// Safe way of truncating a float
+
+inline int intcast(float x)
+{
+    return (int) std::trunc(x);
+}
+
 inline sf::Vector2f to_sf(glm::vec2 vec)
 {
     return sf::Vector2f(vec.x, vec.y);

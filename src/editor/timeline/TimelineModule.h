@@ -8,8 +8,9 @@
 
 class TimelineModule : public EditorModule
 {
-    int scroll_value;
+    float scroll_pct;
     int scroll_max;
+    int scroll_span;
     
     GLNode* clips_anchor;
     std::vector<GLRectangle*> clips;
@@ -23,7 +24,6 @@ public:
     virtual void apply_bounds() override;
     virtual void apply_ui_scale() override;
 
-    void scroll(int delta);
     void refresh_clips();
     
     virtual void on_mouse_press(sf::Vector2i position, bool focused) override;
@@ -35,8 +35,6 @@ private:
 
     bool is_position_in_scroll(sf::Vector2i relative_pos);
     void update_scroll();
-    int scroll_x_to_time(int x);
-    int scroll_time_to_x(int time);
     void update_scroll_color(bool hovering, bool dragging);
 };
 

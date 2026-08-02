@@ -28,6 +28,8 @@ public:
     virtual void apply_bounds() {}
     void set_ui_scale(float new_scale);
     virtual void apply_ui_scale() {}
+
+    sf::Vector2i to_local_pos(sf::Vector2i position);
     
     void set_visible(bool visible);
     void set_hover_highlight(bool hover);

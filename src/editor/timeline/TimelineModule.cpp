@@ -10,6 +10,8 @@
 #include "project/Project.h"
 #include "project/timeline/ColorClip.h"
 
+#include "utility/Logger.h"
+
 constexpr int SCROLLBAR_H = 12;
 constexpr int SCROLLBAR_W = 90;
 
@@ -20,7 +22,7 @@ TimelineModule::TimelineModule(Editor& editor)
     scroll_bar = GLRectangle::create(container);
     scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
 
-    scroll_value = 0;
+    scroll_pct = 0;
     scroll_max = 200;
 }
 
@@ -39,12 +41,6 @@ void TimelineModule::apply_bounds()
 
 void TimelineModule::apply_ui_scale()
 {
-    update_scroll();
-}
-
-void TimelineModule::scroll(int delta)
-{
-    scroll_value = clamp(scroll_value + delta, 0, scroll_max);
     update_scroll();
 }
 
@@ -79,23 +75,17 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused)
 {
     if (focused && is_position_in_scroll(position))
     {
-        editor.set_drag_event(std::unique_ptr<DragMouse>(new DragScroll(this, position.x - scroll_time_to_x(scroll_value))));
+        editor.set_drag_event(std::unique_ptr<DragScroll>(new DragScroll(this, scroll_pct)));
         update_scroll_color(false, true);
     }
 }
 
 void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event)
 {
-    // TODO: Frustratingly, the scroll still jumps slightly when
-    // scrolling in lengthier projects
-    // Still, I've spent way too much time on this already, and can't
-    // afford more time for a bug fix that doesn't affect anything right now
-
     DragScroll* scroll_event = (drag_event) ? dynamic_cast<DragScroll*>(drag_event) : nullptr;
     if (scroll_event != nullptr)
     {
-        int scroll_current = scroll_x_to_time(scroll_event->get_current_pos().x - scroll_event->get_scroll_offset());
-        scroll_value = clamp(scroll_current, 0, scroll_max);
+        scroll_pct = clamp<float>(scroll_event->get_scroll_offset() + scroll_event->get_total_offset().x / (float) scroll_span, 0.f, 1.f);
         update_scroll();
     }
     update_scroll_color(is_position_in_scroll(position), scroll_event != nullptr);
@@ -122,23 +112,11 @@ bool TimelineModule::is_position_in_scroll(sf::Vector2i relative_pos)
 
 void TimelineModule::update_scroll()
 {
-    clips_anchor->set_position(sf::Vector2f(-scroll_value * 10, 0));
-
     scroll_bar->set_size(sf::Vector2f(SCROLLBAR_W, SCROLLBAR_H) * ui_scale);
-    scroll_bar->set_position(sf::Vector2f(scroll_time_to_x(scroll_value), container->get_size().y - 5 - scroll_bar->get_size().y));
-}
+    scroll_span = container->get_size().x - 10 - scroll_bar->get_size().x;
 
-int TimelineModule::scroll_x_to_time(int x)
-{
-    int scroll_span = container->get_size().x - 10 - scroll_bar->get_size().x;
-    return (x - 5) * (scroll_max / (float) scroll_span);
-}
-
-int TimelineModule::scroll_time_to_x(int time)
-{
-    int scroll_span = container->get_size().x - 10 - scroll_bar->get_size().x;
-    float scroll_pct = time / (float) scroll_max;
-    return (5 + scroll_pct * scroll_span);
+    clips_anchor->set_position(sf::Vector2f(-scroll_pct * scroll_max * 10, 0));
+    scroll_bar->set_position(sf::Vector2f(5 + intcast(scroll_pct * scroll_span), container->get_size().y - 5 - scroll_bar->get_size().y));
 }
 
 void TimelineModule::update_scroll_color(bool hovering, bool dragging)
