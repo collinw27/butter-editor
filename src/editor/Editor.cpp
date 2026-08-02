@@ -1,14 +1,15 @@
 #include "editor/Editor.h"
 
-#include "editor/core/DragDivider.h"
+#include <sstream>
 
+#include "utility/core.h"
 #include "utility/Graphics.h"
 #include "utility/Input.h"
 #include "utility/Logger.h"
 #include "utility/FileManager.h"
 #include "utility/file_formats/UserSettings.h"
 #include "utility/Debugger.h"
-
+#include "editor/core/DragDivider.h"
 #include "command/exceptions.h"
 
 constexpr int MODULE_MARGIN = 100;
@@ -16,16 +17,16 @@ constexpr int TAB_HEIGHT = 30;
 constexpr int TAB_WIDTH = 90;
 constexpr int C_BAR_HEIGHT = 20;
 
-const sf::Color Editor::C_BG{0, 0, 0};
-const sf::Color Editor::C_FG{90, 90, 90};
-const sf::Color Editor::C_HOVER{130, 130, 130};
-const sf::Color Editor::C_HIGHLIGHT{90, 90, 90};
-const sf::Color Editor::C_HIGHLIGHT_SUBTLE{50, 50, 50};
-const sf::Color Editor::C_FG_DESELECTED{50, 50, 50};
-const sf::Color Editor::C_INVALID{255, 120, 120};
-const sf::Color Editor::C_SCROLL_STILL{255, 255, 255, 60};
-const sf::Color Editor::C_SCROLL_HOVER{255, 255, 255, 110};
-const sf::Color Editor::C_SCROLL_DRAG{255, 255, 255, 180};
+const sf::Color Editor::C_BG {0, 0, 0};
+const sf::Color Editor::C_FG {90, 90, 90};
+const sf::Color Editor::C_HOVER {130, 130, 130};
+const sf::Color Editor::C_HIGHLIGHT {90, 90, 90};
+const sf::Color Editor::C_HIGHLIGHT_SUBTLE {50, 50, 50};
+const sf::Color Editor::C_FG_DESELECTED {50, 50, 50};
+const sf::Color Editor::C_INVALID {255, 120, 120};
+const sf::Color Editor::C_SCROLL_STILL {255, 255, 255, 60};
+const sf::Color Editor::C_SCROLL_HOVER {255, 255, 255, 110};
+const sf::Color Editor::C_SCROLL_DRAG {255, 255, 255, 180};
 
 Editor::Editor()
 {
@@ -47,6 +48,7 @@ Editor::Editor()
     log_module = new LogModule(*this);
     media_module = new MediaModule(*this);
     project_module = new ProjectModule(*this);
+    debug_module = new DebugModule(*this);
     visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, (EditorModule**) &timeline_module});
 
     // Flex module setup
@@ -56,6 +58,7 @@ Editor::Editor()
     flex_tabs.push_back(new FlexTab(*this, log_module, "Log"));
     flex_tabs.push_back(new FlexTab(*this, media_module, "Media"));
     flex_tabs.push_back(new FlexTab(*this, project_module, "Project"));
+    flex_tabs.push_back(new FlexTab(*this, debug_module, "Debug"));
     flex_tabs.at(current_flex_tab)->set_selected(true);
     flex_module = &flex_tabs.at(current_flex_tab)->get_module();
 
@@ -229,6 +232,17 @@ void Editor::run()
             FileManager().update_user_settings(user_settings);
         }
 
+        // Alt+Q/W: Next/prev tab (wraps!)
+
+        if (!flex_tabs.empty() && Input().check_key_press(SF_KEY::Q, KeyMod::ALT))
+        {
+            switch_flex_tab(mod((int) current_flex_tab - 1, (int) flex_tabs.size()));
+        }
+        if (!flex_tabs.empty() && Input().check_key_press(SF_KEY::W, KeyMod::ALT))
+        {
+            switch_flex_tab(mod((int) current_flex_tab + 1, (int) flex_tabs.size()));
+        }
+
         // Update export display (if applicable)
 
         if (exporting)
@@ -245,6 +259,12 @@ void Editor::run()
                 unlock_project();
             }
         }
+
+        // Update debug module with most recent info
+
+        std::stringstream debug_info {};
+        debug_info << "Cursor: (" << mouse_position.x << ", " << mouse_position.y << ")";
+        debug_module->refresh_info(debug_info.str());
 
         // Display the root, which will propogate to all other GLNode children
 
@@ -402,14 +422,8 @@ void Editor::on_mouse_press()
 
     for (int i = 0; i < flex_tabs.size(); ++i)
     {
-        FlexTab* tab = flex_tabs.at(i);
-        if (tab->get_bounds().contains(mouse_position))
-        {
-            flex_tabs.at(current_flex_tab)->set_selected(false);
-            tab->set_selected(true);
-            current_flex_tab = i;
-            flex_module = &tab->get_module();
-        }
+        if (flex_tabs.at(i)->get_bounds().contains(mouse_position))
+            switch_flex_tab(i);
     }
     
     // Trigger callback for each module
@@ -487,6 +501,14 @@ void Editor::resize_modules()
     temp_menu_bar->set_size(sf::Vector2f(x_divider, tab_height));
     menu_bar_text->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
     menu_bar_text->set_char_size((unsigned int)(19.f * ui_scale));
+}
+
+void Editor::switch_flex_tab(unsigned int index)
+{
+    flex_tabs.at(current_flex_tab)->set_selected(false);
+    flex_tabs.at(index)->set_selected(true);
+    current_flex_tab = index;
+    flex_module = &flex_tabs.at(index)->get_module();
 }
 
 void Editor::on_timeline_update()

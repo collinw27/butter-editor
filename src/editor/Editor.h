@@ -13,10 +13,11 @@
 
 #include "editor/command_bar/CommandBar.h"
 #include "editor/core/DragMouse.h"
+#include "editor/timeline/TimelineModule.h"
 #include "editor/log/LogModule.h"
 #include "editor/media/MediaModule.h"
 #include "editor/project/ProjectModule.h"
-#include "editor/timeline/TimelineModule.h"
+#include "editor/debug/DebugModule.h"
 
 class Editor
 {
@@ -56,6 +57,7 @@ private:
     LogModule* log_module;
     MediaModule* media_module;
     ProjectModule* project_module;
+    DebugModule* debug_module;
 
     // Command processing
     
@@ -129,6 +131,8 @@ private:
     sf::Vector2i get_mouse_position();
 
     void resize_modules();
+
+    void switch_flex_tab(unsigned int index);
 
     void on_timeline_update();
 

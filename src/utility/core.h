@@ -21,6 +21,14 @@ inline T clamp(T value, T min_val, T max_val)
     return std::max(std::min(value, max_val), min_val);
 }
 
+// Proper mathematical modulus since C++'s % operator is useless
+
+template<typename T>
+inline T mod(T a, T b)
+{
+    return (a % b + b) % b;
+}
+
 inline sf::Vector2f to_sf(glm::vec2 vec)
 {
     return sf::Vector2f(vec.x, vec.y);
