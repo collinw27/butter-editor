@@ -4,9 +4,9 @@
 #include <memory>
 
 #include "utility/core.h"
-#include "utility/Logger.h"
 #include "editor/Editor.h"
 #include "editor/core/DragScroll.h"
+#include "editor/media/DragMedia.h"
 #include "project/Project.h"
 #include "project/timeline/ColorClip.h"
 
@@ -103,7 +103,15 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
 
 void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, DragMouse* drag_event)
 {
-    update_scroll_color(is_position_in_scroll(position), false);
+    update_scroll_color(focused && is_position_in_scroll(position), false);
+}
+
+void TimelineModule::on_mouse_drop(sf::Vector2i position, DragMouse* drag_event)
+{
+    if (auto drag_media = dynamic_cast<DragMedia*>(drag_event))
+    {
+        // Logger().log("Dropped media");
+    }
 }
 
 bool TimelineModule::is_position_in_scroll(sf::Vector2i relative_pos)

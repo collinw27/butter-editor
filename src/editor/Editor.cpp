@@ -269,6 +269,8 @@ bool Editor::set_drag_event(std::unique_ptr<DragMouse> new_event)
     drag_mouse_event = std::move(new_event);
     drag_mouse_event->source_pos = mouse_position;
     drag_mouse_event->current_pos = mouse_position;
+    drag_mouse_event->create_node(root);
+    drag_mouse_event->update_node(sf::Vector2f(mouse_position));
     return true;
 }
 
@@ -325,6 +327,7 @@ void Editor::on_mouse_move(sf::Vector2i position)
     {
         drag_mouse_event->current_pos = mouse_position;
         drag_mouse_event->on_move();
+        drag_mouse_event->update_node(sf::Vector2f(mouse_position));
     }
 
     // Special behavior for dragging divider between modules
@@ -421,13 +424,14 @@ void Editor::on_mouse_press()
 
 void Editor::on_mouse_release()
 {
-    // A little confusing, but the call to release() is freeing the pointer,
-    // not simulating a mouse release :)
-
     if (drag_mouse_event != nullptr)
+    {
+        drag_mouse_event->delete_node();
         drag_mouse_event->on_release();
+    }
 
     // Trigger callback for each module
+    // If the cursor is within it, trigger the event drop callback
 
     for (EditorModule** module : visible_modules)
     {
@@ -435,7 +439,12 @@ void Editor::on_mouse_release()
         bool mouse_overlaps = module_bounds.contains(mouse_position);
         DragMouse* event_ptr = (drag_mouse_event && drag_mouse_event->target == *module) ? drag_mouse_event.get() : nullptr;
         (*module)->on_mouse_release(mouse_position - module_bounds.position, mouse_overlaps, event_ptr);
+        if (drag_mouse_event != nullptr && mouse_overlaps)
+            (*module)->on_mouse_drop(mouse_position - module_bounds.position, drag_mouse_event.get());
     }
+
+    // A little confusing, but the call to release() is freeing the pointer,
+    // not simulating a mouse release :)
     
     drag_mouse_event.release();
 }

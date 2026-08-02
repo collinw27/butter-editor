@@ -42,6 +42,10 @@ public:
     virtual void on_mouse_press(sf::Vector2i position, bool focused) {}
     virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) {}
     virtual void on_mouse_release(sf::Vector2i position, bool focused, DragMouse* drag_event) {}
+
+    // This event only triggers when a mouse event is released over this module
+
+    virtual void on_mouse_drop(sf::Vector2i position, DragMouse* drag_event) {}
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include "utility/core.h"
 #include "utility/Graphics.h"
 #include "editor/Editor.h"
+#include "editor/media/DragMedia.h"
 
 MediaModule::MediaModule(Editor& editor)
     : EditorModule{editor}
@@ -44,6 +45,24 @@ void MediaModule::apply_ui_scale()
         media_colors.at(i)->set_size(sf::Vector2f(1, 1) * std::floor(unit_height * ui_scale - 4));
     }
     render_items();
+}
+
+void MediaModule::on_mouse_press(sf::Vector2i position, bool focused)
+{
+    if (focused)
+    {
+        // There's a more efficient way to resolve this than using a for loop,
+        // but it's fine for the time being
+
+        for (int i = 0; i < media.size(); ++i)
+        {
+            if (get_item_bounds(i).contains(position))
+            {
+                editor.set_drag_event(std::unique_ptr<DragMedia>(new DragMedia(media.at(i).color)));
+                break;
+            }
+        }
+    }
 }
 
 void MediaModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event)
