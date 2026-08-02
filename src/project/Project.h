@@ -10,7 +10,7 @@
 #include <SFML/Graphics.hpp>
 #include <subprocess.hpp>
 #include "utility/core.h"
-#include "project/timeline/TimelineClip.h"
+#include "project/clip/ClipData.h"
 
 // All project loading logic is within this class instead of FileManager
 // This does require duplicating some logic, but this strategy is much quicker
@@ -40,6 +40,15 @@
 // The Editor class then has two different variables:
 // `locked_project`: Always contains a pointer to the LockedProject* portion of the Project
 // `project`: Contains a full-on Project* pointer, but only when unlocked (nullptr otherwise)
+
+// Another note (since this essay wasn't long enough already):
+// This class is designed such that it doesn't have to be aware of any other editor constructs
+// ex. it has no knowledge of the timeline interface
+// Because of this, modules that modify project data are responsible for reading from this class
+// and keeping their own data in sync with the underlying project (since they will often store redundant
+// data in a way that makes modifying the project easier)
+// Whenever an external class modifies the project data, it should use message passing to keep this
+// class in sync with the new update
 
 struct ExportTask
 {
@@ -83,7 +92,7 @@ class Project : public LockedProject
 
     // State
 
-    std::vector<TimelineClip*> timeline;
+    std::vector<ClipData*> clip_vec;
     ExportTask export_task;
 
 public:
@@ -103,9 +112,13 @@ public:
     // Timeline manipulation
 
     bool add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
+    void delete_clip(ClipData* clip);
+
+    // Timeline reading
+
     unsigned int get_clip_total();
-    TimelineClip* get_clip_at_index(unsigned int index);
-    TimelineClip* get_clip_at_time(TimelineUnit time);
+    ClipData* get_clip_at_index(unsigned int index);
+    ClipData* get_clip_at_time(TimelineUnit time);
     TimelineUnit get_project_length();
     std::string get_project_length_approx();
     std::string to_string(TimelineUnit time);

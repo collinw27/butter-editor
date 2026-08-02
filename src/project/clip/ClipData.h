@@ -1,5 +1,5 @@
-#ifndef TIMELINE_OBJECT_H
-#define TIMELINE_OBJECT_H
+#ifndef CLIP_DATA_H
+#define CLIP_DATA_H
 
 #include <fstream>
 #include "utility/core.h"
@@ -8,21 +8,21 @@
 // Having to store all subclasses in this file feels weird, but
 // an enum is the easiest way to prevent ID collisions
 
-enum class TimelineClipType
+enum class ClipType
 {
     EMPTY,
     COLOR
 };
 
-class TimelineClip
+class ClipData
 {
     TimelineUnit start_time;
     TimelineUnit length;
 
 public:
 
-    TimelineClip(TimelineUnit start_time, TimelineUnit length);
-    virtual ~TimelineClip();
+    ClipData(TimelineUnit start_time, TimelineUnit length);
+    virtual ~ClipData();
 
     virtual int get_clip_type() = 0;
     void set_start_time(TimelineUnit start_time);

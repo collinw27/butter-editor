@@ -8,10 +8,11 @@
 #include "editor/Editor.h"
 #include "editor/core/DragScroll.h"
 #include "editor/media/DragMedia.h"
-#include "project/Project.h"
-#include "project/timeline/ColorClip.h"
 
-#include "utility/Logger.h"
+#include "project/Project.h"
+#include "project/clip/ClipData.h"
+#include "project/clip/ColorClipData.h"
+#include "editor/timeline/clip/Clip.h"
 
 constexpr int SCROLLBAR_H = 12;
 constexpr int SCROLLBAR_W = 90;
@@ -40,8 +41,6 @@ TimelineModule::TimelineModule(Editor& editor)
 TimelineModule::~TimelineModule()
 {
     delete clips_anchor;
-    for (GLRectangle* clip : clips)
-        delete clip;
     delete scroll_bar;
 }
 
@@ -85,8 +84,6 @@ void TimelineModule::refresh_clips()
 {
     // Clear pre-existing clips
 
-    for (GLRectangle* clip : clips)
-        delete clip;
     clips.clear();
 
     Project* project = editor.get_project();
@@ -95,14 +92,9 @@ void TimelineModule::refresh_clips()
     
     for (int i = 0; i < project->get_clip_total(); ++i)
     {
-        TimelineClip* clip_data = project->get_clip_at_index(i);
-        GLRectangle* new_clip = GLRectangle::create(
-            clips_anchor,
-            sf::Vector2f(clip_data->get_start_time(), 40),
-            sf::Vector2f(clip_data->get_length(), 100)
-        );
-        new_clip->set_fill_color(((ColorClip*) clip_data)->get_color());
-        clips.push_back(new_clip);
+        ClipData* clip_data = project->get_clip_at_index(i);
+        Clip* new_clip = new Clip(clip_data, ((ColorClipData*) clip_data)->get_color(), clips_anchor);
+        clips.push_back(std::unique_ptr<Clip>(new_clip));
     }
     scroll_max = std::max<int>(project->get_project_length(), 200);
     update_scroll();

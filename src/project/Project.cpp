@@ -11,7 +11,7 @@
 #include "utility/Logger.h"
 #include "project/exceptions.h"
 
-#include "project/timeline/ColorClip.h"
+#include "project/clip/ColorClipData.h"
 
 void export_async();
 
@@ -67,7 +67,7 @@ Project::Project(std::string name) : LockedProject{}
     file >> clip_total;
 
     int clip_type;
-    TimelineClip* new_clip = nullptr;
+    ClipData* new_clip = nullptr;
     int clip_start;
     int clip_length;
 
@@ -80,15 +80,15 @@ Project::Project(std::string name) : LockedProject{}
         file >> clip_type;
         file >> clip_start;
         file >> clip_length;
-        switch (static_cast<TimelineClipType>(clip_type))
+        switch (static_cast<ClipType>(clip_type))
         {
-        case TimelineClipType::COLOR:
-            new_clip = new ColorClip(clip_start, clip_length, file);
+        case ClipType::COLOR:
+            new_clip = new ColorClipData(clip_start, clip_length, file);
         break;
         default:
             throw ButterException("Invalid clip type: " + std::to_string(clip_type));
         }
-        timeline.push_back(new_clip);
+        clip_vec.push_back(new_clip);
     }
 
     file.close();
@@ -98,7 +98,7 @@ Project::~Project()
 {
     // Clear memory
 
-    for (auto clip : timeline)
+    for (auto clip : clip_vec)
         delete clip;
 }
 
@@ -136,9 +136,9 @@ bool Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::C
     // Find the first position it can slot in before something
     // If this doesn't exist, insert it at the end
 
-    ColorClip* new_clip = new ColorClip(start_time, length, color);
-    auto next_clip = timeline.begin();
-    while (next_clip < timeline.end())
+    ColorClipData* new_clip = new ColorClipData(start_time, length, color);
+    auto next_clip = clip_vec.begin();
+    while (next_clip < clip_vec.end())
     {
         if (start_time < (*next_clip)->get_start_time())
         {
@@ -161,7 +161,7 @@ bool Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::C
 
     // If the start is placed inside another clip, no clip is created
 
-    if (next_clip != timeline.begin())
+    if (next_clip != clip_vec.begin())
     {
         auto prev_clip = next_clip - 1;
         if ((*prev_clip)->get_end_time() > start_time)
@@ -170,20 +170,29 @@ bool Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::C
 
     // If all checks passed, insert clip
     
-    timeline.insert(next_clip, new_clip);
+    clip_vec.insert(next_clip, new_clip);
     return true;
+}
+
+void Project::delete_clip(ClipData* clip)
+{
+    auto it = std::find(clip_vec.begin(), clip_vec.end(), clip);
+    if (it == clip_vec.end())
+        throw ButterException("Cannot delete clip");
+    clip_vec.erase(it);
+    delete clip;
 }
 
 unsigned int Project::get_clip_total()
 {
-    return timeline.size();
+    return clip_vec.size();
 }
 
-TimelineClip* Project::get_clip_at_index(unsigned int index)
+ClipData* Project::get_clip_at_index(unsigned int index)
 {
     try
     {
-        return timeline.at(index);
+        return clip_vec.at(index);
     }
     catch (std::out_of_range e)
     {
@@ -191,22 +200,22 @@ TimelineClip* Project::get_clip_at_index(unsigned int index)
     }
 }
 
-TimelineClip* Project::get_clip_at_time(TimelineUnit time)
+ClipData* Project::get_clip_at_time(TimelineUnit time)
 {
     // Return early if:
     // a) empty timeline, or
     // b) every clip starts after the provided time
 
-    if (timeline.empty())
+    if (clip_vec.empty())
         return nullptr;
-    if (time < timeline.at(0)->get_start_time())
+    if (time < clip_vec.at(0)->get_start_time())
         return nullptr;
 
     // Attempt to find a clip that begins before the time and ends
     // after the time
     // Beginning is inclusive, end is exclusive
 
-    for (TimelineClip* clip : timeline)
+    for (ClipData* clip : clip_vec)
     {
         if (time >= clip->get_start_time() && time < clip->get_end_time())
             return clip;
@@ -219,7 +228,7 @@ TimelineUnit Project::get_project_length()
     // Return the end time of the final clip
     // If the timeline is empty, return length of 1
 
-    return (timeline.empty() ? 0 : timeline.back()->get_end_time());
+    return (clip_vec.empty() ? 0 : clip_vec.back()->get_end_time());
 }
 
 std::string Project::get_project_length_approx()
@@ -280,10 +289,10 @@ void Project::save()
     // Then, each clip begins with its clip type (enum value), start position, and length
     // Each clip is then free to define its own serialization methods
 
-    file << timeline.size() << " ";
-    for (int i = 0; i < timeline.size(); ++i)
+    file << clip_vec.size() << " ";
+    for (int i = 0; i < clip_vec.size(); ++i)
     {
-        TimelineClip* clip = timeline.at(i);
+        ClipData* clip = clip_vec.at(i);
         file << clip->get_clip_type() << " " << clip->get_start_time() << " " << clip->get_length() << " ";
         clip->save(file);
     }
@@ -353,8 +362,8 @@ void Project::write_frame_rgb24(TimelineUnit time, std::uint8_t* buffer)
 {
     // For now, the entire frame is just one color
 
-    TimelineClip* current_clip = get_clip_at_time(time);
-    sf::Color color = (current_clip == nullptr) ? sf::Color::Black : (dynamic_cast<ColorClip*>(current_clip)->get_color());
+    ClipData* current_clip = get_clip_at_time(time);
+    sf::Color color = (current_clip == nullptr) ? sf::Color::Black : (dynamic_cast<ColorClipData*>(current_clip)->get_color());
 
     // Buffer size = (width * height * 3) chars
 

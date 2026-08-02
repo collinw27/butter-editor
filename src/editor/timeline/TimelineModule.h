@@ -3,8 +3,8 @@
 
 #include "editor/core/EditorModule.h"
 #include "editor/core/DragMouse.h"
-
 #include "graphics/nodes.h"
+#include "editor/timeline/clip/Clip.h"
 
 class TimelineModule : public EditorModule
 {
@@ -15,10 +15,18 @@ class TimelineModule : public EditorModule
     
     GLNode* clips_anchor;
     GLNode* clips_scaler;
-    std::vector<GLRectangle*> clips;
+
+    // The clip display is layered to display properly
+    // Selection outlines should display above non-selected clips,
+    // but are still behind all selected clips
+
+    GLNode* outline_layer;
+    GLNode* clip_layer;
+    std::vector<std::unique_ptr<Clip>> clips;
+
     GLRectangle* scroll_bar;
 
-    GLText* start_text;
+    // GLText* start_text;
 
 public:
 

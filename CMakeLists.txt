@@ -44,6 +44,7 @@ file(
     "src/command/*.cpp"
     "src/editor/*.cpp"
     "src/editor/**/*.cpp"
+    "src/editor/**/**/*.cpp"
     "src/graphics/*.cpp"
     "src/graphics/**/*.cpp"
     "src/project/*.cpp"
