@@ -14,12 +14,18 @@
 class Clip
 {
     std::unique_ptr<GLRectangle> rect;
+    std::unique_ptr<GLRectangle> border;
     ClipData* clip_data;
+    bool is_selected = false;
 
 public:
 
     Clip(ClipData* clip_data, sf::Color color, GLNode* container);
     virtual ~Clip() {}
+
+    bool selected();
+    void select(GLNode* container);
+    void deselect();
 
     void delete_clip(Project* project);
 };

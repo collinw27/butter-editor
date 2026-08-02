@@ -23,10 +23,9 @@ class TimelineModule : public EditorModule
     GLNode* outline_layer;
     GLNode* clip_layer;
     std::vector<std::unique_ptr<Clip>> clips;
+    std::vector<Clip*> selected_clips;
 
     GLRectangle* scroll_bar;
-
-    // GLText* start_text;
 
 public:
 
@@ -41,6 +40,9 @@ public:
     void zoom_in();
     void zoom_out();
     void refresh_clips();
+
+    void select_all();
+    void deselect_all();
     
     virtual void on_mouse_press(sf::Vector2i position, bool focused) override;
     virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) override;

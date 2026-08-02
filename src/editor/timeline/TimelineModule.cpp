@@ -26,9 +26,8 @@ TimelineModule::TimelineModule(Editor& editor)
     clips_anchor = GLNode::create(clips_scaler);
     scroll_bar = GLRectangle::create(container);
     scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
-
-    // start_text = GLText::create(container, Graphics().mono_font(), 14u, "00:00:00+00");
-    // start_text->set_position(sf::Vector2f(8, 8));
+    outline_layer = GLNode::create(clips_anchor);
+    clip_layer = GLNode::create(clips_anchor);
 
     scroll_pct = 0;
     scroll_max = 200;
@@ -93,12 +92,36 @@ void TimelineModule::refresh_clips()
     for (int i = 0; i < project->get_clip_total(); ++i)
     {
         ClipData* clip_data = project->get_clip_at_index(i);
-        Clip* new_clip = new Clip(clip_data, ((ColorClipData*) clip_data)->get_color(), clips_anchor);
+        Clip* new_clip = new Clip(clip_data, ((ColorClipData*) clip_data)->get_color(), clip_layer);
         clips.push_back(std::unique_ptr<Clip>(new_clip));
     }
     scroll_max = std::max<int>(project->get_project_length(), 200);
     update_scroll();
     update_zoom();
+}
+
+void TimelineModule::select_all()
+{
+    for (std::unique_ptr<Clip>& clip : clips)
+    {
+        if (!clip->selected())
+        {
+            clip->select(outline_layer);
+            selected_clips.push_back(clip.get());
+        }
+    }
+}
+
+void TimelineModule::deselect_all()
+{
+    for (std::unique_ptr<Clip>& clip : clips)
+    {
+        if (clip->selected())
+        {
+            clip->deselect();
+            selected_clips.erase(std::find(selected_clips.begin(), selected_clips.end(), clip.get()));
+        }
+    }
 }
 
 void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused)
@@ -152,7 +175,6 @@ void TimelineModule::update_scroll()
     if (!project)
         throw ButterException("Invalid call to update_zoom()");
     TimelineUnit start_time = (TimelineUnit) (scroll_pct * scroll_max);
-    // start_text->set_string(project->to_string(start_time));
 }
 
 void TimelineModule::update_zoom()

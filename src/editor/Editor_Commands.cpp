@@ -13,7 +13,9 @@ enum {
     CMD_SAVE_AS,
     CMD_LOAD,
     CMD_CREATE_CLIP,
-    CMD_EXPORT
+    CMD_EXPORT,
+    CMD_SELECT_ALL,
+    CMD_DESELECT
 };
 
 // Prevent certain operations while exporting
@@ -56,6 +58,8 @@ void Editor::initialize_commands()
     command_parser.define_command(command_parser.new_command("export", (int) CMD_EXPORT)
         .add_parameter("filepath", CommandParser::ParamType::STRING)
     );
+    command_parser.define_command(command_parser.new_command("select_all", (int) CMD_SELECT_ALL));
+    command_parser.define_command(command_parser.new_command("deselect", (int) CMD_DESELECT));
 }
 
 std::string Editor::execute_command(CommandResult command)
@@ -171,6 +175,16 @@ std::string Editor::execute_command(CommandResult command)
         exporting = project->is_exporting();
         lock_project();
         return "Now beginning export task.";
+    }
+    case CMD_SELECT_ALL:
+    {
+        timeline_module->select_all();
+        return "Selected all clips.";
+    }
+    case CMD_DESELECT:
+    {
+        timeline_module->deselect_all();
+        return "Deselected all clips.";
     }
     }
         
