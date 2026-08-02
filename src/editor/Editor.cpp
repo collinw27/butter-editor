@@ -235,13 +235,16 @@ void Editor::run()
         // Alt+Q/W: Next/prev tab (wraps!)
 
         if (!flex_tabs.empty() && Input().check_key_press(SF_KEY::Q, KeyMod::ALT))
-        {
             switch_flex_tab(mod((int) current_flex_tab - 1, (int) flex_tabs.size()));
-        }
         if (!flex_tabs.empty() && Input().check_key_press(SF_KEY::W, KeyMod::ALT))
-        {
             switch_flex_tab(mod((int) current_flex_tab + 1, (int) flex_tabs.size()));
-        }
+
+        // Move timeline
+
+        if (Input().check_key_press(SF_KEY::Down, KeyMod::ALT))
+            timeline_module->zoom_out();
+        if (Input().check_key_press(SF_KEY::Up, KeyMod::ALT))
+            timeline_module->zoom_in();
 
         // Update export display (if applicable)
 

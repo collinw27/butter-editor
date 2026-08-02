@@ -11,8 +11,10 @@ class TimelineModule : public EditorModule
     float scroll_pct;
     int scroll_max;
     int scroll_span;
+    int zoom_factor;
     
     GLNode* clips_anchor;
+    GLNode* clips_scaler;
     std::vector<GLRectangle*> clips;
     GLRectangle* scroll_bar;
 
@@ -24,6 +26,8 @@ public:
     virtual void apply_bounds() override;
     virtual void apply_ui_scale() override;
 
+    void zoom_in();
+    void zoom_out();
     void refresh_clips();
     
     virtual void on_mouse_press(sf::Vector2i position, bool focused) override;

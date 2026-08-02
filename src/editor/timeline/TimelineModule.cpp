@@ -14,16 +14,22 @@
 
 constexpr int SCROLLBAR_H = 12;
 constexpr int SCROLLBAR_W = 90;
+constexpr int ZOOM_MIN = -10;
+constexpr int ZOOM_MAX = 8;
 
 TimelineModule::TimelineModule(Editor& editor)
     : EditorModule(editor)
 {
-    clips_anchor = GLNode::create(container);
+    clips_scaler = GLNode::create(container);
+    clips_anchor = GLNode::create(clips_scaler);
     scroll_bar = GLRectangle::create(container);
     scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
 
     scroll_pct = 0;
     scroll_max = 200;
+
+    zoom_factor = 2;
+    clips_scaler->set_scale(sf::Vector2f(std::pow(2.0, zoom_factor), 1.0));
 }
 
 TimelineModule::~TimelineModule()
@@ -44,6 +50,18 @@ void TimelineModule::apply_ui_scale()
     update_scroll();
 }
 
+void TimelineModule::zoom_in()
+{
+    zoom_factor = clamp(zoom_factor + 1, ZOOM_MIN, ZOOM_MAX);
+    clips_scaler->set_scale(sf::Vector2f(std::pow(2.0, zoom_factor), 1.0));
+}
+
+void TimelineModule::zoom_out()
+{
+    zoom_factor = clamp(zoom_factor - 1, ZOOM_MIN, ZOOM_MAX);
+    clips_scaler->set_scale(sf::Vector2f(std::pow(2.0, zoom_factor), 1.0));
+}
+
 void TimelineModule::refresh_clips()
 {
     // Clear pre-existing clips
@@ -61,8 +79,8 @@ void TimelineModule::refresh_clips()
         TimelineClip* clip_data = project->get_clip_at_index(i);
         GLRectangle* new_clip = GLRectangle::create(
             clips_anchor,
-            sf::Vector2f(clip_data->get_start_time() * 10, 0),
-            sf::Vector2f(clip_data->get_length() * 10, 999)
+            sf::Vector2f(clip_data->get_start_time(), 40),
+            sf::Vector2f(clip_data->get_length(), 100)
         );
         new_clip->set_fill_color(((ColorClip*) clip_data)->get_color());
         clips.push_back(new_clip);
@@ -115,7 +133,7 @@ void TimelineModule::update_scroll()
     scroll_bar->set_size(sf::Vector2f(SCROLLBAR_W, SCROLLBAR_H) * ui_scale);
     scroll_span = container->get_size().x - 10 - scroll_bar->get_size().x;
 
-    clips_anchor->set_position(sf::Vector2f(-scroll_pct * scroll_max * 10, 0));
+    clips_anchor->set_position(sf::Vector2f(-scroll_pct * scroll_max, 0));
     scroll_bar->set_position(sf::Vector2f(5 + intcast(scroll_pct * scroll_span), container->get_size().y - 5 - scroll_bar->get_size().y));
 }
 
