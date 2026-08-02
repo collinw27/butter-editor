@@ -97,9 +97,10 @@ private:
 
     // Project
     // See Project.h for explanation of project "locking"
+    // Project must be initialized before all modules
 
-    LockedProject* locked_project;
-    Project* project;
+    LockedProject* locked_project = nullptr;
+    Project* project = nullptr;
 
     // Special information for asynchronous export task
 

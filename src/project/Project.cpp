@@ -238,6 +238,24 @@ std::string Project::get_project_length_approx()
     ).str();
 }
 
+std::string Project::to_string(TimelineUnit timeline_time)
+{
+    int time = (int) timeline_time;
+    int frame = time % framerate;
+    time = (time - frame) / framerate;
+    int sec = time % 60;
+    time = (time - sec) / 60;
+    int min = time % 60;
+    time = (time - min) / 60;
+    int hr = time;
+    return (std::stringstream{} << std::setfill('0')
+        << std::setw(2) << hr << ":"
+        << std::setw(2) << min << ":"
+        << std::setw(2) << sec << "+"
+        << std::setw(2) << frame
+    ).str();
+}
+
 void Project::save()
 {
     // Must have name to save

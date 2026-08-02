@@ -18,6 +18,8 @@ class TimelineModule : public EditorModule
     std::vector<GLRectangle*> clips;
     GLRectangle* scroll_bar;
 
+    GLText* start_text;
+
 public:
 
     TimelineModule(Editor& editor);
@@ -26,6 +28,8 @@ public:
     virtual void apply_bounds() override;
     virtual void apply_ui_scale() override;
 
+    void scroll_left();
+    void scroll_right();
     void zoom_in();
     void zoom_out();
     void refresh_clips();
@@ -39,6 +43,7 @@ private:
 
     bool is_position_in_scroll(sf::Vector2i relative_pos);
     void update_scroll();
+    void update_zoom();
     void update_scroll_color(bool hovering, bool dragging);
 };
 

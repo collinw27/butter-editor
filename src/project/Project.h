@@ -108,6 +108,7 @@ public:
     TimelineClip* get_clip_at_time(TimelineUnit time);
     TimelineUnit get_project_length();
     std::string get_project_length_approx();
+    std::string to_string(TimelineUnit time);
 
     // Output
     

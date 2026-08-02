@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "utility/core.h"
+#include "utility/Graphics.h"
 #include "editor/Editor.h"
 #include "editor/core/DragScroll.h"
 #include "editor/media/DragMedia.h"
@@ -25,11 +26,15 @@ TimelineModule::TimelineModule(Editor& editor)
     scroll_bar = GLRectangle::create(container);
     scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
 
+    // start_text = GLText::create(container, Graphics().mono_font(), 14u, "00:00:00+00");
+    // start_text->set_position(sf::Vector2f(8, 8));
+
     scroll_pct = 0;
     scroll_max = 200;
-
     zoom_factor = 2;
-    clips_scaler->set_scale(sf::Vector2f(std::pow(2.0, zoom_factor), 1.0));
+
+    update_scroll();
+    update_zoom();
 }
 
 TimelineModule::~TimelineModule()
@@ -50,16 +55,30 @@ void TimelineModule::apply_ui_scale()
     update_scroll();
 }
 
+void TimelineModule::scroll_left()
+{
+    float pct_on_screen = scroll_span / (float) scroll_max / std::pow(2.0, zoom_factor);
+    scroll_pct = clamp<float>(scroll_pct - pct_on_screen * 0.1f, 0.f, 1.f);
+    update_scroll();
+}
+
+void TimelineModule::scroll_right()
+{
+    float pct_on_screen = scroll_span / (float) scroll_max / std::pow(2.0, zoom_factor);
+    scroll_pct = clamp<float>(scroll_pct + pct_on_screen * 0.1f, 0.f, 1.f);
+    update_scroll();
+}
+
 void TimelineModule::zoom_in()
 {
     zoom_factor = clamp(zoom_factor + 1, ZOOM_MIN, ZOOM_MAX);
-    clips_scaler->set_scale(sf::Vector2f(std::pow(2.0, zoom_factor), 1.0));
+    update_zoom();
 }
 
 void TimelineModule::zoom_out()
 {
     zoom_factor = clamp(zoom_factor - 1, ZOOM_MIN, ZOOM_MAX);
-    clips_scaler->set_scale(sf::Vector2f(std::pow(2.0, zoom_factor), 1.0));
+    update_zoom();
 }
 
 void TimelineModule::refresh_clips()
@@ -87,6 +106,7 @@ void TimelineModule::refresh_clips()
     }
     scroll_max = std::max<int>(project->get_project_length(), 200);
     update_scroll();
+    update_zoom();
 }
 
 void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused)
@@ -135,6 +155,25 @@ void TimelineModule::update_scroll()
 
     clips_anchor->set_position(sf::Vector2f(-scroll_pct * scroll_max, 0));
     scroll_bar->set_position(sf::Vector2f(5 + intcast(scroll_pct * scroll_span), container->get_size().y - 5 - scroll_bar->get_size().y));
+
+    Project* project = editor.get_project();
+    if (!project)
+        throw ButterException("Invalid call to update_zoom()");
+    TimelineUnit start_time = (TimelineUnit) (scroll_pct * scroll_max);
+    // start_text->set_string(project->to_string(start_time));
+}
+
+void TimelineModule::update_zoom()
+{
+    // Every change in zoom level doubles/halves the scale
+    // Width is standardized across framerates to match 30 FPS
+    // (since having the zoom depend on framerate would be strange)
+    // Every 1 second is 30 px wide on 1x zoom
+
+    Project* project = editor.get_project();
+    if (!project)
+        throw ButterException("Invalid call to update_zoom()");
+    clips_scaler->set_scale(sf::Vector2f(std::pow(2.0, zoom_factor) * 30.0 / (float) project->get_framerate(), 1.0));
 }
 
 void TimelineModule::update_scroll_color(bool hovering, bool dragging)

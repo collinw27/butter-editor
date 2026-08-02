@@ -40,6 +40,11 @@ Editor::Editor()
     window->setFramerateLimit(150);
     root = GLRootNode::create();
 
+    // Create default project
+
+    create_project(new Project());
+    locked_project = (LockedProject*) project;
+
     // Module setup
 
     preview_module = new EditorModule(*this);
@@ -94,10 +99,8 @@ Editor::Editor()
 
     initialize_commands();
 
-    // Create default project
+    // Other project setup
 
-    create_project(new Project());
-    locked_project = (LockedProject*) project;
     project_module->refresh_info();
     command_bar->set_status_name(project->get_name());
     command_bar->set_status_length(project->get_project_length_approx());
@@ -241,6 +244,10 @@ void Editor::run()
 
         // Move timeline
 
+        if (Input().check_key_press(SF_KEY::Left, KeyMod::ALT))
+            timeline_module->scroll_left();
+        if (Input().check_key_press(SF_KEY::Right, KeyMod::ALT))
+            timeline_module->scroll_right();
         if (Input().check_key_press(SF_KEY::Down, KeyMod::ALT))
             timeline_module->zoom_out();
         if (Input().check_key_press(SF_KEY::Up, KeyMod::ALT))
