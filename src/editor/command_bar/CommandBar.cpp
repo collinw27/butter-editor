@@ -21,8 +21,8 @@ CommandBar::CommandBar(Editor &editor) :
     container.reset(GLContainer::create(nullptr, sf::Vector2f(bounds.position), sf::Vector2f(1000, 1000)));
     selection_rect.reset(GLRectangle::create(container.get()));
     selection_rect->set_fill_color(Editor::C_HIGHLIGHT);
-    status_text.reset(GLText::create(container.get(), Graphics().mono_font(), 16u, ""));
-    command_text.reset(GLText::create(container.get(), Graphics().mono_font(), 16u, "> "));
+    status_text.reset(GLText::create(container.get(), Graphics().mono_font(), 0u, ""));
+    command_text.reset(GLText::create(container.get(), Graphics().mono_font(), 0u, "> "));
     cursor_rect.reset(GLRectangle::create(container.get()));
     cursor_rect->set_fill_color(sf::Color::White);
 

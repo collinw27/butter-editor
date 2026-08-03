@@ -37,6 +37,13 @@ GLText* GLText::create(GLNode* parent, GLFont* font, unsigned int char_size, std
     return instance;
 }
 
+GLText* GLText::create(GLNode* parent, GLFont* font)
+{
+    GLText* instance = new GLText(parent, font, 0u, "");
+    instance->init();
+    return instance;
+}
+
 void GLText::on_window_resized()
 {
     update_model_matrix();
@@ -44,84 +51,90 @@ void GLText::on_window_resized()
 
 void GLText::draw()
 {
-    sf::RenderWindow& window = Graphics().get_window();
-    glUseProgram(shader_program);
-    glBindVertexArray(VAO);
-    glActiveTexture(GL_TEXTURE0);
+    // Rendering will be skipped if char_size is 0
+    // This occurs when text is initialized without a specific font size
 
-    GLuint loc = glGetUniformLocation(shader_program, "model");
-    glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));
-    loc = glGetUniformLocation(shader_program, "text_color");
-    glUniform3fv(loc, 1, glm::value_ptr(u_color));
-
-    // Since each glyph is its own distinct texture, we need to re-bind
-    // the vertex data for every glyph we draw
-    // This could be solved by stitching all glyphs together into a
-    // single sprite sheet (like sf::Font)
-    // This would also require reworking color parameters, though
-
-    std::map<char, FontChar>& char_map = font->get_char_map(char_size);
-    float char_height = char_map.find('|')->second.size.y;
-    float x_offset = 0;
-    float y_offset = char_height;
-
-    for (int i = 0; i < str.length(); ++i)
+    if (char_size != 0)
     {
-        // Change color if necessary (formatting only)
+        sf::RenderWindow& window = Graphics().get_window();
+        glUseProgram(shader_program);
+        glBindVertexArray(VAO);
+        glActiveTexture(GL_TEXTURE0);
 
-        if (do_special_formatting)
+        GLuint loc = glGetUniformLocation(shader_program, "model");
+        glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));
+        loc = glGetUniformLocation(shader_program, "text_color");
+        glUniform3fv(loc, 1, glm::value_ptr(u_color));
+
+        // Since each glyph is its own distinct texture, we need to re-bind
+        // the vertex data for every glyph we draw
+        // This could be solved by stitching all glyphs together into a
+        // single sprite sheet (like sf::Font)
+        // This would also require reworking color parameters, though
+
+        std::map<char, FontChar>& char_map = font->get_char_map(char_size);
+        float char_height = char_map.find('|')->second.size.y;
+        float x_offset = 0;
+        float y_offset = char_height;
+
+        for (int i = 0; i < str.length(); ++i)
         {
-            auto next_format = formatting_body.find((unsigned int) i);
-            if (next_format != formatting_body.end())
+            // Change color if necessary (formatting only)
+
+            if (do_special_formatting)
             {
-                if (auto f_color = dynamic_cast<TextFormat::Color*>(next_format->second))
+                auto next_format = formatting_body.find((unsigned int) i);
+                if (next_format != formatting_body.end())
                 {
-                    glm::vec3 current_color = to_gl3(f_color->get_color());
-                    GLuint color_loc = glGetUniformLocation(shader_program, "text_color");
-                    glUniform3fv(color_loc, 1, glm::value_ptr(current_color));
+                    if (auto f_color = dynamic_cast<TextFormat::Color*>(next_format->second))
+                    {
+                        glm::vec3 current_color = to_gl3(f_color->get_color());
+                        GLuint color_loc = glGetUniformLocation(shader_program, "text_color");
+                        glUniform3fv(color_loc, 1, glm::value_ptr(current_color));
+                    }
                 }
             }
+
+            // Special case for newline
+            // Line spacing of 10 equals the height of 1 char
+
+            if (str.at(i) == '\n')
+            {
+                x_offset = 0;
+                y_offset += (int)((1.f + line_spacing * 0.1f) * char_height);
+                continue;
+            }
+            
+            // Ignore characters with no associated glyph
+
+            auto ch_it = char_map.find(str.at(i));
+            if (ch_it == char_map.end())
+                continue;
+            FontChar ch = ch_it->second;
+
+            // The height of the '|' character is added by default
+            // The characters then "grow upward" based on ch.size.y
+            // Note that y coordinates are negative to match the way
+            // our provided coordinates start from the top-left, not bottom-left
+
+            float x = x_offset + ch.bearing.x;
+            float y = y_offset + ch.size.y - ch.bearing.y;
+            GLfloat vertices[] = {
+                x, -y + ch.size.y, 0.f, 0.f, 0.f,
+                x, -y, 0.f, 0.f, 1.f,
+                x + ch.size.x, -y, 0.f, 1.f, 1.f,
+                x + ch.size.x, -y + ch.size.y, 0.f, 1.f, 0.f
+            };
+            x_offset += (ch.advance >> 6);
+            
+            glBindTexture(GL_TEXTURE_2D, ch.texture_ID);
+            glBindBuffer(GL_ARRAY_BUFFER, vertex_VBO);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * 4 * sizeof(GLfloat), vertices);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         }
-
-        // Special case for newline
-        // Line spacing of 10 equals the height of 1 char
-
-        if (str.at(i) == '\n')
-        {
-            x_offset = 0;
-            y_offset += (int)((1.f + line_spacing * 0.1f) * char_height);
-            continue;
-        }
-        
-        // Ignore characters with no associated glyph
-
-        auto ch_it = char_map.find(str.at(i));
-        if (ch_it == char_map.end())
-            continue;
-        FontChar ch = ch_it->second;
-
-        // The height of the '|' character is added by default
-        // The characters then "grow upward" based on ch.size.y
-        // Note that y coordinates are negative to match the way
-        // our provided coordinates start from the top-left, not bottom-left
-
-        float x = x_offset + ch.bearing.x;
-        float y = y_offset + ch.size.y - ch.bearing.y;
-        GLfloat vertices[] = {
-            x, -y + ch.size.y, 0.f, 0.f, 0.f,
-            x, -y, 0.f, 0.f, 1.f,
-            x + ch.size.x, -y, 0.f, 1.f, 1.f,
-            x + ch.size.x, -y + ch.size.y, 0.f, 1.f, 0.f
-        };
-        x_offset += (ch.advance >> 6);
-        
-        glBindTexture(GL_TEXTURE_2D, ch.texture_ID);
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * 4 * sizeof(GLfloat), vertices);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
 
     GLNode::draw();
 }

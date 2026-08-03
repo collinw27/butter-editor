@@ -39,7 +39,8 @@ protected:
 public:
     
     ~GLText();
-    static GLText* create(GLNode* parent, GLFont* font, unsigned int char_size, std::string str = "");
+    static GLText* create(GLNode* parent, GLFont* font);
+    static GLText* create(GLNode* parent, GLFont* font, unsigned int char_size, std::string str);
 
 protected:
 

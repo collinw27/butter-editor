@@ -23,7 +23,7 @@ MediaModule::MediaModule(Editor& editor)
     {
         media_colors.push_back(std::unique_ptr<GLRectangle>(GLRectangle::create(container.get(), sf::Vector2f(), sf::Vector2f(12, 12))));
         media_colors.back()->set_fill_color(this_media.color);
-        media_text.push_back(std::unique_ptr<GLText>(GLText::create(container.get(), Graphics().mono_font(), 10u, this_media.name)));
+        media_text.push_back(std::unique_ptr<GLText>(GLText::create(container.get(), Graphics().mono_font(), 0u, this_media.name)));
     }
     render_items();
 }

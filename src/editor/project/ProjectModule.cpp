@@ -8,7 +8,7 @@
 ProjectModule::ProjectModule(Editor& editor)
     : EditorModule(editor)
 {
-    text.reset(GLText::create(container.get(), Graphics().mono_font(), 40u, ""));
+    text.reset(GLText::create(container.get(), Graphics().mono_font()));
     text->set_position(sf::Vector2f(8, 8));
 }
 

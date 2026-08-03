@@ -2,6 +2,8 @@
 
 #include "command/exceptions.h"
 #include "project/exceptions.h"
+#include "utility/FileManager.h"
+#include "utility/file_formats/UserSettings.h"
 #include <stdlib.h>
 
 enum {
@@ -81,6 +83,9 @@ std::string Editor::execute_command(CommandResult command)
         ui_scale_index = command.get_int(0);
         ui_scale = 1.f + (float)ui_scale_index * 0.1f;
         resize_modules();
+        UserSettings user_settings = FileManager().get_user_settings();
+        user_settings.ui_scale_index = ui_scale_index;
+        FileManager().update_user_settings(user_settings);
         return "Set UI scale to " + std::to_string(ui_scale_index) + ".";
     }
     case CMD_TYPE_TEST:

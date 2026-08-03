@@ -15,9 +15,9 @@ LogModule::LogModule(Editor& editor)
     highlight_rect->set_visible(false);
     highlight_rect->set_position(sf::Vector2f(0, 8));
 
-    history_text.reset(GLText::create(container.get(), Graphics().mono_font(), 10u, ""));
+    history_text.reset(GLText::create(container.get(), Graphics().mono_font()));
     history_text->set_position(sf::Vector2f(12, 8));
-    error_text.reset(GLText::create(container.get(), Graphics().mono_font(), 10u, ""));
+    error_text.reset(GLText::create(container.get(), Graphics().mono_font()));
     error_text->set_position(sf::Vector2f(12, 8));
     error_text->set_color(Editor::C_INVALID);
 

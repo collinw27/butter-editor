@@ -13,7 +13,7 @@ FlexTab::FlexTab(Editor& editor, EditorModule* module, std::string name)
     container.reset(GLNode::create(nullptr));
     rect.reset(GLRectangle::create(container.get()));
     rect->set_fill_color(Editor::C_FG_DESELECTED);
-    text.reset(GLText::create(container.get(), Graphics().main_font(), 25u, name));
+    text.reset(GLText::create(container.get(), Graphics().main_font(), 0u, name));
 }
 
 FlexTab::~FlexTab()

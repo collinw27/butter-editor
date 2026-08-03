@@ -79,7 +79,7 @@ Editor::Editor()
     for (std::unique_ptr<FlexTab>& tab : flex_tabs)
         root->add_child(tab->get_module().get_node());
     temp_menu_bar.reset(GLContainer::create(root.get(), sf::Vector2f(), sf::Vector2f()));
-    menu_bar_text.reset(GLText::create(temp_menu_bar.get(), Graphics().main_font(), 19u, "File   Edit   Settings   Export"));
+    menu_bar_text.reset(GLText::create(temp_menu_bar.get(), Graphics().main_font(), 0u, "File   Edit   Settings   Export"));
 
     // UI parameters
     // `resize_modules()` must ALWAYS be called
