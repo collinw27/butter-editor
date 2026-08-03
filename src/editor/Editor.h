@@ -66,7 +66,7 @@ private:
     // Top and bottom HUD
 
     CommandBar* command_bar;
-    std::vector<FlexTab*> flex_tabs;
+    std::vector<std::unique_ptr<FlexTab>> flex_tabs;
     unsigned int current_flex_tab;
     std::unique_ptr<GLContainer> temp_menu_bar;
     std::unique_ptr<GLText> menu_bar_text;

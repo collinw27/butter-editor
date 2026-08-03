@@ -88,19 +88,13 @@ Project::Project(std::string name) : LockedProject{}
         default:
             throw ButterException("Invalid clip type: " + std::to_string(clip_type));
         }
-        clip_vec.push_back(new_clip);
+        clip_vec.push_back(std::unique_ptr<ClipData>(new_clip));
     }
 
     file.close();
 }
 
-Project::~Project()
-{
-    // Clear memory
-
-    for (auto clip : clip_vec)
-        delete clip;
-}
+Project::~Project() {}
 
 bool Project::named()
 {
@@ -170,13 +164,13 @@ bool Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::C
 
     // If all checks passed, insert clip
     
-    clip_vec.insert(next_clip, new_clip);
+    clip_vec.insert(next_clip, std::unique_ptr<ClipData>(new_clip));
     return true;
 }
 
 void Project::delete_clip(ClipData* clip)
 {
-    auto it = std::find(clip_vec.begin(), clip_vec.end(), clip);
+    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip] (std::unique_ptr<ClipData>& smart_ptr) { return smart_ptr.get() == clip; } );
     if (it == clip_vec.end())
         throw ButterException("Cannot delete clip");
     clip_vec.erase(it);
@@ -192,7 +186,7 @@ ClipData* Project::get_clip_at_index(unsigned int index)
 {
     try
     {
-        return clip_vec.at(index);
+        return clip_vec.at(index).get();
     }
     catch (std::out_of_range e)
     {
@@ -215,10 +209,10 @@ ClipData* Project::get_clip_at_time(TimelineUnit time)
     // after the time
     // Beginning is inclusive, end is exclusive
 
-    for (ClipData* clip : clip_vec)
+    for (std::unique_ptr<ClipData>& clip : clip_vec)
     {
         if (time >= clip->get_start_time() && time < clip->get_end_time())
-            return clip;
+            return clip.get();
     }
     return nullptr;
 }
@@ -292,7 +286,7 @@ void Project::save()
     file << clip_vec.size() << " ";
     for (int i = 0; i < clip_vec.size(); ++i)
     {
-        ClipData* clip = clip_vec.at(i);
+        ClipData* clip = clip_vec.at(i).get();
         file << clip->get_clip_type() << " " << clip->get_start_time() << " " << clip->get_length() << " ";
         clip->save(file);
     }

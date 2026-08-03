@@ -92,7 +92,7 @@ class Project : public LockedProject
 
     // State
 
-    std::vector<ClipData*> clip_vec;
+    std::vector<std::unique_ptr<ClipData>> clip_vec;
     ExportTask export_task;
 
 public:

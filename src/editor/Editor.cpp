@@ -60,10 +60,10 @@ Editor::Editor()
     // Like the modules themselves, tab parameters are set during `resize_modules()`
 
     current_flex_tab = 0;
-    flex_tabs.push_back(new FlexTab(*this, log_module, "Log"));
-    flex_tabs.push_back(new FlexTab(*this, media_module, "Media"));
-    flex_tabs.push_back(new FlexTab(*this, project_module, "Project"));
-    flex_tabs.push_back(new FlexTab(*this, debug_module, "Debug"));
+    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, log_module, "Log")));
+    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, media_module, "Media")));
+    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, project_module, "Project")));
+    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, debug_module, "Debug")));
     flex_tabs.at(current_flex_tab)->set_selected(true);
     flex_module = &flex_tabs.at(current_flex_tab)->get_module();
 
@@ -74,9 +74,9 @@ Editor::Editor()
     root->add_child(preview_module->get_node());
     root->add_child(timeline_module->get_node());
     root->add_child(command_bar->get_node());
-    for (FlexTab* tab : flex_tabs)
+    for (std::unique_ptr<FlexTab>& tab : flex_tabs)
         root->add_child(tab->get_node());
-    for (FlexTab* tab : flex_tabs)
+    for (std::unique_ptr<FlexTab>& tab : flex_tabs)
         root->add_child(tab->get_module().get_node());
     temp_menu_bar.reset(GLContainer::create(root.get(), sf::Vector2f(), sf::Vector2f()));
     menu_bar_text.reset(GLText::create(temp_menu_bar.get(), Graphics().main_font(), 19u, "File   Edit   Settings   Export"));
@@ -106,7 +106,17 @@ Editor::Editor()
     command_bar->set_status_length(project->get_project_length_approx());
 }
 
-Editor::~Editor() {}
+Editor::~Editor()
+{
+    delete preview_module;
+    delete flex_module;
+    delete timeline_module;
+    delete log_module;
+    delete media_module;
+    delete project_module;
+    delete debug_module;
+    delete command_bar;
+}
 
 void Editor::run()
 {
@@ -376,7 +386,7 @@ void Editor::on_mouse_move(sf::Vector2i position)
             DragMouse* event_ptr = (drag_mouse_event && drag_mouse_event->target == *module) ? drag_mouse_event.get() : nullptr;
             (*module)->on_mouse_move(mouse_position - module_bounds.position, mouse_overlaps, event_ptr);
         }
-        for (FlexTab* tab : flex_tabs)
+        for (std::unique_ptr<FlexTab>& tab : flex_tabs)
         {
             bool mouse_overlaps = tab->get_bounds().contains(mouse_position);
             tab->set_hovering(mouse_overlaps);
