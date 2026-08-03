@@ -10,10 +10,10 @@ FlexTab::FlexTab(Editor& editor, EditorModule* module, std::string name)
     this->module = module;
     this->module->set_visible(false);
 
-    container = GLNode::create(nullptr);
-    rect = GLRectangle::create(container);
+    container.reset(GLNode::create(nullptr));
+    rect.reset(GLRectangle::create(container.get()));
     rect->set_fill_color(Editor::C_FG_DESELECTED);
-    text = GLText::create(container, Graphics().main_font(), 25u, name);
+    text.reset(GLText::create(container.get(), Graphics().main_font(), 25u, name));
 }
 
 FlexTab::~FlexTab()
@@ -25,7 +25,7 @@ FlexTab::~FlexTab()
 
 GLNode* FlexTab::get_node()
 {
-    return container;
+    return container.get();
 }
 
 void FlexTab::set_bounds(const sf::IntRect& new_bounds)

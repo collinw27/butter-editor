@@ -4,7 +4,7 @@
 #include <memory>
 #include "project/clip/ClipData.h"
 #include "project/Project.h"
-#include "graphics/glRectangle.h"
+#include "graphics/GLRectangle.h"
 
 // This class has two main responsibilities:
 // 1) Displaying the timeline clip using GLNodes

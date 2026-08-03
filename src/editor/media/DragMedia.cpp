@@ -1,6 +1,6 @@
 #include "editor/media/DragMedia.h"
 
-#include "graphics/glRectangle.h"
+#include "graphics/GLRectangle.h"
 
 DragMedia::DragMedia(sf::Color color)
 {

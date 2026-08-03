@@ -18,12 +18,12 @@ CommandBar::CommandBar(Editor &editor) :
 {
     command = "";
     
-    container = GLContainer::create(nullptr, sf::Vector2f(bounds.position), sf::Vector2f(1000, 1000));
-    selection_rect = GLRectangle::create(container);
+    container.reset(GLContainer::create(nullptr, sf::Vector2f(bounds.position), sf::Vector2f(1000, 1000)));
+    selection_rect.reset(GLRectangle::create(container.get()));
     selection_rect->set_fill_color(Editor::C_HIGHLIGHT);
-    status_text = GLText::create(container, Graphics().mono_font(), 16u, "");
-    command_text = GLText::create(container, Graphics().mono_font(), 16u, "> ");
-    cursor_rect = GLRectangle::create(container);
+    status_text.reset(GLText::create(container.get(), Graphics().mono_font(), 16u, ""));
+    command_text.reset(GLText::create(container.get(), Graphics().mono_font(), 16u, "> "));
+    cursor_rect.reset(GLRectangle::create(container.get()));
     cursor_rect->set_fill_color(sf::Color::White);
 
     command_text->enable_special_formatting();
@@ -84,7 +84,7 @@ void CommandBar::update(const std::string& typed_string)
 
 GLNode* CommandBar::get_node()
 {
-    return container;
+    return container.get();
 }
 
 void CommandBar::set_bounds(const sf::IntRect& new_bounds)

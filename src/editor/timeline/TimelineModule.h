@@ -13,24 +13,23 @@ class TimelineModule : public EditorModule
     int scroll_span;
     int zoom_factor;
     
-    GLNode* clips_anchor;
-    GLNode* clips_scaler;
+    std::unique_ptr<GLNode> clips_anchor;
+    std::unique_ptr<GLNode> clips_scaler;
 
     // The clip display is layered to display properly
     // Selection outlines should display above non-selected clips,
     // but are still behind all selected clips
 
-    GLNode* outline_layer;
-    GLNode* clip_layer;
+    std::unique_ptr<GLNode> outline_layer;
+    std::unique_ptr<GLNode> clip_layer;
     std::vector<std::unique_ptr<Clip>> clips;
     std::vector<Clip*> selected_clips;
 
-    GLRectangle* scroll_bar;
+    std::unique_ptr<GLRectangle> scroll_bar;
 
 public:
 
     TimelineModule(Editor& editor);
-    ~TimelineModule();
 
     virtual void apply_bounds() override;
     virtual void apply_ui_scale() override;

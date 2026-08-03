@@ -38,7 +38,7 @@ Editor::Editor()
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));
     window->setFramerateLimit(150);
-    root = GLRootNode::create();
+    root.reset(GLRootNode::create());
 
     // Create default project
 
@@ -78,8 +78,8 @@ Editor::Editor()
         root->add_child(tab->get_node());
     for (FlexTab* tab : flex_tabs)
         root->add_child(tab->get_module().get_node());
-    temp_menu_bar = GLContainer::create(root, sf::Vector2f(), sf::Vector2f());
-    menu_bar_text = GLText::create(temp_menu_bar, Graphics().main_font(), 19u, "File   Edit   Settings   Export");
+    temp_menu_bar.reset(GLContainer::create(root.get(), sf::Vector2f(), sf::Vector2f()));
+    menu_bar_text.reset(GLText::create(temp_menu_bar.get(), Graphics().main_font(), 19u, "File   Edit   Settings   Export"));
 
     // UI parameters
     // `resize_modules()` must ALWAYS be called
@@ -106,10 +106,7 @@ Editor::Editor()
     command_bar->set_status_length(project->get_project_length_approx());
 }
 
-Editor::~Editor()
-{
-    delete root;
-}
+Editor::~Editor() {}
 
 void Editor::run()
 {
@@ -278,7 +275,7 @@ void Editor::run()
 
         // Display the root, which will propogate to all other GLNode children
 
-        Graphics().display(root);
+        Graphics().display(root.get());
     }
 }
 
@@ -299,7 +296,7 @@ bool Editor::set_drag_event(std::unique_ptr<DragMouse> new_event)
     drag_mouse_event = std::move(new_event);
     drag_mouse_event->source_pos = mouse_position;
     drag_mouse_event->current_pos = mouse_position;
-    drag_mouse_event->create_node(root);
+    drag_mouse_event->create_node(root.get());
     drag_mouse_event->update_node(sf::Vector2f(mouse_position));
     return true;
 }
@@ -338,7 +335,7 @@ LockedProject* Editor::get_locked_project()
 
 void Editor::on_resized(sf::Vector2i new_size)
 {
-    Graphics().on_window_resized(root);
+    Graphics().on_window_resized(root.get());
     x_divider = (int)( ((float)x_divider / window_size.x) * new_size.x);
     y_divider = (int)( ((float)y_divider / window_size.y) * new_size.y);
     x_divider = std::max(MODULE_MARGIN, std::min(new_size.x - MODULE_MARGIN, x_divider));

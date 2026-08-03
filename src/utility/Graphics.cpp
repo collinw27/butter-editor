@@ -44,6 +44,8 @@ GraphicsSingleton::GraphicsSingleton()
 GraphicsSingleton::~GraphicsSingleton()
 {
     GraphicsSingleton::singleton_object = nullptr;
+    delete main_font_obj;
+    delete mono_font_obj;
 }
 
 void GraphicsSingleton::init(sf::VideoMode mode, std::string title, uint32_t style)

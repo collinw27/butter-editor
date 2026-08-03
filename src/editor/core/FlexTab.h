@@ -9,9 +9,9 @@ class FlexTab
     EditorModule* module;
     sf::IntRect bounds;
     float ui_scale = 1.f;
-    GLNode* container;
-    GLRectangle* rect;
-    GLText* text;
+    std::unique_ptr<GLNode> container;
+    std::unique_ptr<GLRectangle> rect;
+    std::unique_ptr<GLText> text;
 
     bool hovering = false;
     bool selected = false;

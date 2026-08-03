@@ -22,12 +22,12 @@ constexpr int ZOOM_MAX = 8;
 TimelineModule::TimelineModule(Editor& editor)
     : EditorModule(editor)
 {
-    clips_scaler = GLNode::create(container);
-    clips_anchor = GLNode::create(clips_scaler);
-    scroll_bar = GLRectangle::create(container);
+    clips_scaler.reset(GLNode::create(container.get()));
+    clips_anchor.reset(GLNode::create(clips_scaler.get()));
+    scroll_bar.reset(GLRectangle::create(container.get()));
     scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
-    outline_layer = GLNode::create(clips_anchor);
-    clip_layer = GLNode::create(clips_anchor);
+    outline_layer.reset(GLNode::create(clips_anchor.get()));
+    clip_layer.reset(GLNode::create(clips_anchor.get()));
 
     scroll_pct = 0;
     scroll_max = 200;
@@ -35,12 +35,6 @@ TimelineModule::TimelineModule(Editor& editor)
 
     update_scroll();
     update_zoom();
-}
-
-TimelineModule::~TimelineModule()
-{
-    delete clips_anchor;
-    delete scroll_bar;
 }
 
 void TimelineModule::apply_bounds()
@@ -92,7 +86,7 @@ void TimelineModule::refresh_clips()
     for (int i = 0; i < project->get_clip_total(); ++i)
     {
         ClipData* clip_data = project->get_clip_at_index(i);
-        Clip* new_clip = new Clip(clip_data, ((ColorClipData*) clip_data)->get_color(), clip_layer);
+        Clip* new_clip = new Clip(clip_data, ((ColorClipData*) clip_data)->get_color(), clip_layer.get());
         clips.push_back(std::unique_ptr<Clip>(new_clip));
     }
     scroll_max = std::max<int>(project->get_project_length(), 200);
@@ -106,7 +100,7 @@ void TimelineModule::select_all()
     {
         if (!clip->selected())
         {
-            clip->select(outline_layer);
+            clip->select(outline_layer.get());
             selected_clips.push_back(clip.get());
         }
     }

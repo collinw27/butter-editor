@@ -21,6 +21,11 @@ enum class Axis
 // This allows nodes to have more control over drawing, especially when
 // it comes to things like scissor buffering
 
+// Deleting a node will free it (remove it from the tree)
+// Its children will be freed as well, but NOT automatically deleted
+// Giving nodes the ability to delete their children would be problematic,
+// since it would result in two different objects managing the memory
+
 class GLRootNode;
 
 class GLNode
@@ -54,6 +59,7 @@ protected:
 public:
 
     static GLNode* create(GLNode* parent);
+    virtual ~GLNode();
 
 protected:
 
@@ -68,14 +74,13 @@ protected:
 
     virtual void draw();
     virtual void on_window_resized();
-    virtual void apply_global_matrix() {}
+    virtual void apply_global_matrix();
 
 public:
 
-    ~GLNode();
-
     void add_child(GLNode* child);
     void remove_child(GLNode* child);
+    void free();
     GLNode* get_parent();
 
     bool is_visible();

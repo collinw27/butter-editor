@@ -10,14 +10,14 @@ constexpr int MAX_HISTORY = 8;
 LogModule::LogModule(Editor& editor)
     : EditorModule(editor)
 {
-    highlight_rect = GLRectangle::create(container);
+    highlight_rect.reset(GLRectangle::create(container.get()));
     highlight_rect->set_fill_color(Editor::C_HIGHLIGHT);
     highlight_rect->set_visible(false);
     highlight_rect->set_position(sf::Vector2f(0, 8));
 
-    history_text = GLText::create(container, Graphics().mono_font(), 10u, "");
+    history_text.reset(GLText::create(container.get(), Graphics().mono_font(), 10u, ""));
     history_text->set_position(sf::Vector2f(12, 8));
-    error_text = GLText::create(container, Graphics().mono_font(), 10u, "");
+    error_text.reset(GLText::create(container.get(), Graphics().mono_font(), 10u, ""));
     error_text->set_position(sf::Vector2f(12, 8));
     error_text->set_color(Editor::C_INVALID);
 

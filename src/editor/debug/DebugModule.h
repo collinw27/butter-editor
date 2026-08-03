@@ -8,7 +8,7 @@
 
 class DebugModule : public EditorModule
 {
-    GLText* text;
+    std::unique_ptr<GLText> text;
 
 public:
 

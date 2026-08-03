@@ -10,9 +10,9 @@
 
 class LogModule : public EditorModule
 {
-    GLText* history_text;
-    GLText* error_text;
-    GLRectangle* highlight_rect;
+    std::unique_ptr<GLText> history_text;
+    std::unique_ptr<GLText> error_text;
+    std::unique_ptr<GLRectangle> highlight_rect;
     float unit_height;
 
     // Draws the last-executed commands

@@ -1,6 +1,7 @@
 #ifndef EDITOR_MODULE_H
 #define EDITOR_MODULE_H
 
+#include <memory>
 #include "graphics/nodes.h"
 
 class Editor;
@@ -13,8 +14,8 @@ protected:
     Editor& editor;
     sf::IntRect bounds;
     float ui_scale = 1.f;
-    GLOutlinedRectangle* visible_rect;
-    GLContainer* container;
+    std::unique_ptr<GLOutlinedRectangle> visible_rect;
+    std::unique_ptr<GLContainer> container;
     bool mouse_hover;
 
 public:

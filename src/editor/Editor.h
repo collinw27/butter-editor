@@ -41,7 +41,7 @@ public:
 private:
 
     sf::RenderWindow* window;
-    GLRootNode* root;
+    std::unique_ptr<GLRootNode> root;
 
     // For now, the editor has 3 modules visible at all times
     // Flex modules can be toggled between each other using
@@ -68,8 +68,8 @@ private:
     CommandBar* command_bar;
     std::vector<FlexTab*> flex_tabs;
     unsigned int current_flex_tab;
-    GLContainer* temp_menu_bar;
-    GLText* menu_bar_text;
+    std::unique_ptr<GLContainer> temp_menu_bar;
+    std::unique_ptr<GLText> menu_bar_text;
     sf::Vector2i mouse_position;
     bool using_terminal = false;
 

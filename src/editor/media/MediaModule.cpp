@@ -9,7 +9,7 @@
 MediaModule::MediaModule(Editor& editor)
     : EditorModule{editor}
 {
-    highlight_rect = std::unique_ptr<GLRectangle>(GLRectangle::create(container));
+    highlight_rect = std::unique_ptr<GLRectangle>(GLRectangle::create(container.get()));
     highlight_rect->set_fill_color(Editor::C_HIGHLIGHT);
     highlight_rect->set_visible(false);
     highlight_rect->set_position(sf::Vector2f(0, 8));
@@ -21,9 +21,9 @@ MediaModule::MediaModule(Editor& editor)
     media.push_back(MediaItem{sf::Color::Blue, "Blue"});
     for (MediaItem& this_media : media)
     {
-        media_colors.push_back(std::unique_ptr<GLRectangle>(GLRectangle::create(container, sf::Vector2f(), sf::Vector2f(12, 12))));
+        media_colors.push_back(std::unique_ptr<GLRectangle>(GLRectangle::create(container.get(), sf::Vector2f(), sf::Vector2f(12, 12))));
         media_colors.back()->set_fill_color(this_media.color);
-        media_text.push_back(std::unique_ptr<GLText>(GLText::create(container, Graphics().mono_font(), 10u, this_media.name)));
+        media_text.push_back(std::unique_ptr<GLText>(GLText::create(container.get(), Graphics().mono_font(), 10u, this_media.name)));
     }
     render_items();
 }

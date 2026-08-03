@@ -9,7 +9,6 @@ GLNode::GLNode(GLNode* parent)
 {
     if (parent != nullptr)
         parent->add_child(this);
-    init();
 }
 
 void GLNode::init()
@@ -22,6 +21,15 @@ GLNode* GLNode::create(GLNode* parent)
     GLNode* instance = new GLNode(parent);
     instance->init();
     return instance;
+}
+
+GLNode::~GLNode()
+{
+    // Free all children, but DON'T delete them
+
+    for (GLNode* child : children)
+        child->free();
+    free();
 }
 
 void GLNode::draw()
@@ -39,17 +47,7 @@ void GLNode::on_window_resized()
         child->on_window_resized();
 }
 
-// All children are freed from the node upon deletion
-// If this is undesirable, make sure to unparent them first
-// !! Any remaining references to the children are now dangling!
-
-GLNode::~GLNode()
-{
-    for (GLNode* child : children)
-        delete child;
-    if (parent != nullptr)
-        parent->remove_child(this);
-}
+void GLNode::apply_global_matrix() {}
 
 void GLNode::add_child(GLNode* child)
 {
@@ -68,6 +66,12 @@ void GLNode::remove_child(GLNode* child)
         throw ButterException("Cannot remove child from node that isn't its parent");
     children.erase(std::find(children.begin(), children.end(), child));
     child->parent = nullptr;
+}
+
+void GLNode::free()
+{
+    if (parent != nullptr)
+        parent->remove_child(this);
 }
 
 GLNode* GLNode::get_parent()

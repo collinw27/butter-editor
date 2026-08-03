@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include "graphics/nodes.h"
 
 class Editor;
@@ -12,11 +13,11 @@ class CommandBar
     Editor& editor;
     sf::IntRect bounds;
     float ui_scale = 1.f;
-    GLContainer* container;
-    GLRectangle* cursor_rect;
-    GLRectangle* selection_rect;
-    GLText* status_text;
-    GLText* command_text;
+    std::unique_ptr<GLContainer> container;
+    std::unique_ptr<GLRectangle> cursor_rect;
+    std::unique_ptr<GLRectangle> selection_rect;
+    std::unique_ptr<GLText> status_text;
+    std::unique_ptr<GLText> command_text;
 
     // Status text information
 

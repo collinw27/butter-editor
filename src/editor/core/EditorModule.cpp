@@ -7,16 +7,16 @@
 EditorModule::EditorModule(Editor &editor) :
     editor{editor}
 {
-    visible_rect = GLOutlinedRectangle::create(nullptr);
+    visible_rect.reset(GLOutlinedRectangle::create(nullptr));
     visible_rect->set_fill_color(sf::Color::Transparent);
     visible_rect->set_outline_color(Editor::C_HOVER);
     visible_rect->set_outline_thickness(2);
-    container = GLContainer::create(visible_rect, sf::Vector2f(), sf::Vector2f(bounds.size));
+    container.reset(GLContainer::create(visible_rect.get(), sf::Vector2f(), sf::Vector2f(bounds.size)));
 }
 
 GLNode* EditorModule::get_node()
 {
-    return visible_rect;
+    return visible_rect.get();
 }
 
 sf::IntRect EditorModule::get_bounds()
