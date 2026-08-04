@@ -13,6 +13,7 @@
 
 class Clip
 {
+    sf::Color color;
     std::unique_ptr<GLRectangle> rect;
     std::unique_ptr<GLRectangle> border;
     ClipData* clip_data;
@@ -23,9 +24,13 @@ public:
     Clip(ClipData* clip_data, sf::Color color, GLNode* container);
     virtual ~Clip() {}
 
+    GLRectangle* get_rect();
+
     bool selected();
     void select(GLNode* container);
     void deselect();
+    bool is_time_within(int time);
+    void set_hovering(bool hovering);
 
     void delete_clip(Project* project);
 };

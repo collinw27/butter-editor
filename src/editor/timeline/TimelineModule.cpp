@@ -5,6 +5,7 @@
 
 #include "utility/core.h"
 #include "utility/Graphics.h"
+#include "utility/Input.h"
 #include "editor/Editor.h"
 #include "editor/core/DragScroll.h"
 #include "editor/media/DragMedia.h"
@@ -120,15 +121,39 @@ void TimelineModule::deselect_all()
 
 void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused)
 {
-    if (focused && is_position_in_scroll(position))
+    if (focused)
     {
-        editor.set_drag_event(std::unique_ptr<DragScroll>(new DragScroll(this, scroll_pct)));
-        update_scroll_color(false, true);
+        // Drag scroll
+
+        if (is_position_in_scroll(position))
+        {
+            editor.set_drag_event(std::unique_ptr<DragScroll>(new DragScroll(this, scroll_pct)));
+            update_scroll_color(false, true);
+        }
+
+        else
+        {
+            // Select hovered clip
+            // Shift to select multiple
+            // Clicking with no hovered clip will deselect all
+
+            if (!Input().check_shift())
+            {
+                deselect_all();
+            }
+            if (hovered_clip != nullptr && !hovered_clip->selected())
+            {
+                hovered_clip->select(outline_layer.get());
+                selected_clips.push_back(hovered_clip);
+            }
+        }
     }
 }
 
 void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event)
 {
+    // Update scroll
+
     DragScroll* scroll_event = (drag_event) ? dynamic_cast<DragScroll*>(drag_event) : nullptr;
     if (scroll_event != nullptr)
     {
@@ -136,6 +161,29 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
         update_scroll();
     }
     update_scroll_color(is_position_in_scroll(position), scroll_event != nullptr);
+
+    // Highlight moused-over clip
+    // Note: This can leave a dangling pointer if the Clip is deleted
+    // This will need to be fixed in the future
+
+    int time_pos = (int) x_to_time(position.x);
+    if (hovered_clip)
+    {
+        hovered_clip->set_hovering(false);
+        hovered_clip = nullptr;
+    }
+    if (position.y >= 40 && position.y < 140)
+    {
+        for (std::unique_ptr<Clip>& clip : clips)
+        {
+            if (clip->is_time_within(time_pos))
+            {
+                hovered_clip = clip.get();
+                clip->set_hovering(true);
+                break;
+            }
+        }
+    }
 }
 
 void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, DragMouse* drag_event)
@@ -155,6 +203,16 @@ bool TimelineModule::is_position_in_scroll(sf::Vector2i relative_pos)
 {
     sf::IntRect rect {sf::Vector2i(scroll_bar->get_position()), sf::Vector2i(scroll_bar->get_size())};
     return rect.contains(relative_pos);
+}
+
+float TimelineModule::x_to_time(int pos_x)
+{
+    // Instead of performing arithmetic on every clip bounds,
+    // find the time the mouse X represents within the timeline
+
+    float x_scaled = pos_x / clips_scaler->get_scale().x;
+    float x_shifted = x_scaled - clips_anchor->get_position().x;
+    return x_shifted;
 }
 
 void TimelineModule::update_scroll()

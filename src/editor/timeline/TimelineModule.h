@@ -24,6 +24,7 @@ class TimelineModule : public EditorModule
     std::unique_ptr<GLNode> clip_layer;
     std::vector<std::unique_ptr<Clip>> clips;
     std::vector<Clip*> selected_clips;
+    Clip* hovered_clip = nullptr;
 
     std::unique_ptr<GLRectangle> scroll_bar;
 
@@ -51,6 +52,8 @@ public:
 private:
 
     bool is_position_in_scroll(sf::Vector2i relative_pos);
+    float x_to_time(int x);
+    
     void update_scroll();
     void update_zoom();
     void update_scroll_color(bool hovering, bool dragging);
