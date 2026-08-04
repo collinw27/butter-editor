@@ -27,8 +27,9 @@ TimelineModule::TimelineModule(Editor& editor)
     clips_anchor.reset(GLNode::create(clips_scaler.get()));
     scroll_bar.reset(GLRectangle::create(container.get()));
     scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
-    outline_layer.reset(GLNode::create(clips_anchor.get()));
     clip_layer.reset(GLNode::create(clips_anchor.get()));
+    outline_layer.reset(GLNode::create(clips_anchor.get()));
+    selection_layer.reset(GLNode::create(clips_anchor.get()));
 
     scroll_pct = 0;
     scroll_max = 200;
@@ -80,9 +81,13 @@ void TimelineModule::refresh_clips()
 
     clips.clear();
 
+    // Project must exist
+
     Project* project = editor.get_project();
     if (project == nullptr)
-        return;
+        throw ButterException("Invalid call to update_zoom()");
+
+    //
     
     for (int i = 0; i < project->get_clip_total(); ++i)
     {
@@ -99,11 +104,7 @@ void TimelineModule::select_all()
 {
     for (std::unique_ptr<Clip>& clip : clips)
     {
-        if (!clip->selected())
-        {
-            clip->select(outline_layer.get());
-            selected_clips.push_back(clip.get());
-        }
+        select_clip(clip.get());
     }
 }
 
@@ -111,11 +112,7 @@ void TimelineModule::deselect_all()
 {
     for (std::unique_ptr<Clip>& clip : clips)
     {
-        if (clip->selected())
-        {
-            clip->deselect();
-            selected_clips.erase(std::find(selected_clips.begin(), selected_clips.end(), clip.get()));
-        }
+        deselect_clip(clip.get());
     }
 }
 
@@ -141,10 +138,9 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused)
             {
                 deselect_all();
             }
-            if (hovered_clip != nullptr && !hovered_clip->selected())
+            if (hovered_clip != nullptr)
             {
-                hovered_clip->select(outline_layer.get());
-                selected_clips.push_back(hovered_clip);
+                select_clip(hovered_clip);
             }
         }
     }
@@ -172,7 +168,7 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
         hovered_clip->set_hovering(false);
         hovered_clip = nullptr;
     }
-    if (position.y >= 40 && position.y < 140)
+    if (focused && position.y >= 40 && position.y < 140)
     {
         for (std::unique_ptr<Clip>& clip : clips)
         {
@@ -215,6 +211,28 @@ float TimelineModule::x_to_time(int pos_x)
     return x_shifted;
 }
 
+void TimelineModule::select_clip(Clip* clip)
+{
+    if (!clip->selected())
+    {
+        clip->render_selected(outline_layer.get(), clips_scaler->get_scale().x);
+        clip->get_rect()->free();
+        selection_layer->add_child(clip->get_rect());
+        selected_clips.push_back(clip);
+    }
+}
+
+void TimelineModule::deselect_clip(Clip* clip)
+{
+    if (clip->selected())
+    {
+        clip->deselect();
+        clip->get_rect()->free();
+        clip_layer->add_child(clip->get_rect());
+        selected_clips.erase(std::find(selected_clips.begin(), selected_clips.end(), clip));
+    }
+}
+
 void TimelineModule::update_scroll()
 {
     scroll_bar->set_size(sf::Vector2f(SCROLLBAR_W, SCROLLBAR_H) * ui_scale);
@@ -224,7 +242,7 @@ void TimelineModule::update_scroll()
     scroll_bar->set_position(sf::Vector2f(5 + intcast(scroll_pct * scroll_span), container->get_size().y - 5 - scroll_bar->get_size().y));
 
     Project* project = editor.get_project();
-    if (!project)
+    if (project == nullptr)
         throw ButterException("Invalid call to update_zoom()");
     TimelineUnit start_time = (TimelineUnit) (scroll_pct * scroll_max);
 }
@@ -237,9 +255,16 @@ void TimelineModule::update_zoom()
     // Every 1 second is 30 px wide on 1x zoom
 
     Project* project = editor.get_project();
-    if (!project)
+    if (project == nullptr)
         throw ButterException("Invalid call to update_zoom()");
     clips_scaler->set_scale(sf::Vector2f(std::pow(2.0, zoom_factor) * 30.0 / (float) project->get_framerate(), 1.0));
+
+    // Re-scale selection windows
+
+    for (Clip* clip : selected_clips)
+    {
+        clip->render_selected(outline_layer.get(), clips_scaler->get_scale().x);
+    }
 }
 
 void TimelineModule::update_scroll_color(bool hovering, bool dragging)

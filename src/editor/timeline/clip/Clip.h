@@ -25,12 +25,14 @@ public:
     virtual ~Clip() {}
 
     GLRectangle* get_rect();
+    GLRectangle* get_border();
 
     bool selected();
-    void select(GLNode* container);
+    void render_selected(GLNode* container, float t_scale);
     void deselect();
-    bool is_time_within(int time);
     void set_hovering(bool hovering);
+
+    bool is_time_within(int time);
 
     void delete_clip(Project* project);
 };

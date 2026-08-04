@@ -20,8 +20,9 @@ class TimelineModule : public EditorModule
     // Selection outlines should display above non-selected clips,
     // but are still behind all selected clips
 
-    std::unique_ptr<GLNode> outline_layer;
     std::unique_ptr<GLNode> clip_layer;
+    std::unique_ptr<GLNode> outline_layer;
+    std::unique_ptr<GLNode> selection_layer;
     std::vector<std::unique_ptr<Clip>> clips;
     std::vector<Clip*> selected_clips;
     Clip* hovered_clip = nullptr;
@@ -53,6 +54,9 @@ private:
 
     bool is_position_in_scroll(sf::Vector2i relative_pos);
     float x_to_time(int x);
+
+    void select_clip(Clip* clip);
+    void deselect_clip(Clip* clip);
     
     void update_scroll();
     void update_zoom();
