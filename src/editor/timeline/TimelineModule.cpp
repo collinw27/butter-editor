@@ -216,8 +216,7 @@ void TimelineModule::select_clip(Clip* clip)
     if (!clip->selected())
     {
         clip->render_selected(outline_layer.get(), clips_scaler->get_scale().x);
-        clip->get_rect()->free();
-        selection_layer->add_child(clip->get_rect());
+        clip->get_rect()->reparent(selection_layer.get());
         selected_clips.push_back(clip);
     }
 }
@@ -227,8 +226,7 @@ void TimelineModule::deselect_clip(Clip* clip)
     if (clip->selected())
     {
         clip->deselect();
-        clip->get_rect()->free();
-        clip_layer->add_child(clip->get_rect());
+        clip->get_rect()->reparent(clip_layer.get());
         selected_clips.erase(std::find(selected_clips.begin(), selected_clips.end(), clip));
     }
 }

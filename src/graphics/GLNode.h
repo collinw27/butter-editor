@@ -80,7 +80,8 @@ public:
 
     void add_child(GLNode* child);
     void remove_child(GLNode* child);
-    void free();
+    void orphan();
+    void reparent(GLNode* new_parent);
     GLNode* get_parent();
 
     bool is_visible();

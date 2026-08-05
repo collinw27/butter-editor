@@ -25,11 +25,11 @@ GLNode* GLNode::create(GLNode* parent)
 
 GLNode::~GLNode()
 {
-    // Free all children, but DON'T delete them
+    // Free all children from the tree, but DON'T delete them
 
     for (GLNode* child : children)
-        child->free();
-    free();
+        child->orphan();
+    orphan();
 }
 
 void GLNode::draw()
@@ -68,10 +68,17 @@ void GLNode::remove_child(GLNode* child)
     child->parent = nullptr;
 }
 
-void GLNode::free()
+void GLNode::orphan()
 {
     if (parent != nullptr)
         parent->remove_child(this);
+}
+
+void GLNode::reparent(GLNode* new_parent)
+{
+    orphan();
+    if (new_parent != nullptr)
+        new_parent->add_child(this);
 }
 
 GLNode* GLNode::get_parent()
