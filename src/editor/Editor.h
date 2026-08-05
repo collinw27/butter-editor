@@ -31,6 +31,8 @@ public:
     static const sf::Color C_BG;
     static const sf::Color C_FG;
     static const sf::Color C_HOVER;
+    static const sf::Color C_FOCUSED;
+    static const sf::Color C_FOCUSED_HOVER;
     static const sf::Color C_HIGHLIGHT;
     static const sf::Color C_HIGHLIGHT_SUBTLE;
     static const sf::Color C_FG_DESELECTED;
@@ -44,17 +46,25 @@ private:
     sf::RenderWindow* window;
     std::unique_ptr<GLRootNode> root;
 
-    // For now, the editor has 3 modules visible at all times
-    // Flex modules can be toggled between each other using
-    // a list of tabs that appear over it
     // `visible_modules` holds the address of the module variable
     // This allows the actual module each variable references to be
     // switched out without having to update `visible_modules`
+    
+    std::vector<EditorModule**> visible_modules;
+
+    // Only one module can be "focused" at once
+    // (Not to be confused with the `focused` argument in mouse events)
+    // This disambiguates which module should respond to key events
+
+    EditorModule* focused_module = nullptr;
+
+    // For now, the editor has 3 modules visible at all times
+    // Flex modules can be toggled between each other using
+    // a list of tabs that appear over it
 
     EditorModule* preview_module;
     EditorModule* flex_module;
     TimelineModule* timeline_module;
-    std::vector<EditorModule**> visible_modules;
     LogModule* log_module;
     MediaModule* media_module;
     ProjectModule* project_module;
@@ -99,6 +109,7 @@ private:
     // Project
     // See Project.h for explanation of project "locking"
     // Project must be initialized before all modules
+    // `project` MUST NOT be stored persistently in any other classes!
 
     LockedProject* locked_project = nullptr;
     Project* project = nullptr;

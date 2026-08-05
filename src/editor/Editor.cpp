@@ -20,6 +20,8 @@ constexpr int C_BAR_HEIGHT = 20;
 const sf::Color Editor::C_BG {0, 0, 0};
 const sf::Color Editor::C_FG {90, 90, 90};
 const sf::Color Editor::C_HOVER {130, 130, 130};
+const sf::Color Editor::C_FOCUSED {160, 174, 186};
+const sf::Color Editor::C_FOCUSED_HOVER {182, 198, 212};
 const sf::Color Editor::C_HIGHLIGHT {90, 90, 90};
 const sf::Color Editor::C_HIGHLIGHT_SUBTLE {50, 50, 50};
 const sf::Color Editor::C_FG_DESELECTED {50, 50, 50};
@@ -269,9 +271,12 @@ void Editor::run()
 
         // Update all visible modules
 
-        for (EditorModule** module : visible_modules)
+        if (!using_terminal)
         {
-            (*module)->on_update();
+            for (EditorModule** module : visible_modules)
+            {
+                (*module)->on_update();
+            }
         }
 
         // Update export display (if applicable)
@@ -456,6 +461,23 @@ void Editor::on_mouse_press(InputButton button)
         if (flex_tabs.at(i)->get_bounds().contains(mouse_position))
             switch_flex_tab(i);
     }
+
+    // Switch focus if mouse is inside a module
+
+    EditorModule* new_focus = nullptr;
+    for (EditorModule** module : visible_modules)
+    {
+        if ((*module)->get_bounds().contains(mouse_position))
+            new_focus = *module;
+    }
+    if (new_focus != focused_module)
+    {
+        if (focused_module != nullptr)
+            focused_module->set_focused(false);
+        focused_module = new_focus;
+        if (focused_module != nullptr)
+            focused_module->set_focused(true);
+    }
     
     // Trigger callback for each module
 
@@ -532,6 +554,16 @@ void Editor::resize_modules()
     temp_menu_bar->set_size(sf::Vector2f(x_divider, tab_height));
     menu_bar_text->set_position(sf::Vector2f(sf::Vector2i(10 + 4 * ui_scale, 4 + 4 * ui_scale)));
     menu_bar_text->set_char_size((unsigned int)(19.f * ui_scale));
+}
+
+void request_focus(EditorModule* module)
+{
+
+}
+
+void is_focused(EditorModule* module)
+{
+
 }
 
 void Editor::switch_flex_tab(unsigned int index)

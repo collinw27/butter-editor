@@ -49,8 +49,20 @@ void EditorModule::set_visible(bool visible)
     visible_rect->set_visible(visible);
 }
 
+void EditorModule::set_focused(bool focused)
+{
+    has_focus = focused;
+    visible_rect->set_outline_color(has_focus ?
+        (mouse_hover ? Editor::C_FOCUSED_HOVER : Editor::C_FOCUSED) :
+        (mouse_hover ? Editor::C_HOVER : Editor::C_FG)
+    );
+}
+
 void EditorModule::set_hover_highlight(bool hover)
 {
     mouse_hover = hover;
-    visible_rect->set_outline_color(mouse_hover ? Editor::C_HOVER : Editor::C_FG);
+    visible_rect->set_outline_color(has_focus ?
+        (mouse_hover ? Editor::C_FOCUSED_HOVER : Editor::C_FOCUSED) :
+        (mouse_hover ? Editor::C_HOVER : Editor::C_FG)
+    );
 }

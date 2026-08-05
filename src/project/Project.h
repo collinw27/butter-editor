@@ -47,8 +47,8 @@
 // Because of this, modules that modify project data are responsible for reading from this class
 // and keeping their own data in sync with the underlying project (since they will often store redundant
 // data in a way that makes modifying the project easier)
-// Whenever an external class modifies the project data, it should use message passing to keep this
-// class in sync with the new update
+// Whenever an external class modifies the project data, it should call one of this class' update methods
+// to keep it in sync with the new update
 
 struct ExportTask
 {

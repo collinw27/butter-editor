@@ -174,7 +174,6 @@ void Project::delete_clip(ClipData* clip)
     if (it == clip_vec.end())
         throw ButterException("Cannot delete clip");
     clip_vec.erase(it);
-    delete clip;
 }
 
 unsigned int Project::get_clip_total()

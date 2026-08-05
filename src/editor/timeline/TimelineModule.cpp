@@ -37,15 +37,18 @@ void ClipMem::add_clip(Clip* clip)
 
 void ClipMem::remove_clip(Clip* clip)
 {
-    auto it = std::find(clips.begin(), clips.end(), clip);
-    if (it != clips.end())
-        clips.erase(it);
-
-    // Don't forget to prevent danging references
+    // Remove potential danging pointers
 
     deselect_clip(clip);
     if (hovered_clip == clip)
         hovered_clip = nullptr;
+
+    // The clip must be manually deleted (no smart pointer)
+        
+    auto it = std::find(clips.begin(), clips.end(), clip);
+    if (it != clips.end())
+        clips.erase(it);
+    delete clip;
 }
 
 void ClipMem::clear_all()
@@ -191,6 +194,34 @@ void TimelineModule::deselect_all()
     }
 }
 
+void TimelineModule::on_update()
+{
+    if (has_focus)
+    {
+        // Select & deselect all
+
+        if (Input().check_key_press(SF_KEY::A, KeyMod::CTRL))
+            select_all();
+        
+        if (Input().check_key_press(SF_KEY::Escape))
+            deselect_all();
+        
+        // Attempt to delete selection
+
+        if (Input().check_key(SF_KEY::Delete))
+        {
+            // Selected clips vector must be cloned, since it will be modified
+            // in-place during this operation
+
+            std::vector selected_clips_copy {clip_mem.get_selected_clips()};
+            for (Clip* clip : selected_clips_copy)
+            {
+                delete_clip(clip);
+            }
+        }
+    }
+}
+
 void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputButton button)
 {
     if (focused)
@@ -330,6 +361,18 @@ void TimelineModule::deselect_clip(Clip* clip)
         clip->get_rect()->reparent(clip_layer.get());
         clip_mem.deselect_clip(clip);
     }
+}
+
+void TimelineModule::delete_clip(Clip* clip)
+{
+    Project* project = editor.get_project();
+    if (project == nullptr)
+        throw ButterException("Invalid call");
+    clip->delete_clip(project);
+    
+    // GLNodes should automatically be removed by their destructor
+
+    clip_mem.remove_clip(clip);
 }
 
 void TimelineModule::update_scroll()

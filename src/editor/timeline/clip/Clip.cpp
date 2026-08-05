@@ -71,5 +71,5 @@ void Clip::set_hovering(bool hovering)
 
 void Clip::delete_clip(Project* project)
 {
-    
+    project->delete_clip(clip_data);
 }

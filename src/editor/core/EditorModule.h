@@ -17,7 +17,8 @@ protected:
     float ui_scale = 1.f;
     std::unique_ptr<GLOutlinedRectangle> visible_rect;
     std::unique_ptr<GLContainer> container;
-    bool mouse_hover;
+    bool mouse_hover = false;
+    bool has_focus = false;
 
 public:
 
@@ -34,6 +35,7 @@ public:
     sf::Vector2i to_local_pos(sf::Vector2i position);
     
     void set_visible(bool visible);
+    void set_focused(bool focused);
     void set_hover_highlight(bool hover);
 
     // `update()` is called every frame

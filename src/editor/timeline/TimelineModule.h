@@ -61,6 +61,10 @@ class TimelineModule : public EditorModule
 
     std::unique_ptr<GLRectangle> scroll_bar;
 
+    // Not storing the project here is a deliberate choice
+    // The Editor class needs to be able to nullify the Project pointer
+    // whenever the Project is locked
+
 public:
 
     TimelineModule(Editor& editor);
@@ -77,6 +81,7 @@ public:
     void select_all();
     void deselect_all();
     
+    virtual void on_update() override;
     virtual void on_mouse_press(sf::Vector2i position, bool focused, InputButton button) override;
     virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) override;
     virtual void on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouse* drag_event) override;
@@ -89,6 +94,7 @@ private:
 
     void select_clip(Clip* clip);
     void deselect_clip(Clip* clip);
+    void delete_clip(Clip* clip);
     
     void update_scroll();
     void update_zoom();
