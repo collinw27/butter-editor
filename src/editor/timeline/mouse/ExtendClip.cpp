@@ -1,10 +1,10 @@
 #include "editor/timeline/mouse/ExtendClip.h"
 
-ExtendClip::ExtendClip(EditorModule* target_module, bool forward, TimelineUnit start_time, TimelineUnit max_extend, int start_pos) :
+ExtendClip::ExtendClip(EditorModule* target_module, bool forward, TimelineUnit start_time, TimelineUnit max_extend, TimelineUnit max_trim) :
     forward{forward},
     start_time{start_time},
     max_extend{max_extend},
-    start_pos{start_pos}
+    max_trim{max_trim}
 {
     target = target_module;
 }

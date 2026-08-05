@@ -271,15 +271,17 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
                         bool forward = clip_mem.extend_mode == ExtendMode::RIGHT;
                         if (forward)
                         {
-                            TimelineUnit gap = project->check_gap_ahead(extend_clip->get_clip_data()->get_end_time());
                             TimelineUnit start_time = extend_clip->get_clip_data()->get_end_time();
-                            editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, 0)));
+                            TimelineUnit gap = project->check_gap_ahead(extend_clip->get_clip_data()->get_end_time());
+                            TimelineUnit max_trim = extend_clip->get_clip_data()->get_length() - 1;
+                            editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, max_trim)));
                         }
                         else
                         {
-                            TimelineUnit gap = project->check_gap_behind(extend_clip->get_clip_data()->get_start_time());
                             TimelineUnit start_time = extend_clip->get_clip_data()->get_start_time();
-                            editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, 0)));
+                            TimelineUnit gap = project->check_gap_behind(extend_clip->get_clip_data()->get_start_time());
+                            TimelineUnit max_trim = extend_clip->get_clip_data()->get_length() - 1;
+                            editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, max_trim)));
                         }
                     }
                 }
@@ -333,18 +335,25 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
                 editor.cancel_drag_event();
             else
             {
-                // For now, just extend it by its maximum amount
+                // Calculate the amount the mouse has dragged
+                // This depends on the extension direction
+                // Drag total can be negative, but should not leave the clip
+                // with 0 length
+
+                int x_diff = (extend_event->get_total_offset().x) * (extend_event->forward ? 1 : -1);
+                TimelineUnit time_diff = (TimelineUnit) (x_diff / zoom_amount);
+                time_diff = clamp(time_diff, -extend_event->max_trim, extend_event->max_extend);
 
                 Clip* selected_clip = clip_mem.get_selected_clips().front();
                 Project* project = get_project();
                 if (extend_event->forward)
                 {
-                    selected_clip->set_clip_end(project, extend_event->start_time + extend_event->max_extend);
+                    selected_clip->set_clip_end(project, extend_event->start_time + time_diff);
                     selected_clip->render_selected(outline_layer.get(), zoom_amount);
                 }
                 else
                 {
-                    selected_clip->set_clip_start(project, extend_event->start_time - extend_event->max_extend);
+                    selected_clip->set_clip_start(project, extend_event->start_time - time_diff);
                     selected_clip->render_selected(outline_layer.get(), zoom_amount);
                 }
                 scroll_max = std::max<TimelineUnit>(project->get_project_length(), 200);
