@@ -12,6 +12,8 @@ class TimelineModule : public EditorModule
     int scroll_max;
     int scroll_span;
     int zoom_factor;
+    float scroll_amount;
+    float zoom_amount;
     
     std::unique_ptr<GLNode> clips_anchor;
     std::unique_ptr<GLNode> clips_scaler;
@@ -23,9 +25,39 @@ class TimelineModule : public EditorModule
     std::unique_ptr<GLNode> clip_layer;
     std::unique_ptr<GLNode> outline_layer;
     std::unique_ptr<GLNode> selection_layer;
-    std::vector<std::unique_ptr<Clip>> clips;
-    std::vector<Clip*> selected_clips;
-    Clip* hovered_clip = nullptr;
+
+    // Dynamically-allocated clips are stored sequentially in a vector
+    // Other Clip-referencing variables are able to store pointers to these clips
+    // Care must be taken to ensure dangling pointers are not created when clips
+    // are deleted, projects are switched, etc.
+    // To prevent accidental mishaps, access to this memory is forced to use
+    // ClipMemoryManager, which makes these operations much safer
+
+    class ClipMemoryManager
+    {
+        std::vector<Clip*> clips;
+        std::vector<Clip*> selected_clips;
+        Clip* hovered_clip = nullptr;
+
+    public:
+
+        ~ClipMemoryManager();
+
+        void add_clip(Clip* clip);
+        void remove_clip(Clip* clip);
+        void clear_all();
+        const std::vector<Clip*>& get_clips();
+
+        void select_clip(Clip* clip);
+        void deselect_clip(Clip* clip);
+        const std::vector<Clip*>& get_selected_clips();
+
+        void set_hovered_clip(Clip* clip);
+        Clip* get_hovered_clip();
+    };
+    ClipMemoryManager clip_mem;
+
+    // Other nodes
 
     std::unique_ptr<GLRectangle> scroll_bar;
 

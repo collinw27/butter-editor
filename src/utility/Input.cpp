@@ -80,3 +80,8 @@ bool InputSingleton::check_alt()
         || sf::Keyboard::isKeyPressed(SF_KEY::RAlt)
     );
 }
+
+bool InputSingleton::check_mouse(sf::Mouse::Button button)
+{
+    return sf::Mouse::isButtonPressed(button);
+}

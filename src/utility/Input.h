@@ -41,6 +41,8 @@ public:
     bool check_shift();
     bool check_alt();
 
+    bool check_mouse(sf::Mouse::Button button);
+
     // Singleton returned by external function to make code cleaner
 
     friend InputSingleton& Input();

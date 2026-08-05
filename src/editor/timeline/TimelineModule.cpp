@@ -20,6 +20,80 @@ constexpr int SCROLLBAR_W = 90;
 constexpr int ZOOM_MIN = -10;
 constexpr int ZOOM_MAX = 8;
 
+#define ClipMem TimelineModule::ClipMemoryManager
+
+ClipMem::~ClipMemoryManager()
+{
+    clear_all();
+}
+
+void ClipMem::add_clip(Clip* clip)
+{
+    clips.push_back(clip);
+}
+
+void ClipMem::remove_clip(Clip* clip)
+{
+    auto it = std::find(clips.begin(), clips.end(), clip);
+    if (it != clips.end())
+        clips.erase(it);
+
+    // Don't forget to prevent danging references
+
+    deselect_clip(clip);
+    if (hovered_clip == clip)
+        hovered_clip = nullptr;
+}
+
+void ClipMem::clear_all()
+{
+    // Easier to just store clips as raw pointers and delete them here
+    // This prevents any interators over `clips` from having to use type std::unique_ptr<Clip>
+
+    for (auto clip : clips)
+        delete clip;
+    clips.clear();
+
+    // Don't forget to prevent danging references
+
+    selected_clips.clear();
+    hovered_clip = nullptr;
+}
+
+const std::vector<Clip*>& ClipMem::get_clips()
+{
+    return clips;
+}
+
+void ClipMem::select_clip(Clip* clip)
+{
+    auto it = std::find(selected_clips.begin(), selected_clips.end(), clip);
+    if (it == selected_clips.end())
+        selected_clips.push_back(clip);
+}
+
+void ClipMem::deselect_clip(Clip* clip)
+{
+    auto it = std::find(selected_clips.begin(), selected_clips.end(), clip);
+    if (it != selected_clips.end())
+        selected_clips.erase(it);
+}
+
+const std::vector<Clip*>& ClipMem::get_selected_clips()
+{
+    return selected_clips;
+}
+
+void ClipMem::set_hovered_clip(Clip* clip)
+{
+    hovered_clip = clip;
+}
+
+Clip* ClipMem::get_hovered_clip()
+{
+    return hovered_clip;
+}
+
 TimelineModule::TimelineModule(Editor& editor)
     : EditorModule(editor)
 {
@@ -79,21 +153,19 @@ void TimelineModule::refresh_clips()
 {
     // Clear pre-existing clips
 
-    clips.clear();
+    clip_mem.clear_all();
 
     // Project must exist
 
     Project* project = editor.get_project();
     if (project == nullptr)
         throw ButterException("Invalid call to update_zoom()");
-
-    //
     
     for (int i = 0; i < project->get_clip_total(); ++i)
     {
         ClipData* clip_data = project->get_clip_at_index(i);
         Clip* new_clip = new Clip(clip_data, ((ColorClipData*) clip_data)->get_color(), clip_layer.get());
-        clips.push_back(std::unique_ptr<Clip>(new_clip));
+        clip_mem.add_clip(new_clip);
     }
     scroll_max = std::max<int>(project->get_project_length(), 200);
     update_scroll();
@@ -102,17 +174,17 @@ void TimelineModule::refresh_clips()
 
 void TimelineModule::select_all()
 {
-    for (std::unique_ptr<Clip>& clip : clips)
+    for (Clip* clip : clip_mem.get_clips())
     {
-        select_clip(clip.get());
+        select_clip(clip);
     }
 }
 
 void TimelineModule::deselect_all()
 {
-    for (std::unique_ptr<Clip>& clip : clips)
+    for (Clip* clip : clip_mem.get_clips())
     {
-        deselect_clip(clip.get());
+        deselect_clip(clip);
     }
 }
 
@@ -120,8 +192,6 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused)
 {
     if (focused)
     {
-        // Drag scroll
-
         if (is_position_in_scroll(position))
         {
             editor.set_drag_event(std::unique_ptr<DragScroll>(new DragScroll(this, scroll_pct)));
@@ -131,17 +201,13 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused)
         else
         {
             // Select hovered clip
-            // Shift to select multiple
+            // Ctrl to select multiple
             // Clicking with no hovered clip will deselect all
 
-            if (!Input().check_shift())
-            {
+            if (!Input().check_ctrl())
                 deselect_all();
-            }
-            if (hovered_clip != nullptr)
-            {
-                select_clip(hovered_clip);
-            }
+            if (clip_mem.get_hovered_clip() != nullptr)
+                select_clip(clip_mem.get_hovered_clip());
         }
     }
 }
@@ -159,26 +225,33 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
     update_scroll_color(is_position_in_scroll(position), scroll_event != nullptr);
 
     // Highlight moused-over clip
-    // Note: This can leave a dangling pointer if the Clip is deleted
-    // This will need to be fixed in the future
+    // ClipMemoryManager prevents this from becoming a dangling pointer
 
     int time_pos = (int) x_to_time(position.x);
-    if (hovered_clip)
+    if (clip_mem.get_hovered_clip() != nullptr)
     {
-        hovered_clip->set_hovering(false);
-        hovered_clip = nullptr;
+        clip_mem.get_hovered_clip()->set_hovering(false);
+        clip_mem.set_hovered_clip(nullptr);
     }
     if (focused && position.y >= 40 && position.y < 140)
     {
-        for (std::unique_ptr<Clip>& clip : clips)
+        for (Clip* clip : clip_mem.get_clips())
         {
             if (clip->is_time_within(time_pos))
             {
-                hovered_clip = clip.get();
+                clip_mem.set_hovered_clip(clip);
                 clip->set_hovering(true);
                 break;
             }
         }
+    }
+
+    // Holding middle mouse will select any hovered clip
+
+    if (Input().check_mouse(sf::Mouse::Button::Middle))
+    {
+        if (clip_mem.get_hovered_clip() != nullptr)
+            select_clip(clip_mem.get_hovered_clip());
     }
 }
 
@@ -206,8 +279,8 @@ float TimelineModule::x_to_time(int pos_x)
     // Instead of performing arithmetic on every clip bounds,
     // find the time the mouse X represents within the timeline
 
-    float x_scaled = pos_x / clips_scaler->get_scale().x;
-    float x_shifted = x_scaled - clips_anchor->get_position().x;
+    float x_scaled = pos_x / zoom_amount;
+    float x_shifted = x_scaled + scroll_amount;
     return x_shifted;
 }
 
@@ -215,9 +288,9 @@ void TimelineModule::select_clip(Clip* clip)
 {
     if (!clip->selected())
     {
-        clip->render_selected(outline_layer.get(), clips_scaler->get_scale().x);
+        clip->render_selected(outline_layer.get(), zoom_amount);
         clip->get_rect()->reparent(selection_layer.get());
-        selected_clips.push_back(clip);
+        clip_mem.select_clip(clip);
     }
 }
 
@@ -227,7 +300,7 @@ void TimelineModule::deselect_clip(Clip* clip)
     {
         clip->deselect();
         clip->get_rect()->reparent(clip_layer.get());
-        selected_clips.erase(std::find(selected_clips.begin(), selected_clips.end(), clip));
+        clip_mem.deselect_clip(clip);
     }
 }
 
@@ -236,7 +309,8 @@ void TimelineModule::update_scroll()
     scroll_bar->set_size(sf::Vector2f(SCROLLBAR_W, SCROLLBAR_H) * ui_scale);
     scroll_span = container->get_size().x - 10 - scroll_bar->get_size().x;
 
-    clips_anchor->set_position(sf::Vector2f(-scroll_pct * scroll_max, 0));
+    scroll_amount = scroll_pct * scroll_max;
+    clips_anchor->set_position(sf::Vector2f(-scroll_amount, 0));
     scroll_bar->set_position(sf::Vector2f(5 + intcast(scroll_pct * scroll_span), container->get_size().y - 5 - scroll_bar->get_size().y));
 
     Project* project = editor.get_project();
@@ -255,13 +329,14 @@ void TimelineModule::update_zoom()
     Project* project = editor.get_project();
     if (project == nullptr)
         throw ButterException("Invalid call to update_zoom()");
-    clips_scaler->set_scale(sf::Vector2f(std::pow(2.0, zoom_factor) * 30.0 / (float) project->get_framerate(), 1.0));
+    zoom_amount = std::pow(2.0, zoom_factor) * 30.0 / (float) project->get_framerate();
+    clips_scaler->set_scale(sf::Vector2f(zoom_amount, 1.0));
 
     // Re-scale selection windows
 
-    for (Clip* clip : selected_clips)
+    for (Clip* clip : clip_mem.get_selected_clips())
     {
-        clip->render_selected(outline_layer.get(), clips_scaler->get_scale().x);
+        clip->render_selected(outline_layer.get(), zoom_amount);
     }
 }
 
