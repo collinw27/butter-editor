@@ -236,10 +236,13 @@ ClipData* Project::get_clip_at_index(unsigned int index)
 ClipData* Project::get_clip_at_time(TimelineUnit time)
 {
     // Return early if:
-    // a) empty timeline, or
+    // a) empty timeline
+    // b) negative time, or
     // b) every clip starts after the provided time
 
     if (clip_vec.empty())
+        return nullptr;
+    if (time < 0)
         return nullptr;
     if (time < clip_vec.at(0)->get_start_time())
         return nullptr;
