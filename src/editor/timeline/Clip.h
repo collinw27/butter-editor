@@ -26,6 +26,7 @@ public:
 
     GLRectangle* get_rect();
     GLRectangle* get_border();
+    const ClipData* get_clip_data();
 
     bool selected();
     void render_selected(GLNode* container, float t_scale);
@@ -33,7 +34,11 @@ public:
     void set_hovering(bool hovering);
 
     bool is_time_within(int time);
+    bool is_start_within(float left, float right);
+    bool is_end_within(float left, float right);
 
+    void set_clip_start(Project* project, TimelineUnit start);
+    void set_clip_end(Project* project, TimelineUnit end);
     void delete_clip(Project* project);
 };
 

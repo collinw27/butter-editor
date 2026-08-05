@@ -12,6 +12,7 @@
 // Type aliases
 
 using TimelineUnit = std::uint32_t;
+constexpr TimelineUnit TIMELINE_MAX = 107892000; // 999 hours at 30 FPS
 
 // Doesn't validate that a < b
 

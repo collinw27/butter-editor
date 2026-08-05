@@ -26,11 +26,11 @@ public:
 
     virtual int get_clip_type() = 0;
     void set_start_time(TimelineUnit start_time);
-    TimelineUnit get_start_time();
+    TimelineUnit get_start_time() const;
     void set_end_time(TimelineUnit end_time);
-    TimelineUnit get_end_time();
+    TimelineUnit get_end_time() const;
     void set_length(TimelineUnit length);
-    TimelineUnit get_length();
+    TimelineUnit get_length() const;
 
     virtual void save(std::ofstream& file);
 };

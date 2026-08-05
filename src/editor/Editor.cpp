@@ -1,6 +1,7 @@
 #include "editor/Editor.h"
 
 #include <sstream>
+#include <optional>
 
 #include "utility/core.h"
 #include "utility/Graphics.h"
@@ -330,6 +331,17 @@ bool Editor::set_drag_event(std::unique_ptr<DragMouse> new_event)
     return true;
 }
 
+void Editor::cancel_drag_event()
+{
+    // Normal callbacks are not run when cancelled
+    
+    if (drag_mouse_event != nullptr)
+    {
+        drag_mouse_event->delete_node();
+        drag_mouse_event.release();
+    }
+}
+
 CommandParser& Editor::get_command_parser()
 {
     return command_parser;
@@ -360,6 +372,13 @@ Project* Editor::get_project()
 LockedProject* Editor::get_locked_project()
 {
     return locked_project;
+}
+
+void Editor::on_timeline_update()
+{
+    project_module->refresh_info();
+    if (project)
+        command_bar->set_status_length(project->get_project_length_approx());
 }
 
 void Editor::on_resized(sf::Vector2i new_size)
@@ -433,13 +452,25 @@ void Editor::on_mouse_move(sf::Vector2i position)
     else
     {
         // Set appropriate cursor type when not dragging
+        // Only reset the cursor when explicitly moving off of the divider
+        // This prevents it from constantly being reset and overridding
+        // other modules' behavior
 
         if (abs(mouse_position.y - y_divider) < 6)
+        {
             set_cursor(sf::Cursor::Type::SizeVertical);
+            hovering_divider = true;
+        }
         else if (mouse_position.y < y_divider && abs(mouse_position.x - x_divider) < 6)
+        {
             set_cursor(sf::Cursor::Type::SizeHorizontal);
-        else
+            hovering_divider = true;
+        }
+        else if (hovering_divider)
+        {
             set_cursor(sf::Cursor::Type::Arrow);
+            hovering_divider = false;
+        }
     }
 }
 
@@ -572,14 +603,6 @@ void Editor::switch_flex_tab(unsigned int index)
     flex_tabs.at(index)->set_selected(true);
     current_flex_tab = index;
     flex_module = &flex_tabs.at(index)->get_module();
-}
-
-void Editor::on_timeline_update()
-{
-    timeline_module->refresh_clips();
-    project_module->refresh_info();
-    if (project)
-        command_bar->set_status_length(project->get_project_length_approx());
 }
 
 void Editor::create_project(Project* new_project)

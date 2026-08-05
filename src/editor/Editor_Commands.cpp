@@ -100,6 +100,7 @@ std::string Editor::execute_command(CommandResult command)
             delete project;
         create_project(new Project());
         command_bar->set_status_name(project->get_name());
+        timeline_module->reset();
         on_timeline_update();
         return "Created new project.";
     }
@@ -134,6 +135,7 @@ std::string Editor::execute_command(CommandResult command)
             create_project(new Project(command.get_string(0)));
             locked_project = (LockedProject*) project;
             command_bar->set_status_name(project->get_name());
+            timeline_module->reset();
             on_timeline_update();
             return "Loaded project \"" + project->get_name() + "\".";
         }
@@ -144,6 +146,8 @@ std::string Editor::execute_command(CommandResult command)
     }
     case CMD_CREATE_CLIP:
     {
+        return "This command is temporarily disabled.";
+        /*
         block_if_exporting(project);
         int c_index = -1;
         std::string provided_name = command.get_string(2);
@@ -161,6 +165,7 @@ std::string Editor::execute_command(CommandResult command)
         bool successful = project->add_color_clip(command.get_int(0), command.get_int(1), hex_to_color(colors.at(c_index)));
         on_timeline_update();
         return successful ? "Created clip." : "Could not create clip.";
+        */
     }
     case CMD_EXPORT:
     {

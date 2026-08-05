@@ -15,7 +15,7 @@ void ClipData::set_start_time(TimelineUnit start_time)
     this->start_time = start_time;
 }
 
-TimelineUnit ClipData::get_start_time()
+TimelineUnit ClipData::get_start_time() const
 {
     return start_time;
 }
@@ -27,7 +27,7 @@ void ClipData::set_end_time(TimelineUnit end_time)
     length = end_time - start_time;
 }
 
-TimelineUnit ClipData::get_end_time()
+TimelineUnit ClipData::get_end_time() const
 {
     return start_time + length;
 }
@@ -39,7 +39,7 @@ void ClipData::set_length(TimelineUnit length)
     this->length = length;
 }
 
-TimelineUnit ClipData::get_length()
+TimelineUnit ClipData::get_length() const
 {
     return length;    
 }

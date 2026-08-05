@@ -4,12 +4,12 @@
 #include "editor/core/EditorModule.h"
 #include "editor/core/DragMouse.h"
 #include "graphics/nodes.h"
-#include "editor/timeline/clip/Clip.h"
+#include "editor/timeline/Clip.h"
 
 class TimelineModule : public EditorModule
 {
     float scroll_pct;
-    int scroll_max;
+    TimelineUnit scroll_max;
     int scroll_span;
     int zoom_factor;
     float scroll_amount;
@@ -26,6 +26,13 @@ class TimelineModule : public EditorModule
     std::unique_ptr<GLNode> outline_layer;
     std::unique_ptr<GLNode> selection_layer;
 
+    enum class ExtendMode
+    {
+        NONE,
+        LEFT,
+        RIGHT
+    };
+
     // Dynamically-allocated clips are stored sequentially in a vector
     // Other Clip-referencing variables are able to store pointers to these clips
     // Care must be taken to ensure dangling pointers are not created when clips
@@ -38,6 +45,16 @@ class TimelineModule : public EditorModule
         std::vector<Clip*> clips;
         std::vector<Clip*> selected_clips;
         Clip* hovered_clip = nullptr;
+
+    public:
+
+        // Extend mode is used to signify which end of the hovered clip
+        // the cursor is over
+        // It is also used for extending selected clips
+        // (Multiple clips can be extended at once, but they will always
+        // be in the same direction)
+
+        ExtendMode extend_mode = ExtendMode::NONE;
 
     public:
 
@@ -68,6 +85,7 @@ class TimelineModule : public EditorModule
 public:
 
     TimelineModule(Editor& editor);
+    void reset();
 
     virtual void apply_bounds() override;
     virtual void apply_ui_scale() override;
@@ -76,7 +94,6 @@ public:
     void scroll_right();
     void zoom_in();
     void zoom_out();
-    void refresh_clips();
 
     void select_all();
     void deselect_all();
@@ -89,8 +106,11 @@ public:
 
 private:
 
+    Project* get_project();
+
     bool is_position_in_scroll(sf::Vector2i relative_pos);
     float x_to_time(int x);
+    float time_to_x(TimelineUnit time);
 
     void select_clip(Clip* clip);
     void deselect_clip(Clip* clip);

@@ -1,4 +1,4 @@
-#include "editor/timeline/clip/Clip.h"
+#include "editor/timeline/Clip.h"
 
 Clip::Clip(ClipData* clip_data, sf::Color color, GLNode* container)
 {
@@ -20,6 +20,11 @@ GLRectangle* Clip::get_rect()
 GLRectangle* Clip::get_border()
 {
     return border.get();
+}
+
+const ClipData* Clip::get_clip_data()
+{
+    return clip_data;
 }
 
 bool Clip::selected()
@@ -61,12 +66,36 @@ bool Clip::is_time_within(int time)
     return (time >= clip_data->get_start_time() && time < clip_data->get_end_time());
 }
 
+bool Clip::is_start_within(float left, float right)
+{
+    return (left <= (float) clip_data->get_start_time() && right > (float) clip_data->get_start_time());
+}
+
+bool Clip::is_end_within(float left, float right)
+{
+    return (left <= (float) clip_data->get_end_time() && right > (float) clip_data->get_end_time());
+}
+
 void Clip::set_hovering(bool hovering)
 {
     if (hovering)
         rect->set_fill_color(sf::Color(std::min((int) color.r + 12, 255), std::min((int) color.g + 12, 255), std::min((int) color.b + 12, 255)));
     else
         rect->set_fill_color(color);
+}
+
+void Clip::set_clip_start(Project* project, TimelineUnit start)
+{
+    project->set_clip_start(clip_data, start);
+    rect->set_position(sf::Vector2f(clip_data->get_start_time(), rect->get_position().y));
+    rect->set_size(sf::Vector2f(clip_data->get_length(), rect->get_size().y));
+}
+
+void Clip::set_clip_end(Project* project, TimelineUnit end)
+{
+    project->set_clip_end(clip_data, end);
+    rect->set_position(sf::Vector2f(clip_data->get_start_time(), rect->get_position().y));
+    rect->set_size(sf::Vector2f(clip_data->get_length(), rect->get_size().y));
 }
 
 void Clip::delete_clip(Project* project)

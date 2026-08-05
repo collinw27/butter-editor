@@ -94,6 +94,7 @@ private:
     // Mouse events
 
     std::unique_ptr<DragMouse> drag_mouse_event = nullptr;
+    bool hovering_divider = false;
 
     // Window resizing
 
@@ -128,12 +129,24 @@ public:
 
     void set_cursor(sf::Cursor::Type cursor_type);
     bool set_drag_event(std::unique_ptr<DragMouse> new_event);
+    void cancel_drag_event();
 
     CommandParser& get_command_parser();
     std::string run_command(std::string command, bool throw_errors = false);
 
     Project* get_project();
     LockedProject* get_locked_project();
+
+    // `on_timeline_update()` is used for when a timeline action causes
+    // effects within other modules
+    // Modules needing to notify other modules of updates will end up being
+    // a common occurance, so a more robust system should be created for this
+    // in the future
+    // A sensible approach to me seems like having an enumeration of update events;
+    // modules can emit these update events to the Editor, and individual modules
+    // can choose which events they want to listen for
+
+    void on_timeline_update();
 
 private:
 
@@ -146,8 +159,6 @@ private:
     void resize_modules();
 
     void switch_flex_tab(unsigned int index);
-
-    void on_timeline_update();
 
     void create_project(Project* new_project);
     void lock_project();

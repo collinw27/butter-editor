@@ -168,6 +168,46 @@ bool Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::C
     return true;
 }
 
+void Project::set_clip_start(ClipData* clip, TimelineUnit start)
+{
+    // This method exits prematurely if this clip will cut into its neighbor
+    // or if it will result in a clip with length 0
+
+    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip] (std::unique_ptr<ClipData>& smart_ptr) { return smart_ptr.get() == clip; } );
+    if (it == clip_vec.end())
+        throw ButterException("Cannot extend clip");
+    if (start >= clip->get_end_time())
+        return;
+    if (it != clip_vec.begin())
+    {
+        ClipData* clip_before = (it - 1)->get();
+        if (start < clip_before->get_end_time())
+            return;
+    }
+    TimelineUnit old_end = clip->get_end_time();
+    clip->set_start_time(start);
+    clip->set_end_time(old_end);
+}
+
+void Project::set_clip_end(ClipData* clip, TimelineUnit end)
+{
+    // This method exits prematurely if this clip will cut into its neighbor,
+    // or if it will result in a clip with length 0
+
+    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip] (std::unique_ptr<ClipData>& smart_ptr) { return smart_ptr.get() == clip; } );
+    if (it == clip_vec.end())
+        throw ButterException("Cannot extend clip");
+    if (end <= clip->get_start_time())
+        return;
+    if (it + 1 != clip_vec.end())
+    {
+        ClipData* clip_after = (it + 1)->get();
+        if (end > clip_after->get_start_time())
+            return;
+    }
+    clip->set_end_time(end);
+}
+
 void Project::delete_clip(ClipData* clip)
 {
     auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip] (std::unique_ptr<ClipData>& smart_ptr) { return smart_ptr.get() == clip; } );
@@ -226,13 +266,13 @@ TimelineUnit Project::get_project_length()
 
 std::string Project::get_project_length_approx()
 {
-    int time = (int) get_project_length();
-    time = std::ceil(time / ((float) framerate));
-    int sec = time % 60;
+    TimelineUnit time = get_project_length();
+    time = (TimelineUnit) std::ceil(time / ((double) framerate));
+    TimelineUnit sec = time % 60;
     time = (time - sec) / 60;
-    int min = time % 60;
+    TimelineUnit min = time % 60;
     time = (time - min) / 60;
-    int hr = time;
+    TimelineUnit hr = time;
     return (std::stringstream{} << std::setfill('0')
         << std::setw(2) << hr << "h "
         << std::setw(2) << min << "m "
@@ -256,6 +296,62 @@ std::string Project::to_string(TimelineUnit timeline_time)
         << std::setw(2) << sec << "+"
         << std::setw(2) << frame
     ).str();
+}
+
+// These functions check how far ahead/behind of a time
+// you can continue without running into a clip
+// 0 if inside of clip
+
+TimelineUnit Project::check_gap_ahead(TimelineUnit time)
+{
+    // Find the clip directly after the time (if applicable)
+    // This clip is the only thing that can terminate the gap
+    // A clip that ends exactly on this frame will not be considered,
+    // since a valid gap will still exist after the clip
+
+    int index = -1;
+    for (int i = clip_vec.size() - 1; i >= 0; --i)
+    {
+        if (clip_vec.at(i)->get_end_time() > time)
+            index = i;
+        else
+            break;
+    }
+    ClipData* after = (index != -1) ? clip_vec.at(index).get() : nullptr;
+
+    // Return the distance to the start of the proceeding clip
+    // If the start is before the given time (i.e. the time is inside the clip),
+    // we should return 0 (hence the max function; be careful with unsigned integers)
+    // If there is no clip after, the gap extends to the end of time timeline
+
+    if (after != nullptr)
+        return std::max((int) after->get_start_time() - (int) time, 0);
+    else
+        return (TIMELINE_MAX - time);
+}
+
+TimelineUnit Project::check_gap_behind(TimelineUnit time)
+{
+    // The logic here is pretty similar to the function above
+    // Instead, find the clip immediately before
+
+    int index = -1;
+    for (int i = 0; i < clip_vec.size(); ++i)
+    {
+        if (clip_vec.at(i)->get_start_time() < time)
+            index = i;
+        else
+            break;
+    }
+    ClipData* before = (index != -1) ? clip_vec.at(index).get() : nullptr;
+
+    // The only difference here is the clip does not extend infinitely;
+    // it gets cut off at time 0 (hence, length = time)
+
+    if (before != nullptr)
+        return std::max((int) time - (int) before->get_end_time(), 0);
+    else
+        return time;
 }
 
 void Project::save()

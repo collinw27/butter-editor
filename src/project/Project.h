@@ -112,6 +112,8 @@ public:
     // Timeline manipulation
 
     bool add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
+    void set_clip_start(ClipData* clip, TimelineUnit start);
+    void set_clip_end(ClipData* clip, TimelineUnit end);
     void delete_clip(ClipData* clip);
 
     // Timeline reading
@@ -122,6 +124,8 @@ public:
     TimelineUnit get_project_length();
     std::string get_project_length_approx();
     std::string to_string(TimelineUnit time);
+    TimelineUnit check_gap_ahead(TimelineUnit time);
+    TimelineUnit check_gap_behind(TimelineUnit time);
 
     // Output
     

@@ -17,6 +17,7 @@ sf::Vector2i DragMouse::get_total_offset()
     return current_pos - source_pos;
 }
 
+
 void DragMouse::update_node(sf::Vector2f position)
 {
     if (visible_node != nullptr)
