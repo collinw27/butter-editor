@@ -144,16 +144,20 @@ void Editor::run()
             else if (const auto* mouse_clicked = event->getIf<sf::Event::MouseButtonPressed>())
             {
                 if (mouse_clicked->button == sf::Mouse::Button::Left)
-                {
-                    on_mouse_press();
-                }
+                    on_mouse_press(InputButton::LEFT);
+                else if (mouse_clicked->button == sf::Mouse::Button::Right)
+                    on_mouse_press(InputButton::RIGHT);
+                else if (mouse_clicked->button == sf::Mouse::Button::Middle)
+                    on_mouse_press(InputButton::MIDDLE);
             }
-            else if (const auto* mouse_clicked = event->getIf<sf::Event::MouseButtonReleased>())
+            else if (const auto* mouse_released = event->getIf<sf::Event::MouseButtonReleased>())
             {
-                if (mouse_clicked->button == sf::Mouse::Button::Left)
-                {
-                    on_mouse_release();
-                }
+                if (mouse_released->button == sf::Mouse::Button::Left)
+                    on_mouse_release(InputButton::LEFT);
+                else if (mouse_released->button == sf::Mouse::Button::Right)
+                    on_mouse_release(InputButton::RIGHT);
+                else if (mouse_released->button == sf::Mouse::Button::Middle)
+                    on_mouse_release(InputButton::MIDDLE);
             }
             else if (const auto* key_pressed = event->getIf<sf::Event::KeyPressed>())
             {
@@ -261,6 +265,13 @@ void Editor::run()
                 timeline_module->zoom_out();
             if (Input().check_key_press(SF_KEY::Up, KeyMod::ALT))
                 timeline_module->zoom_in();
+        }
+
+        // Update all visible modules
+
+        for (EditorModule** module : visible_modules)
+        {
+            (*module)->on_update();
         }
 
         // Update export display (if applicable)
@@ -427,7 +438,7 @@ void Editor::on_mouse_move(sf::Vector2i position)
     }
 }
 
-void Editor::on_mouse_press()
+void Editor::on_mouse_press(InputButton button)
 {
     // Start scaling dividers if they were clicked
 
@@ -452,11 +463,11 @@ void Editor::on_mouse_press()
     {
         sf::IntRect module_bounds = (*module)->get_bounds();
         bool mouse_overlaps = module_bounds.contains(mouse_position);
-        (*module)->on_mouse_press(mouse_position - module_bounds.position, mouse_overlaps);
+        (*module)->on_mouse_press(mouse_position - module_bounds.position, mouse_overlaps, button);
     }
 }
 
-void Editor::on_mouse_release()
+void Editor::on_mouse_release(InputButton button)
 {
     if (drag_mouse_event != nullptr)
     {
@@ -472,7 +483,7 @@ void Editor::on_mouse_release()
         sf::IntRect module_bounds = (*module)->get_bounds();
         bool mouse_overlaps = module_bounds.contains(mouse_position);
         DragMouse* event_ptr = (drag_mouse_event && drag_mouse_event->target == *module) ? drag_mouse_event.get() : nullptr;
-        (*module)->on_mouse_release(mouse_position - module_bounds.position, mouse_overlaps, event_ptr);
+        (*module)->on_mouse_release(mouse_position - module_bounds.position, mouse_overlaps, button, event_ptr);
         if (drag_mouse_event != nullptr && mouse_overlaps)
             (*module)->on_mouse_drop(mouse_position - module_bounds.position, drag_mouse_event.get());
     }

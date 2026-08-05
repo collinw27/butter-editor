@@ -47,9 +47,9 @@ void MediaModule::apply_ui_scale()
     render_items();
 }
 
-void MediaModule::on_mouse_press(sf::Vector2i position, bool focused)
+void MediaModule::on_mouse_press(sf::Vector2i position, bool focused, InputButton button)
 {
-    if (focused)
+    if (focused && button == InputButton::LEFT)
     {
         // There's a more efficient way to resolve this than using a for loop,
         // but it's fine for the time being

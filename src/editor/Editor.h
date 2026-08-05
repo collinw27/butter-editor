@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 
+#include "utility/Input.h"
 #include "graphics/nodes.h"
 #include "editor/core/EditorModule.h"
 #include "editor/core/FlexTab.h"
@@ -127,8 +128,8 @@ private:
 
     void on_resized(sf::Vector2i new_size);
     void on_mouse_move(sf::Vector2i position);
-    void on_mouse_press();
-    void on_mouse_release();
+    void on_mouse_press(InputButton button);
+    void on_mouse_release(InputButton button);
     sf::Vector2i get_mouse_position();
 
     void resize_modules();

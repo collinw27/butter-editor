@@ -2,6 +2,7 @@
 #define EDITOR_MODULE_H
 
 #include <memory>
+#include "utility/Input.h"
 #include "graphics/nodes.h"
 
 class Editor;
@@ -35,6 +36,11 @@ public:
     void set_visible(bool visible);
     void set_hover_highlight(bool hover);
 
+    // `update()` is called every frame
+    // When possible, behavior should instead be delegated to mouse functions
+
+    virtual void on_update() {}
+
     // Allow custom behavior on mouse inputs
     // These functions will be triggered even when the mouse is outside the module bounds
     // Because of this, `focused` should be checked in cases where an event should only
@@ -42,9 +48,9 @@ public:
     // `position` is given relative to the top-left of the module
     // `event` is only passed if the current mouse event is targeted toward this module
     
-    virtual void on_mouse_press(sf::Vector2i position, bool focused) {}
+    virtual void on_mouse_press(sf::Vector2i position, bool focused, InputButton button) {}
     virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) {}
-    virtual void on_mouse_release(sf::Vector2i position, bool focused, DragMouse* drag_event) {}
+    virtual void on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouse* drag_event) {}
 
     // This event only triggers when a mouse event is released over this module
 

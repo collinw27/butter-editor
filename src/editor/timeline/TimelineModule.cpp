@@ -8,12 +8,15 @@
 #include "utility/Input.h"
 #include "editor/Editor.h"
 #include "editor/core/DragScroll.h"
+#include "editor/core/DragDirectScroll.h"
 #include "editor/media/DragMedia.h"
 
 #include "project/Project.h"
 #include "project/clip/ClipData.h"
 #include "project/clip/ColorClipData.h"
 #include "editor/timeline/clip/Clip.h"
+
+#include "utility/Logger.h"
 
 constexpr int SCROLLBAR_H = 12;
 constexpr int SCROLLBAR_W = 90;
@@ -188,26 +191,38 @@ void TimelineModule::deselect_all()
     }
 }
 
-void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused)
+void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputButton button)
 {
     if (focused)
     {
-        if (is_position_in_scroll(position))
+        if (button == InputButton::LEFT)
         {
-            editor.set_drag_event(std::unique_ptr<DragScroll>(new DragScroll(this, scroll_pct)));
-            update_scroll_color(false, true);
+            // Drag scroll
+
+            if (is_position_in_scroll(position))
+            {
+                editor.set_drag_event(std::unique_ptr<DragScroll>(new DragScroll(this, scroll_pct)));
+                update_scroll_color(false, true);
+            }
+
+            else
+            {
+                // Select hovered clip
+                // Ctrl to select multiple
+                // Clicking with no hovered clip will deselect all
+
+                if (!Input().check_ctrl())
+                    deselect_all();
+                if (clip_mem.get_hovered_clip() != nullptr)
+                    select_clip(clip_mem.get_hovered_clip());
+            }
         }
+        
+        // Drag timeline (if holding space)
 
-        else
+        if (button == InputButton::MIDDLE)
         {
-            // Select hovered clip
-            // Ctrl to select multiple
-            // Clicking with no hovered clip will deselect all
-
-            if (!Input().check_ctrl())
-                deselect_all();
-            if (clip_mem.get_hovered_clip() != nullptr)
-                select_clip(clip_mem.get_hovered_clip());
+            editor.set_drag_event(std::unique_ptr<DragDirectScroll>(new DragDirectScroll(this, position.x, scroll_pct)));
         }
     }
 }
@@ -223,6 +238,19 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
         update_scroll();
     }
     update_scroll_color(is_position_in_scroll(position), scroll_event != nullptr);
+
+    // Update space drag
+
+    DragDirectScroll* space_event = (drag_event) ? dynamic_cast<DragDirectScroll*>(drag_event) : nullptr;
+    if (space_event != nullptr)
+    {
+        // Find the difference in x positions,  then convert it to scroll percentage
+
+        int x_delta = position.x - space_event->get_start_pos();
+        float x_pct_delta = x_delta / (float) scroll_max / zoom_amount;
+        scroll_pct = clamp<float>(space_event->get_start_pct() - x_pct_delta, 0.f, 1.f);
+        update_scroll();
+    }
 
     // Highlight moused-over clip
     // ClipMemoryManager prevents this from becoming a dangling pointer
@@ -248,14 +276,14 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
 
     // Holding middle mouse will select any hovered clip
 
-    if (Input().check_mouse(sf::Mouse::Button::Middle))
+    if (Input().check_key(SF_KEY::Space))
     {
         if (clip_mem.get_hovered_clip() != nullptr)
             select_clip(clip_mem.get_hovered_clip());
     }
 }
 
-void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, DragMouse* drag_event)
+void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouse* drag_event)
 {
     update_scroll_color(focused && is_position_in_scroll(position), false);
 }

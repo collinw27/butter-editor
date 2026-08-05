@@ -16,6 +16,20 @@ enum class KeyMod
     ALT     = 1 << 2
 };
 
+// Originally, the plan was to allow space to function like a mouse input
+// Some programs let you scroll with the space bar, and this was an attempt
+// to replicate that
+// Even though this functionality has been removed, mouse events still use a
+// separate enum than sf::Mouse::Button to allow behavior like this to be
+// potentially re-added without any major refactoring
+
+enum class InputButton
+{
+    LEFT,
+    RIGHT,
+    MIDDLE
+};
+
 class InputSingleton;
 
 InputSingleton& Input();

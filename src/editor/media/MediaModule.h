@@ -8,6 +8,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "editor/core/EditorModule.h"
+#include "utility/Input.h"
 #include "graphics/nodes.h"
 
 struct MediaItem
@@ -31,7 +32,7 @@ public:
     virtual void apply_bounds() override;
     virtual void apply_ui_scale() override;
     
-    virtual void on_mouse_press(sf::Vector2i position, bool focused) override;
+    virtual void on_mouse_press(sf::Vector2i position, bool focused, InputButton button) override;
     virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) override;
 
 private:

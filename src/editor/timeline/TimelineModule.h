@@ -77,9 +77,9 @@ public:
     void select_all();
     void deselect_all();
     
-    virtual void on_mouse_press(sf::Vector2i position, bool focused) override;
+    virtual void on_mouse_press(sf::Vector2i position, bool focused, InputButton button) override;
     virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) override;
-    virtual void on_mouse_release(sf::Vector2i position, bool focused, DragMouse* drag_event) override;
+    virtual void on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouse* drag_event) override;
     virtual void on_mouse_drop(sf::Vector2i position, DragMouse* drag_event) override;
 
 private:
