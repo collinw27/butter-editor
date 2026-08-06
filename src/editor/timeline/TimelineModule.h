@@ -48,16 +48,6 @@ class TimelineModule : public EditorModule
 
     public:
 
-        // Extend mode is used to signify which end of the hovered clip
-        // the cursor is over
-        // It is also used for extending selected clips
-        // (Multiple clips can be extended at once, but they will always
-        // be in the same direction)
-
-        ExtendMode extend_mode = ExtendMode::NONE;
-
-    public:
-
         ~ClipMemoryManager();
 
         void add_clip(Clip* clip);
@@ -77,6 +67,13 @@ class TimelineModule : public EditorModule
     // Other nodes
 
     std::unique_ptr<GLRectangle> scroll_bar;
+
+    // Extend mode is used to signify which end of the hovered clip
+    // the cursor is over
+    // This is used for deciding if a click event should extend the clip
+    // Note: This variable is not used during the actual extend event!
+
+    ExtendMode extend_mode = ExtendMode::NONE;
 
     // Not storing the project here is a deliberate choice
     // The Editor class needs to be able to nullify the Project pointer

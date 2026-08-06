@@ -42,10 +42,7 @@ void ClipMem::remove_clip(Clip* clip)
 
     deselect_clip(clip);
     if (hovered_clip == clip)
-    {
         hovered_clip = nullptr;
-        extend_mode = ExtendMode::NONE;
-    }
 
     // The clip must be manually deleted (no smart pointer)
         
@@ -70,7 +67,6 @@ void ClipMem::clear_all()
 
     selected_clips.clear();
     hovered_clip = nullptr;
-    extend_mode = ExtendMode::NONE;
 }
 
 const std::vector<Clip*>& ClipMem::get_clips()
@@ -250,10 +246,21 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
 
                 if (!Input().check_ctrl())
                     deselect_all();
-                if (clip_mem.get_hovered_clip() != nullptr)
+                
+                if (clip_mem.get_hovered_clip() == nullptr)
                 {
-                    if (clip_mem.extend_mode == ExtendMode::NONE)
+                    // Extended indicator is cleared if a nonexistent clip is clicked
+                    // This can happen if a clip is deleted while the mouse is hovering it
+                    
+                    extend_mode = ExtendMode::NONE;
+                    editor.set_cursor(sf::Cursor::Type::Arrow);
+                }
+                else
+                {
+                    if (extend_mode == ExtendMode::NONE)
                     {
+                        // Select the clip without creating an extend event
+
                         select_clip(clip_mem.get_hovered_clip());
                     }
                     else
@@ -268,7 +275,7 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
                         // This can be 0
 
                         Project* project = get_project();
-                        bool forward = clip_mem.extend_mode == ExtendMode::RIGHT;
+                        bool forward = (extend_mode == ExtendMode::RIGHT);
                         if (forward)
                         {
                             TimelineUnit start_time = extend_clip->get_clip_data()->get_end_time();
@@ -311,16 +318,16 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
         }
         update_scroll_color(is_position_in_scroll(position), scroll_event != nullptr);
 
-        // Update space drag
+        // Update direct drag
 
-        DragDirectScroll* space_event = dynamic_cast<DragDirectScroll*>(drag_event);
-        if (space_event != nullptr)
+        DragDirectScroll* dd_event = dynamic_cast<DragDirectScroll*>(drag_event);
+        if (dd_event != nullptr)
         {
             // Find the difference in x positions,  then convert it to scroll percentage
 
-            int x_delta = position.x - space_event->get_start_pos();
+            int x_delta = position.x - dd_event->get_start_pos();
             float x_pct_delta = x_delta / (float) scroll_max / zoom_amount;
-            scroll_pct = clamp<float>(space_event->get_start_pct() - x_pct_delta, 0.f, 1.f);
+            scroll_pct = clamp<float>(dd_event->get_start_pct() - x_pct_delta, 0.f, 1.f);
             update_scroll();
         }
 
@@ -358,66 +365,70 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
                 }
                 scroll_max = std::max<TimelineUnit>(project->get_project_length(), 200);
                 update_scroll();
-                update_zoom();
                 editor.on_timeline_update();
             }
         }
     }
 
-    // Highlight moused-over clip
-    // ClipMemoryManager prevents this from becoming a dangling pointer
-    // When hovering over the edge of a clip (either end), the mouse type is changed
-    // and this information is stored
+    // These events should only activate if not already dragging something
 
-    float time_pos_f = x_to_time(position.x);
-    int time_pos = (int) time_pos_f;
-    float extend_margin_l = x_to_time(position.x - 12);
-    float extend_margin_r = std::ceil(x_to_time(position.x + 12));
-    if (clip_mem.get_hovered_clip() != nullptr)
+    if (drag_event == nullptr)
     {
-        clip_mem.get_hovered_clip()->set_hovering(false);
-        clip_mem.set_hovered_clip(nullptr);
-        clip_mem.extend_mode = ExtendMode::NONE;
-    }
+        // Highlight moused-over clip
+        // ClipMemoryManager prevents this from becoming a dangling pointer
+        // When hovering over the edge of a clip (either end), the mouse type is changed
+        // and this information is stored
 
-    // This could benefit from some optimization (since it currently performs 3 checks on every clip),
-    // but that's a task for the far future
-
-    if (focused && position.y >= 40 && position.y < 140)
-    {
-        for (Clip* clip : clip_mem.get_clips())
+        float time_pos_f = x_to_time(position.x);
+        int time_pos = (int) time_pos_f;
+        float extend_margin_l = x_to_time(position.x - 12);
+        float extend_margin_r = std::ceil(x_to_time(position.x + 12));
+        if (clip_mem.get_hovered_clip() != nullptr)
         {
-            if (clip->is_start_within(extend_margin_l, time_pos_f))
+            clip_mem.get_hovered_clip()->set_hovering(false);
+            clip_mem.set_hovered_clip(nullptr);
+            extend_mode = ExtendMode::NONE;
+        }
+
+        // This could benefit from some optimization (since it currently performs 3 checks on every clip),
+        // but that's a task for the far future
+
+        if (focused && position.y >= 40 && position.y < 140)
+        {
+            for (Clip* clip : clip_mem.get_clips())
             {
-                clip_mem.set_hovered_clip(clip);
-                clip_mem.extend_mode = ExtendMode::LEFT;
-                clip->set_hovering(true);
-                break;
-            }
-            if (clip->is_end_within(time_pos_f, extend_margin_r))
-            {
-                clip_mem.set_hovered_clip(clip);
-                clip_mem.extend_mode = ExtendMode::RIGHT;
-                clip->set_hovering(true);
-                break;
-            }
-            if (clip->is_time_within(time_pos))
-            {
-                clip_mem.set_hovered_clip(clip);
-                clip_mem.extend_mode = ExtendMode::NONE;
-                clip->set_hovering(true);
-                break;
+                if (clip->is_start_within(extend_margin_l, time_pos_f))
+                {
+                    clip_mem.set_hovered_clip(clip);
+                    extend_mode = ExtendMode::LEFT;
+                    clip->set_hovering(true);
+                    break;
+                }
+                if (clip->is_end_within(time_pos_f, extend_margin_r))
+                {
+                    clip_mem.set_hovered_clip(clip);
+                    extend_mode = ExtendMode::RIGHT;
+                    clip->set_hovering(true);
+                    break;
+                }
+                if (clip->is_time_within(time_pos))
+                {
+                    clip_mem.set_hovered_clip(clip);
+                    extend_mode = ExtendMode::NONE;
+                    clip->set_hovering(true);
+                    break;
+                }
             }
         }
-    }
-    editor.set_cursor((clip_mem.extend_mode == ExtendMode::NONE) ? sf::Cursor::Type::Arrow : sf::Cursor::Type::SizeHorizontal);
+        editor.set_cursor((extend_mode == ExtendMode::NONE) ? sf::Cursor::Type::Arrow : sf::Cursor::Type::SizeHorizontal);
 
-    // Holding middle mouse will select any hovered clip
+        // Holding space will select any hovered clip
 
-    if (Input().check_key(SF_KEY::Space))
-    {
-        if (clip_mem.get_hovered_clip() != nullptr)
-            select_clip(clip_mem.get_hovered_clip());
+        if (Input().check_key(SF_KEY::Space))
+        {
+            if (clip_mem.get_hovered_clip() != nullptr)
+                select_clip(clip_mem.get_hovered_clip());
+        }
     }
 }
 
@@ -495,17 +506,20 @@ void TimelineModule::delete_clip(Clip* clip)
     clip_mem.remove_clip(clip);
 }
 
+// `update_scroll()` and `update_zoom()` are split into two different functions
+// since scrolling is generally a faster operation than zooming, and it's ideal
+// for scrolling to feel as smooth as possible
+
 void TimelineModule::update_scroll()
 {
+    // First, adjust the horizontal positioning of the clips
+
     scroll_bar->set_size(sf::Vector2f(SCROLLBAR_W, SCROLLBAR_H) * ui_scale);
     scroll_span = container->get_size().x - 10 - scroll_bar->get_size().x;
 
     scroll_amount = scroll_pct * scroll_max;
     clips_anchor->set_position(sf::Vector2f(-scroll_amount, 0));
     scroll_bar->set_position(sf::Vector2f(5 + intcast(scroll_pct * scroll_span), container->get_size().y - 5 - scroll_bar->get_size().y));
-
-    Project* project = get_project();
-    TimelineUnit start_time = (TimelineUnit) (scroll_pct * scroll_max);
 }
 
 void TimelineModule::update_zoom()
