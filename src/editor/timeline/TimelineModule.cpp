@@ -363,9 +363,11 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
                     selected_clip->set_clip_start(project, extend_event->start_time - time_diff);
                     selected_clip->render_selected(outline_layer.get(), zoom_amount);
                 }
-                scroll_max = std::max<TimelineUnit>(project->get_project_length(), 200);
-                update_scroll();
-                editor.on_timeline_update();
+
+                // The scroll & project aren't updated here
+                // This only occurs when the event is released
+                // This prevents weird behavior from the scroll updating while
+                // dragging past the end of the project
             }
         }
     }
@@ -434,6 +436,26 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
 
 void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouse* drag_event)
 {
+    auto extend_event = dynamic_cast<ExtendClip*>(drag_event);
+    {
+        // When extending a clip, timeline updates are buffered until this point
+
+        Project* project = get_project();
+        TimelineUnit old_scroll_max = scroll_max;
+        scroll_max = std::max<TimelineUnit>(project->get_project_length(), 200);
+        if (old_scroll_max != scroll_max)
+        {
+            update_scroll();
+            editor.on_timeline_update();
+            extend_mode = ExtendMode::NONE;
+            editor.set_cursor(sf::Cursor::Type::Arrow);
+            Clip* hovered_clip = clip_mem.get_hovered_clip();
+            if (hovered_clip != nullptr)
+                hovered_clip->set_hovering(false);
+            clip_mem.set_hovered_clip(nullptr);
+        }
+    }
+
     update_scroll_color(focused && is_position_in_scroll(position), false);
 }
 
