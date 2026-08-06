@@ -9,7 +9,6 @@
 // This class has two main responsibilities:
 // 1) Displaying the timeline clip using GLNodes
 // 2) Propogating any change to this clip to the project interface
-// This class should be extended for all subclasses of TimelineClip
 
 class Clip
 {

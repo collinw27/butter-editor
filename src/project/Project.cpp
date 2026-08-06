@@ -235,28 +235,8 @@ ClipData* Project::get_clip_at_index(unsigned int index)
 
 ClipData* Project::get_clip_at_time(TimelineUnit time)
 {
-    // Return early if:
-    // a) empty timeline
-    // b) negative time, or
-    // b) every clip starts after the provided time
-
-    if (clip_vec.empty())
-        return nullptr;
-    if (time < 0)
-        return nullptr;
-    if (time < clip_vec.at(0)->get_start_time())
-        return nullptr;
-
-    // Attempt to find a clip that begins before the time and ends
-    // after the time
-    // Beginning is inclusive, end is exclusive
-
-    for (std::unique_ptr<ClipData>& clip : clip_vec)
-    {
-        if (time >= clip->get_start_time() && time < clip->get_end_time())
-            return clip.get();
-    }
-    return nullptr;
+    auto it = get_iter_at_time(time);
+    return (it == clip_vec.end()) ? nullptr : (*it).get();
 }
 
 TimelineUnit Project::get_project_length()
@@ -305,7 +285,7 @@ std::string Project::to_string(TimelineUnit timeline_time)
 // you can continue without running into a clip
 // 0 if inside of clip
 
-TimelineUnit Project::check_gap_ahead(TimelineUnit time)
+TimelineUnit Project::get_gap_ahead(TimelineUnit time)
 {
     // Find the clip directly after the time (if applicable)
     // This clip is the only thing that can terminate the gap
@@ -333,7 +313,7 @@ TimelineUnit Project::check_gap_ahead(TimelineUnit time)
         return (TIMELINE_MAX - time);
 }
 
-TimelineUnit Project::check_gap_behind(TimelineUnit time)
+TimelineUnit Project::get_gap_behind(TimelineUnit time)
 {
     // The logic here is pretty similar to the function above
     // Instead, find the clip immediately before
@@ -355,6 +335,28 @@ TimelineUnit Project::check_gap_behind(TimelineUnit time)
         return std::max((int) time - (int) before->get_end_time(), 0);
     else
         return time;
+}
+
+TimelineUnit Project::get_chain_ahead(TimelineUnit time)
+{
+    auto curr = get_iter_at_time(time);
+    if (curr == clip_vec.end())
+        return 0;
+    
+    // Keep chaining clips together until a gap is found
+    // (or the end of the vector is reached)
+
+    TimelineUnit chain_length = (*curr)->get_end_time() - time;
+    while (++curr != clip_vec.end())
+    {
+        // Gap is found when this clip doesn't start when the prev clip ends
+
+        if ((*(curr - 1))->get_end_time() != (*curr)->get_start_time())
+            break;
+        else
+            chain_length += (*curr)->get_length();
+    }
+    return chain_length;
 }
 
 void Project::save()
@@ -442,6 +444,36 @@ void Project::export_video(std::filesystem::path filepath)
 
     export_task.thread = std::thread(&Project::export_async, this);
     export_task.thread.detach();
+}
+
+// Used internally by `get_clip_at_time()`
+// Exists as an intermediate function since having access to the iterator
+// is useful for a lot of member functions to save time
+
+std::vector<std::unique_ptr<ClipData>>::iterator Project::get_iter_at_time(TimelineUnit time)
+{
+    // Return early if:
+    // a) empty timeline
+    // b) negative time, or
+    // c) every clip starts after the provided time
+
+    if (clip_vec.empty())
+        return clip_vec.end();
+    if (time < 0)
+        return clip_vec.end();
+    if (time < clip_vec.at(0)->get_start_time())
+        return clip_vec.end();
+
+    // Attempt to find a clip that begins before the time
+    // and ends after the time
+    // Beginning is inclusive, end is exclusive
+
+    for (auto it = clip_vec.begin(); it != clip_vec.end(); ++it)
+    {
+        if (time >= (*it)->get_start_time() && time < (*it)->get_end_time())
+            return it;
+    }
+    return clip_vec.end();
 }
 
 void Project::proj_assert(bool condition, std::string fail_msg)

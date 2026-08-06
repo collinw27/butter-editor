@@ -108,11 +108,16 @@ TimelineModule::TimelineModule(Editor& editor)
 {
     clips_scaler.reset(GLNode::create(container.get()));
     clips_anchor.reset(GLNode::create(clips_scaler.get()));
-    scroll_bar.reset(GLRectangle::create(container.get()));
-    scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
     clip_layer.reset(GLNode::create(clips_anchor.get()));
     outline_layer.reset(GLNode::create(clips_anchor.get()));
     selection_layer.reset(GLNode::create(clips_anchor.get()));
+    
+    scroll_bar.reset(GLRectangle::create(container.get()));
+    scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
+
+    ghost_clip.reset(GLRectangle::create(clip_layer.get(), sf::Vector2f(), sf::Vector2f(400, 100)));
+    ghost_clip->set_fill_color(sf::Color::White);
+    ghost_clip->set_visible(false);
 
     reset();
 }
@@ -279,14 +284,14 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
                         if (forward)
                         {
                             TimelineUnit start_time = extend_clip->get_clip_data()->get_end_time();
-                            TimelineUnit gap = project->check_gap_ahead(extend_clip->get_clip_data()->get_end_time());
+                            TimelineUnit gap = project->get_gap_ahead(extend_clip->get_clip_data()->get_end_time());
                             TimelineUnit max_trim = extend_clip->get_clip_data()->get_length() - 1;
                             editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, max_trim)));
                         }
                         else
                         {
                             TimelineUnit start_time = extend_clip->get_clip_data()->get_start_time();
-                            TimelineUnit gap = project->check_gap_behind(extend_clip->get_clip_data()->get_start_time());
+                            TimelineUnit gap = project->get_gap_behind(extend_clip->get_clip_data()->get_start_time());
                             TimelineUnit max_trim = extend_clip->get_clip_data()->get_length() - 1;
                             editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, max_trim)));
                         }
@@ -306,11 +311,12 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
 
 void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event)
 {
+    bool doing_drag_event = (drag_event != nullptr);
     if (drag_event != nullptr)
     {
         // Update scroll
 
-        DragScroll* scroll_event = dynamic_cast<DragScroll*>(drag_event);
+        auto scroll_event = dynamic_cast<DragScroll*>(drag_event);
         if (scroll_event != nullptr)
         {
             scroll_pct = clamp<float>(scroll_event->get_scroll_offset() + scroll_event->get_total_offset().x / (float) scroll_span, 0.f, 1.f);
@@ -320,8 +326,7 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
 
         // Update direct drag
 
-        DragDirectScroll* dd_event = dynamic_cast<DragDirectScroll*>(drag_event);
-        if (dd_event != nullptr)
+        if (auto dd_event = dynamic_cast<DragDirectScroll*>(drag_event))
         {
             // Find the difference in x positions,  then convert it to scroll percentage
 
@@ -333,8 +338,7 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
 
         // Update clip extend
 
-        ExtendClip* extend_event = dynamic_cast<ExtendClip*>(drag_event);
-        if (extend_event != nullptr)
+        if (auto extend_event = dynamic_cast<ExtendClip*>(drag_event))
         {
             // Cancel event if no selection
 
@@ -372,9 +376,35 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
         }
     }
 
+    // Special behavior for dragging media into timeline
+    // This event isn't technically targeted to this module
+
+    if (auto drag_media = dynamic_cast<DragMedia*>(editor.get_drag_event()))
+    {
+        if (focused)
+        {
+            doing_drag_event = true;
+            TimelineUnit drag_time = x_to_time(position.x);
+
+            // Adjust the clip to be in the correct bounds
+            // See `get_fitted_clip()` for more information on the procedure for this
+
+            std::tuple<TimelineUnit, TimelineUnit> clip_bounds = get_fitted_clip(drag_time, 60);
+            TimelineUnit clip_start = std::get<0>(clip_bounds);
+            TimelineUnit clip_length = std::get<1>(clip_bounds);
+            ghost_clip->set_visible(clip_length > 0);
+            if (clip_length > 0)
+            {
+                ghost_clip->set_position(sf::Vector2f((int) clip_start, 40));
+                ghost_clip->set_size(sf::Vector2f((int) clip_length, 100));
+            }
+                
+        }
+    }
+
     // These events should only activate if not already dragging something
 
-    if (drag_event == nullptr)
+    if (!doing_drag_event)
     {
         // Highlight moused-over clip
         // ClipMemoryManager prevents this from becoming a dangling pointer
@@ -456,6 +486,7 @@ void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, Input
         }
     }
 
+    ghost_clip->set_visible(false);
     update_scroll_color(focused && is_position_in_scroll(position), false);
 }
 
@@ -496,6 +527,63 @@ float TimelineModule::time_to_x(TimelineUnit time)
     float time_shifted = (float) time - scroll_amount;
     float time_scaled = time_shifted * zoom_amount;
     return time_shifted;
+}
+
+// This function is used when a clip is dropped between other clips
+// It returns the start time & length where the clip can be placed without
+// cutting into other clips (or returns length 0 if it cannot be placed)
+// At a high level, the procedure is as follows:
+// 1) Attempt to place it normally
+// 2) If the start is not inside a clip, but the clip cuts into another clip,
+// snap the clip backwards (attempting to retain the length, but trimming if necessary)
+// 3) If the start is inside the clip but there is a gap within the bounds of the clip,
+// push the clip ahead to start at the gap (trimming if necessary)
+// 4) If neither of these worked, we are attempting to place a clip entirely within the
+// bounds of another clip (or chain of clips), so placement fails
+
+std::tuple<TimelineUnit, TimelineUnit> TimelineModule::get_fitted_clip(TimelineUnit start_time, TimelineUnit length)
+{
+    Project* project = get_project();
+
+    // (1) & (2) take place if the start position is free
+
+    if (project->get_clip_at_time(start_time) == nullptr)
+    {
+        // 1) Attempt to place it normally
+
+        TimelineUnit gap_ahead = project->get_gap_ahead(start_time);
+        if (gap_ahead >= length)
+            return std::tuple<TimelineUnit, TimelineUnit>(start_time, length);
+
+        // 2) Attempt to snap the clip backwards
+        // The else branch trims the clip
+        
+        TimelineUnit gap_behind = project->get_gap_behind(start_time);
+        if (gap_behind + gap_ahead >= length)
+            return std::tuple<TimelineUnit, TimelineUnit>(start_time - (length - gap_ahead), length);
+        else
+            return std::tuple<TimelineUnit, TimelineUnit>(start_time - gap_behind, gap_behind + gap_ahead);
+    }
+
+    // (3) & (4) take place if the start position is occupied
+
+    else
+    {
+        TimelineUnit chain_ahead = project->get_chain_ahead(start_time);
+
+        // (3) Attempt to snap the clip forwards
+        // The else branch trims the clip
+
+        if (chain_ahead < length)
+        {
+            TimelineUnit gap_further_ahead = project->get_gap_ahead(start_time + chain_ahead);
+            return std::tuple<TimelineUnit, TimelineUnit>(start_time + chain_ahead, std::min(length, gap_further_ahead));
+        }
+
+        // (4) Return if filled area extends past bounds
+
+        return std::tuple<TimelineUnit, TimelineUnit>(0, 0);
+    }
 }
 
 void TimelineModule::select_clip(Clip* clip)

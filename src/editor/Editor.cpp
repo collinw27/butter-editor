@@ -331,6 +331,11 @@ bool Editor::set_drag_event(std::unique_ptr<DragMouse> new_event)
     return true;
 }
 
+DragMouse* Editor::get_drag_event()
+{
+    return drag_mouse_event.get();
+}
+
 void Editor::cancel_drag_event()
 {
     // Normal callbacks are not run when cancelled

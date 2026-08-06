@@ -1,6 +1,7 @@
 #ifndef TIMELINE_MODULE
 #define TIMELINE_MODULE
 
+#include <tuple>
 #include "editor/core/EditorModule.h"
 #include "editor/core/DragMouse.h"
 #include "graphics/nodes.h"
@@ -26,19 +27,17 @@ class TimelineModule : public EditorModule
     std::unique_ptr<GLNode> outline_layer;
     std::unique_ptr<GLNode> selection_layer;
 
-    enum class ExtendMode
-    {
-        NONE,
-        LEFT,
-        RIGHT
-    };
+    // Used for previewing dragging media into the editor
 
-    // Dynamically-allocated clips are stored sequentially in a vector
+    std::unique_ptr<GLRectangle> ghost_clip;
+
+    // Dynamically-allocated Clips are stored sequentially in a vector
     // Other Clip-referencing variables are able to store pointers to these clips
     // Care must be taken to ensure dangling pointers are not created when clips
     // are deleted, projects are switched, etc.
     // To prevent accidental mishaps, access to this memory is forced to use
-    // ClipMemoryManager, which makes these operations much safer
+    // ClipMemoryManager, which keeps the various pointers in sync with
+    // each other
 
     class ClipMemoryManager
     {
@@ -72,6 +71,13 @@ class TimelineModule : public EditorModule
     // the cursor is over
     // This is used for deciding if a click event should extend the clip
     // Note: This variable is not used during the actual extend event!
+    
+    enum class ExtendMode
+    {
+        NONE,
+        LEFT,
+        RIGHT
+    };
 
     ExtendMode extend_mode = ExtendMode::NONE;
 
@@ -108,6 +114,7 @@ private:
     bool is_position_in_scroll(sf::Vector2i relative_pos);
     float x_to_time(int x);
     float time_to_x(TimelineUnit time);
+    std::tuple<TimelineUnit, TimelineUnit> get_fitted_clip(TimelineUnit start_time, TimelineUnit length);
 
     void select_clip(Clip* clip);
     void deselect_clip(Clip* clip);

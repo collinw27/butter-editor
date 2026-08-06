@@ -124,8 +124,9 @@ public:
     TimelineUnit get_project_length();
     std::string get_project_length_approx();
     std::string to_string(TimelineUnit time);
-    TimelineUnit check_gap_ahead(TimelineUnit time);
-    TimelineUnit check_gap_behind(TimelineUnit time);
+    TimelineUnit get_gap_ahead(TimelineUnit time);
+    TimelineUnit get_gap_behind(TimelineUnit time);
+    TimelineUnit get_chain_ahead(TimelineUnit time);
 
     // Output
     
@@ -137,6 +138,8 @@ public:
     static bool exists(std::string name);
 
 private:
+
+    std::vector<std::unique_ptr<ClipData>>::iterator get_iter_at_time(TimelineUnit time);
 
     void proj_assert(bool condition, std::string fail_msg);
     void write_frame_rgb24(TimelineUnit time, std::uint8_t* buffer);

@@ -129,6 +129,7 @@ public:
 
     void set_cursor(sf::Cursor::Type cursor_type);
     bool set_drag_event(std::unique_ptr<DragMouse> new_event);
+    DragMouse* get_drag_event();
     void cancel_drag_event();
 
     CommandParser& get_command_parser();
