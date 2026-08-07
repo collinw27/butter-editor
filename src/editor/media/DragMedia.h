@@ -2,15 +2,15 @@
 #define DRAG_MEDIA_H
 
 #include "utility/core.h"
-#include "editor/core/DragMouse.h"
+#include "editor/core/mouse/DragMouseEvent.h"
 
-class DragMedia : public DragMouse
+class DragMedia : public DragMouseEvent
 {
 public:
 
     const sf::Color media_color;
-    TimelineUnit start_time = 0;
-    TimelineUnit length = 0;
+    VideoTime start_time = 0;
+    VideoTime length = 0;
     bool valid = false;
 
     DragMedia(sf::Color color);

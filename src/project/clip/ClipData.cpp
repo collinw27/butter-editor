@@ -2,7 +2,7 @@
 
 #include "utility/core.h"
 
-ClipData::ClipData(TimelineUnit start_time, TimelineUnit length)
+ClipData::ClipData(VideoTime start_time, VideoTime length)
 {
     this->start_time = start_time;
     this->length = length;
@@ -10,36 +10,36 @@ ClipData::ClipData(TimelineUnit start_time, TimelineUnit length)
 
 ClipData::~ClipData() {}
 
-void ClipData::set_start_time(TimelineUnit start_time)
+void ClipData::set_start_time(VideoTime start_time)
 {
     this->start_time = start_time;
 }
 
-TimelineUnit ClipData::get_start_time() const
+VideoTime ClipData::get_start_time() const
 {
     return start_time;
 }
 
-void ClipData::set_end_time(TimelineUnit end_time)
+void ClipData::set_end_time(VideoTime end_time)
 {
     if (end_time <= start_time)
         throw ButterException("Clip length must be positive");
     length = end_time - start_time;
 }
 
-TimelineUnit ClipData::get_end_time() const
+VideoTime ClipData::get_end_time() const
 {
     return start_time + length;
 }
 
-void ClipData::set_length(TimelineUnit length)
+void ClipData::set_length(VideoTime length)
 {
     if (length <= 0)
         throw ButterException("Clip length must be positive");
     this->length = length;
 }
 
-TimelineUnit ClipData::get_length() const
+VideoTime ClipData::get_length() const
 {
     return length;    
 }

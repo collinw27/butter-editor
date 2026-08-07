@@ -12,8 +12,8 @@ class ColorClipData : public ClipData
 
 public:
 
-    ColorClipData(TimelineUnit start_time, TimelineUnit length, sf::Color color);
-    ColorClipData(TimelineUnit start_time, TimelineUnit length, std::ifstream& file);
+    ColorClipData(VideoTime start_time, VideoTime length, sf::Color color);
+    ColorClipData(VideoTime start_time, VideoTime length, std::ifstream& file);
     
     virtual int get_clip_type() override;
     virtual void save(std::ofstream& file) override;

@@ -56,7 +56,7 @@ struct ExportTask
     std::thread thread;
     std::size_t buffer_size;
     std::uint8_t* buffer;
-    TimelineUnit final_frame;
+    VideoTime final_frame;
 };
 
 class LockedProject
@@ -111,22 +111,22 @@ public:
 
     // Timeline manipulation
 
-    ClipData* add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
-    void set_clip_start(ClipData* clip, TimelineUnit start);
-    void set_clip_end(ClipData* clip, TimelineUnit end);
+    ClipData* add_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
+    void set_clip_start(ClipData* clip, VideoTime start);
+    void set_clip_end(ClipData* clip, VideoTime end);
     void delete_clip(ClipData* clip);
 
     // Timeline reading
 
     unsigned int get_clip_total();
     ClipData* get_clip_at_index(unsigned int index);
-    ClipData* get_clip_at_time(TimelineUnit time);
-    TimelineUnit get_project_length();
+    ClipData* get_clip_at_time(VideoTime time);
+    VideoTime get_project_length();
     std::string get_project_length_approx();
-    std::string to_string(TimelineUnit time);
-    TimelineUnit get_gap_ahead(TimelineUnit time);
-    TimelineUnit get_gap_behind(TimelineUnit time);
-    TimelineUnit get_chain_ahead(TimelineUnit time);
+    std::string to_string(VideoTime time);
+    VideoTime get_gap_ahead(VideoTime time);
+    VideoTime get_gap_behind(VideoTime time);
+    VideoTime get_chain_ahead(VideoTime time);
 
     // Output
     
@@ -139,10 +139,10 @@ public:
 
 private:
 
-    std::vector<std::unique_ptr<ClipData>>::iterator get_iter_at_time(TimelineUnit time);
+    std::vector<std::unique_ptr<ClipData>>::iterator get_iter_at_time(VideoTime time);
 
     void proj_assert(bool condition, std::string fail_msg);
-    void write_frame_rgb24(TimelineUnit time, std::uint8_t* buffer);
+    void write_frame_rgb24(VideoTime time, std::uint8_t* buffer);
     void export_async();
 };
 

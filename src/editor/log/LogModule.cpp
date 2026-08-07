@@ -54,7 +54,7 @@ void LogModule::push_error(std::string error)
     render_text();
 }
 
-void LogModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event)
+void LogModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouseEvent* drag_event)
 {
     highlight_rect->set_visible(false);
     if (focused)

@@ -7,8 +7,8 @@
 #include "utility/Graphics.h"
 #include "utility/Input.h"
 #include "editor/Editor.h"
-#include "editor/core/DragScroll.h"
-#include "editor/core/DragDirectScroll.h"
+#include "editor/core/mouse/DragScroll.h"
+#include "editor/core/mouse/DragDirectScroll.h"
 #include "editor/media/DragMedia.h"
 #include "editor/timeline/mouse/ExtendClip.h"
 
@@ -141,7 +141,7 @@ void TimelineModule::reset()
     
     // Reset parameters
 
-    scroll_max = std::max<TimelineUnit>(project->get_project_length(), 200);
+    scroll_max = std::max<VideoTime>(project->get_project_length(), 200);
     scroll_pct = 0;
     zoom_factor = 2;
 
@@ -283,16 +283,16 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
                         bool forward = (extend_mode == ExtendMode::RIGHT);
                         if (forward)
                         {
-                            TimelineUnit start_time = extend_clip->get_clip_data()->get_end_time();
-                            TimelineUnit gap = project->get_gap_ahead(extend_clip->get_clip_data()->get_end_time());
-                            TimelineUnit max_trim = extend_clip->get_clip_data()->get_length() - 1;
+                            VideoTime start_time = extend_clip->get_clip_data()->get_end_time();
+                            VideoTime gap = project->get_gap_ahead(extend_clip->get_clip_data()->get_end_time());
+                            VideoTime max_trim = extend_clip->get_clip_data()->get_length() - 1;
                             editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, max_trim)));
                         }
                         else
                         {
-                            TimelineUnit start_time = extend_clip->get_clip_data()->get_start_time();
-                            TimelineUnit gap = project->get_gap_behind(extend_clip->get_clip_data()->get_start_time());
-                            TimelineUnit max_trim = extend_clip->get_clip_data()->get_length() - 1;
+                            VideoTime start_time = extend_clip->get_clip_data()->get_start_time();
+                            VideoTime gap = project->get_gap_behind(extend_clip->get_clip_data()->get_start_time());
+                            VideoTime max_trim = extend_clip->get_clip_data()->get_length() - 1;
                             editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, max_trim)));
                         }
                     }
@@ -309,7 +309,7 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
     }
 }
 
-void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event)
+void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouseEvent* drag_event)
 {
     bool doing_drag_event = (drag_event != nullptr);
     if (drag_event != nullptr)
@@ -352,7 +352,7 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
                 // with 0 length
 
                 int x_diff = (extend_event->get_total_offset().x) * (extend_event->forward ? 1 : -1);
-                TimelineUnit time_diff = (TimelineUnit) (x_diff / zoom_amount);
+                VideoTime time_diff = (VideoTime) (x_diff / zoom_amount);
                 time_diff = clamp(time_diff, -extend_event->max_trim, extend_event->max_extend);
 
                 Clip* selected_clip = clip_mem.get_selected_clips().front();
@@ -379,28 +379,28 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
     // Special behavior for dragging media into timeline
     // This event isn't technically targeted to this module
 
-    if (auto drag_media = dynamic_cast<DragMedia*>(editor.get_drag_event()))
+    if (auto drag_media_event = dynamic_cast<DragMedia*>(editor.get_drag_event()))
     {
         if (focused)
         {
             doing_drag_event = true;
-            TimelineUnit drag_time = x_to_time(position.x);
+            VideoTime drag_time = x_to_time(position.x);
 
             // Adjust the clip to be in the correct bounds
             // See `get_fitted_clip()` for more information on the procedure for this
 
-            std::tuple<TimelineUnit, TimelineUnit> clip_bounds = get_fitted_clip(drag_time, 60);
-            TimelineUnit clip_start = std::get<0>(clip_bounds);
-            TimelineUnit clip_length = std::get<1>(clip_bounds);
+            std::tuple<VideoTime, VideoTime> clip_bounds = get_fitted_clip(drag_time, 60);
+            VideoTime clip_start = std::get<0>(clip_bounds);
+            VideoTime clip_length = std::get<1>(clip_bounds);
             ghost_clip->set_visible(clip_length > 0);
             if (clip_length > 0)
             {
-                drag_media->start_time = clip_start;
-                drag_media->length = clip_length;
+                drag_media_event->start_time = clip_start;
+                drag_media_event->length = clip_length;
                 ghost_clip->set_position(sf::Vector2f((int) clip_start, 40));
                 ghost_clip->set_size(sf::Vector2f((int) clip_length, 100));
             }
-            drag_media->valid = (clip_length > 0);
+            drag_media_event->valid = (clip_length > 0);
         }
     }
 
@@ -466,15 +466,15 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
     }
 }
 
-void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouse* drag_event)
+void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouseEvent* drag_event)
 {
     auto extend_event = dynamic_cast<ExtendClip*>(drag_event);
     {
         // When extending a clip, timeline updates are buffered until this point
 
         Project* project = get_project();
-        TimelineUnit old_scroll_max = scroll_max;
-        scroll_max = std::max<TimelineUnit>(project->get_project_length(), 200);
+        VideoTime old_scroll_max = scroll_max;
+        scroll_max = std::max<VideoTime>(project->get_project_length(), 200);
         if (old_scroll_max != scroll_max)
         {
             update_scroll();
@@ -492,15 +492,15 @@ void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, Input
     update_scroll_color(focused && is_position_in_scroll(position), false);
 }
 
-void TimelineModule::on_mouse_drop(sf::Vector2i position, DragMouse* drag_event)
+void TimelineModule::on_mouse_drop(sf::Vector2i position, DragMouseEvent* drag_event)
 {
-    if (auto drag_media = dynamic_cast<DragMedia*>(drag_event))
+    if (auto drag_media_event = dynamic_cast<DragMedia*>(drag_event))
     {
         // The media drop should use the same paramters as the ghost clip
 
-        if (drag_media->valid)
+        if (drag_media_event->valid)
         {
-            create_color_clip(drag_media->start_time, drag_media->length, drag_media->media_color);
+            create_color_clip(drag_media_event->start_time, drag_media_event->length, drag_media_event->media_color);
         }
         ghost_clip->set_visible(false);
     }
@@ -530,7 +530,7 @@ float TimelineModule::x_to_time(int pos_x)
     return x_shifted;
 }
 
-float TimelineModule::time_to_x(TimelineUnit time)
+float TimelineModule::time_to_x(VideoTime time)
 {
     float time_shifted = (float) time - scroll_amount;
     float time_scaled = time_shifted * zoom_amount;
@@ -549,7 +549,7 @@ float TimelineModule::time_to_x(TimelineUnit time)
 // 4) If neither of these worked, we are attempting to place a clip entirely within the
 // bounds of another clip (or chain of clips), so placement fails
 
-std::tuple<TimelineUnit, TimelineUnit> TimelineModule::get_fitted_clip(TimelineUnit start_time, TimelineUnit length)
+std::tuple<VideoTime, VideoTime> TimelineModule::get_fitted_clip(VideoTime start_time, VideoTime length)
 {
     Project* project = get_project();
 
@@ -559,38 +559,38 @@ std::tuple<TimelineUnit, TimelineUnit> TimelineModule::get_fitted_clip(TimelineU
     {
         // 1) Attempt to place it normally
 
-        TimelineUnit gap_ahead = project->get_gap_ahead(start_time);
+        VideoTime gap_ahead = project->get_gap_ahead(start_time);
         if (gap_ahead >= length)
-            return std::tuple<TimelineUnit, TimelineUnit>(start_time, length);
+            return std::tuple<VideoTime, VideoTime>(start_time, length);
 
         // 2) Attempt to snap the clip backwards
         // The else branch trims the clip
         
-        TimelineUnit gap_behind = project->get_gap_behind(start_time);
+        VideoTime gap_behind = project->get_gap_behind(start_time);
         if (gap_behind + gap_ahead >= length)
-            return std::tuple<TimelineUnit, TimelineUnit>(start_time - (length - gap_ahead), length);
+            return std::tuple<VideoTime, VideoTime>(start_time - (length - gap_ahead), length);
         else
-            return std::tuple<TimelineUnit, TimelineUnit>(start_time - gap_behind, gap_behind + gap_ahead);
+            return std::tuple<VideoTime, VideoTime>(start_time - gap_behind, gap_behind + gap_ahead);
     }
 
     // (3) & (4) take place if the start position is occupied
 
     else
     {
-        TimelineUnit chain_ahead = project->get_chain_ahead(start_time);
+        VideoTime chain_ahead = project->get_chain_ahead(start_time);
 
         // (3) Attempt to snap the clip forwards
         // The else branch trims the clip
 
         if (chain_ahead < length)
         {
-            TimelineUnit gap_further_ahead = project->get_gap_ahead(start_time + chain_ahead);
-            return std::tuple<TimelineUnit, TimelineUnit>(start_time + chain_ahead, std::min(length, gap_further_ahead));
+            VideoTime gap_further_ahead = project->get_gap_ahead(start_time + chain_ahead);
+            return std::tuple<VideoTime, VideoTime>(start_time + chain_ahead, std::min(length, gap_further_ahead));
         }
 
         // (4) Return if filled area extends past bounds
 
-        return std::tuple<TimelineUnit, TimelineUnit>(0, 0);
+        return std::tuple<VideoTime, VideoTime>(0, 0);
     }
 }
 
@@ -614,7 +614,7 @@ void TimelineModule::deselect_clip(Clip* clip)
     }
 }
 
-void TimelineModule::create_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color)
+void TimelineModule::create_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
 {
     Project* project = get_project();
     ClipData* clip_data = project->add_color_clip(start_time, length, color);

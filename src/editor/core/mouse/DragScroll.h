@@ -1,10 +1,10 @@
 #ifndef DRAG_SCROLL_H
 #define DRAG_SCROLL_H
 
-#include "editor/core/DragMouse.h"
+#include "editor/core/mouse/DragMouseEvent.h"
 #include "editor/core/EditorModule.h"
 
-class DragScroll : public DragMouse
+class DragScroll : public DragMouseEvent
 {
     float scroll_offset;
 

@@ -1,4 +1,4 @@
-#include "editor/core/DragDivider.h"
+#include "editor/core/mouse/DragDivider.h"
 
 DragDivider::DragDivider(bool vertical) :
     vertical{vertical}

@@ -16,21 +16,21 @@ enum class ClipType
 
 class ClipData
 {
-    TimelineUnit start_time;
-    TimelineUnit length;
+    VideoTime start_time;
+    VideoTime length;
 
 public:
 
-    ClipData(TimelineUnit start_time, TimelineUnit length);
+    ClipData(VideoTime start_time, VideoTime length);
     virtual ~ClipData();
 
     virtual int get_clip_type() = 0;
-    void set_start_time(TimelineUnit start_time);
-    TimelineUnit get_start_time() const;
-    void set_end_time(TimelineUnit end_time);
-    TimelineUnit get_end_time() const;
-    void set_length(TimelineUnit length);
-    TimelineUnit get_length() const;
+    void set_start_time(VideoTime start_time);
+    VideoTime get_start_time() const;
+    void set_end_time(VideoTime end_time);
+    VideoTime get_end_time() const;
+    void set_length(VideoTime length);
+    VideoTime get_length() const;
 
     virtual void save(std::ofstream& file);
 };

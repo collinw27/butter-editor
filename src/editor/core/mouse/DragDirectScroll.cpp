@@ -1,4 +1,4 @@
-#include "editor/core/DragDirectScroll.h"
+#include "editor/core/mouse/DragDirectScroll.h"
 
 DragDirectScroll::DragDirectScroll(EditorModule* target_module, int start_pos, float start_pct)
 {

@@ -10,7 +10,7 @@
 #include "utility/FileManager.h"
 #include "utility/file_formats/UserSettings.h"
 #include "utility/Debugger.h"
-#include "editor/core/DragDivider.h"
+#include "editor/core/mouse/DragDivider.h"
 #include "command/exceptions.h"
 
 constexpr int MODULE_MARGIN = 100;
@@ -319,7 +319,7 @@ void Editor::set_cursor(sf::Cursor::Type cursor_type)
     window->setMouseCursor(sf::Cursor{cursor_type});
 }
 
-bool Editor::set_drag_event(std::unique_ptr<DragMouse> new_event)
+bool Editor::set_drag_event(std::unique_ptr<DragMouseEvent> new_event)
 {
     if (drag_mouse_event != nullptr)
         return false;
@@ -331,7 +331,7 @@ bool Editor::set_drag_event(std::unique_ptr<DragMouse> new_event)
     return true;
 }
 
-DragMouse* Editor::get_drag_event()
+DragMouseEvent* Editor::get_drag_event()
 {
     return drag_mouse_event.get();
 }
@@ -426,7 +426,7 @@ void Editor::on_mouse_move(sf::Vector2i position)
             sf::IntRect module_bounds = (*module)->get_bounds();
             bool mouse_overlaps = module_bounds.contains(mouse_position);
             (*module)->set_hover_highlight(mouse_overlaps);
-            DragMouse* event_ptr = (drag_mouse_event && drag_mouse_event->target == *module) ? drag_mouse_event.get() : nullptr;
+            DragMouseEvent* event_ptr = (drag_mouse_event && drag_mouse_event->target == *module) ? drag_mouse_event.get() : nullptr;
             (*module)->on_mouse_move(mouse_position - module_bounds.position, mouse_overlaps, event_ptr);
         }
         for (std::unique_ptr<FlexTab>& tab : flex_tabs)
@@ -484,9 +484,9 @@ void Editor::on_mouse_press(InputButton button)
     // Start scaling dividers if they were clicked
 
     if (abs(mouse_position.y - y_divider) < 6)
-        set_drag_event(std::unique_ptr<DragMouse>(new DragDivider(true)));
+        set_drag_event(std::unique_ptr<DragMouseEvent>(new DragDivider(true)));
     else if (mouse_position.y < y_divider && abs(mouse_position.x - x_divider) < 6)
-        set_drag_event(std::unique_ptr<DragMouse>(new DragDivider(false)));
+        set_drag_event(std::unique_ptr<DragMouseEvent>(new DragDivider(false)));
 
     // Switch tabs if clicked
     // In the future, it might be desirable to have this occur
@@ -540,7 +540,7 @@ void Editor::on_mouse_release(InputButton button)
     {
         sf::IntRect module_bounds = (*module)->get_bounds();
         bool mouse_overlaps = module_bounds.contains(mouse_position);
-        DragMouse* event_ptr = (drag_mouse_event && drag_mouse_event->target == *module) ? drag_mouse_event.get() : nullptr;
+        DragMouseEvent* event_ptr = (drag_mouse_event && drag_mouse_event->target == *module) ? drag_mouse_event.get() : nullptr;
         (*module)->on_mouse_release(mouse_position - module_bounds.position, mouse_overlaps, button, event_ptr);
         if (drag_mouse_event != nullptr && mouse_overlaps)
             (*module)->on_mouse_drop(mouse_position - module_bounds.position, drag_mouse_event.get());

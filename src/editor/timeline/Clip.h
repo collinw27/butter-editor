@@ -36,8 +36,8 @@ public:
     bool is_start_within(float left, float right);
     bool is_end_within(float left, float right);
 
-    void set_clip_start(Project* project, TimelineUnit start);
-    void set_clip_end(Project* project, TimelineUnit end);
+    void set_clip_start(Project* project, VideoTime start);
+    void set_clip_end(Project* project, VideoTime end);
     void delete_clip(Project* project);
 };
 

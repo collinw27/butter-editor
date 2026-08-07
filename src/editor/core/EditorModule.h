@@ -6,7 +6,7 @@
 #include "graphics/nodes.h"
 
 class Editor;
-class DragMouse;
+class DragMouseEvent;
 
 class EditorModule
 {
@@ -51,12 +51,12 @@ public:
     // `event` is only passed if the current mouse event is targeted toward this module
     
     virtual void on_mouse_press(sf::Vector2i position, bool focused, InputButton button) {}
-    virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) {}
-    virtual void on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouse* drag_event) {}
+    virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouseEvent* drag_event) {}
+    virtual void on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouseEvent* drag_event) {}
 
     // This event only triggers when a mouse event is released over this module
 
-    virtual void on_mouse_drop(sf::Vector2i position, DragMouse* drag_event) {}
+    virtual void on_mouse_drop(sf::Vector2i position, DragMouseEvent* drag_event) {}
 };
 
 #endif

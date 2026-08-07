@@ -13,7 +13,7 @@
 #include "project/Project.h"
 
 #include "editor/command_bar/CommandBar.h"
-#include "editor/core/DragMouse.h"
+#include "editor/core/mouse/DragMouseEvent.h"
 #include "editor/timeline/TimelineModule.h"
 #include "editor/log/LogModule.h"
 #include "editor/media/MediaModule.h"
@@ -93,7 +93,7 @@ private:
 
     // Mouse events
 
-    std::unique_ptr<DragMouse> drag_mouse_event = nullptr;
+    std::unique_ptr<DragMouseEvent> drag_mouse_event = nullptr;
     bool hovering_divider = false;
 
     // Window resizing
@@ -128,8 +128,8 @@ public:
     float get_delta_time();
 
     void set_cursor(sf::Cursor::Type cursor_type);
-    bool set_drag_event(std::unique_ptr<DragMouse> new_event);
-    DragMouse* get_drag_event();
+    bool set_drag_event(std::unique_ptr<DragMouseEvent> new_event);
+    DragMouseEvent* get_drag_event();
     void cancel_drag_event();
 
     CommandParser& get_command_parser();

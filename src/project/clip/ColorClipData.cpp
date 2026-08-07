@@ -2,13 +2,13 @@
 
 #include "utility/core.h"
 
-ColorClipData::ColorClipData(TimelineUnit start_time, TimelineUnit length, sf::Color color)
+ColorClipData::ColorClipData(VideoTime start_time, VideoTime length, sf::Color color)
     : ClipData(start_time, length)
 {
     this->color = color;
 }
 
-ColorClipData::ColorClipData(TimelineUnit start_time, TimelineUnit length, std::ifstream& file)
+ColorClipData::ColorClipData(VideoTime start_time, VideoTime length, std::ifstream& file)
     : ClipData(start_time, length)
 {
     std::string hex_color;

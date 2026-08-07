@@ -1,9 +1,9 @@
 #ifndef DRAG_DIVIDER_H
 #define DRAG_DIVIDER_H
 
-#include "editor/core/DragMouse.h"
+#include "editor/core/mouse/DragMouseEvent.h"
 
-class DragDivider : public DragMouse
+class DragDivider : public DragMouseEvent
 {
     bool vertical;
 

@@ -84,14 +84,14 @@ void Clip::set_hovering(bool hovering)
         rect->set_fill_color(color);
 }
 
-void Clip::set_clip_start(Project* project, TimelineUnit start)
+void Clip::set_clip_start(Project* project, VideoTime start)
 {
     project->set_clip_start(clip_data, start);
     rect->set_position(sf::Vector2f(clip_data->get_start_time(), rect->get_position().y));
     rect->set_size(sf::Vector2f(clip_data->get_length(), rect->get_size().y));
 }
 
-void Clip::set_clip_end(Project* project, TimelineUnit end)
+void Clip::set_clip_end(Project* project, VideoTime end)
 {
     project->set_clip_end(clip_data, end);
     rect->set_position(sf::Vector2f(clip_data->get_start_time(), rect->get_position().y));

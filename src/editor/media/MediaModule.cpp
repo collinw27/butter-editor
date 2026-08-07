@@ -65,7 +65,7 @@ void MediaModule::on_mouse_press(sf::Vector2i position, bool focused, InputButto
     }
 }
 
-void MediaModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event)
+void MediaModule::on_mouse_move(sf::Vector2i position, bool focused, DragMouseEvent* drag_event)
 {
     highlight_rect->set_visible(false);
     if (focused)

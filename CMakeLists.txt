@@ -42,49 +42,25 @@ target_link_libraries(common INTERFACE
     opengl32
     gdi32
 )
+
+# I know glob is generally advised against for CMakeLists,
+# but at least for now, I've had much more ease doing it this way
+# I might change it in the future once the files aren't as prone
+# to creation/moving around
+
 target_compile_features(common INTERFACE cxx_std_17)
 file(
     GLOB butter_SRC
-    "src/command/CommandParser.cpp"
-    "src/command/CommandResult.cpp"
-    "src/command/CommandStructure.cpp"
-    "src/command/exceptions.cpp"
-    "src/editor/Editor.cpp"
-    "src/editor/Editor_Commands.cpp"
-    "src/editor/command_bar/CommandBar.cpp"
-    "src/editor/core/DragDirectScroll.cpp"
-    "src/editor/core/DragDivider.cpp"
-    "src/editor/core/DragMouse.cpp"
-    "src/editor/core/DragScroll.cpp"
-    "src/editor/core/EditorModule.cpp"
-    "src/editor/core/FlexTab.cpp"
-    "src/editor/debug/DebugModule.cpp"
-    "src/editor/log/LogModule.cpp"
-    "src/editor/media/DragMedia.cpp"
-    "src/editor/media/MediaModule.cpp"
-    "src/editor/project/ProjectModule.cpp"
-    "src/editor/timeline/TimelineModule.cpp"
-    "src/editor/timeline/Clip.cpp"
-    "src/editor/timeline/mouse/ExtendClip.cpp"
-    "src/graphics/GLContainer.cpp"
-    "src/graphics/GLFont.cpp"
-    "src/graphics/GLNode.cpp"
-    "src/graphics/GLOutlinedRectangle.cpp"
-    "src/graphics/GLRectangle.cpp"
-    "src/graphics/GLRootNode.cpp"
-    "src/graphics/GLText.cpp"
-    "src/graphics/text_formatting/TextFormat.cpp"
-    "src/main.cpp"
-    "src/project/Project.cpp"
-    "src/project/clip/ClipData.cpp"
-    "src/project/clip/ColorClipData.cpp"
-    "src/project/exceptions.cpp"
-    "src/utility/Debugger.cpp"
-    "src/utility/FileManager.cpp"
-    "src/utility/Graphics.cpp"
-    "src/utility/Input.cpp"
-    "src/utility/Logger.cpp"
-    "src/utility/core.cpp"
+    "src/command/*.cpp"
+    "src/editor/*.cpp"
+    "src/editor/**/*.cpp"
+    "src/editor/**/**/*.cpp"
+    "src/graphics/*.cpp"
+    "src/graphics/**/*.cpp"
+    "src/project/*.cpp"
+    "src/project/**/*.cpp"
+    "src/utility/*.cpp"
+    "src/utility/**/*.cpp"
 )
 file(
     GLOB butter_LINK

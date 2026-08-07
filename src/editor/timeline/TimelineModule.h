@@ -3,14 +3,14 @@
 
 #include <tuple>
 #include "editor/core/EditorModule.h"
-#include "editor/core/DragMouse.h"
+#include "editor/core/mouse/DragMouseEvent.h"
 #include "graphics/nodes.h"
 #include "editor/timeline/Clip.h"
 
 class TimelineModule : public EditorModule
 {
     float scroll_pct;
-    TimelineUnit scroll_max;
+    VideoTime scroll_max;
     int scroll_span;
     int zoom_factor;
     float scroll_amount;
@@ -103,9 +103,9 @@ public:
     
     virtual void on_update() override;
     virtual void on_mouse_press(sf::Vector2i position, bool focused, InputButton button) override;
-    virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) override;
-    virtual void on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouse* drag_event) override;
-    virtual void on_mouse_drop(sf::Vector2i position, DragMouse* drag_event) override;
+    virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouseEvent* drag_event) override;
+    virtual void on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouseEvent* drag_event) override;
+    virtual void on_mouse_drop(sf::Vector2i position, DragMouseEvent* drag_event) override;
 
 private:
 
@@ -113,12 +113,12 @@ private:
 
     bool is_position_in_scroll(sf::Vector2i relative_pos);
     float x_to_time(int x);
-    float time_to_x(TimelineUnit time);
-    std::tuple<TimelineUnit, TimelineUnit> get_fitted_clip(TimelineUnit start_time, TimelineUnit length);
+    float time_to_x(VideoTime time);
+    std::tuple<VideoTime, VideoTime> get_fitted_clip(VideoTime start_time, VideoTime length);
 
     void select_clip(Clip* clip);
     void deselect_clip(Clip* clip);
-    void create_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
+    void create_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
     void delete_clip(Clip* clip);
     
     void update_scroll();

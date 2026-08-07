@@ -33,7 +33,7 @@ public:
     virtual void apply_ui_scale() override;
     
     virtual void on_mouse_press(sf::Vector2i position, bool focused, InputButton button) override;
-    virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouse* drag_event) override;
+    virtual void on_mouse_move(sf::Vector2i position, bool focused, DragMouseEvent* drag_event) override;
 
 private:
 

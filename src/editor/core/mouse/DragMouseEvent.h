@@ -7,7 +7,7 @@
 class Editor;
 class EditorModule;
 
-class DragMouse
+class DragMouseEvent
 {
     sf::Vector2i source_pos;
     sf::Vector2i current_pos;
@@ -27,8 +27,8 @@ protected:
 
 public:
 
-    DragMouse() {}
-    virtual ~DragMouse() {}
+    DragMouseEvent() {}
+    virtual ~DragMouseEvent() {}
 
     sf::Vector2i get_source_pos();
     sf::Vector2i get_current_pos();

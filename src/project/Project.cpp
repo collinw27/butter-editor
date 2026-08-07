@@ -124,7 +124,7 @@ sf::Vector2u Project::get_resolution()
 // Returns whether the operation was successful
 // It can fail if there's no space to insert the clip
 
-ClipData* Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color)
+ClipData* Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
 {
     // Add the color clip to the timeline
     // Find the first position it can slot in before something
@@ -139,7 +139,7 @@ ClipData* Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, 
             // The clip afterward can trim the length of the clip
             // (0 length = no clip inserted)
 
-            TimelineUnit new_length = std::min(length, (*next_clip)->get_start_time() - start_time);
+            VideoTime new_length = std::min(length, (*next_clip)->get_start_time() - start_time);
             if (new_length <= 0)
                 return nullptr;
             new_clip->set_length(new_length);
@@ -168,7 +168,7 @@ ClipData* Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, 
     return new_clip;
 }
 
-void Project::set_clip_start(ClipData* clip, TimelineUnit start)
+void Project::set_clip_start(ClipData* clip, VideoTime start)
 {
     // This method exits prematurely if this clip will cut into its neighbor
     // or if it will result in a clip with length 0
@@ -184,12 +184,12 @@ void Project::set_clip_start(ClipData* clip, TimelineUnit start)
         if (start < clip_before->get_end_time())
             return;
     }
-    TimelineUnit old_end = clip->get_end_time();
+    VideoTime old_end = clip->get_end_time();
     clip->set_start_time(start);
     clip->set_end_time(old_end);
 }
 
-void Project::set_clip_end(ClipData* clip, TimelineUnit end)
+void Project::set_clip_end(ClipData* clip, VideoTime end)
 {
     // This method exits prematurely if this clip will cut into its neighbor,
     // or if it will result in a clip with length 0
@@ -233,13 +233,13 @@ ClipData* Project::get_clip_at_index(unsigned int index)
     }
 }
 
-ClipData* Project::get_clip_at_time(TimelineUnit time)
+ClipData* Project::get_clip_at_time(VideoTime time)
 {
     auto it = get_iter_at_time(time);
     return (it == clip_vec.end()) ? nullptr : (*it).get();
 }
 
-TimelineUnit Project::get_project_length()
+VideoTime Project::get_project_length()
 {
     // Return the end time of the final clip
     // If the timeline is empty, return length of 1
@@ -249,13 +249,13 @@ TimelineUnit Project::get_project_length()
 
 std::string Project::get_project_length_approx()
 {
-    TimelineUnit time = get_project_length();
-    time = (TimelineUnit) std::ceil(time / ((double) framerate));
-    TimelineUnit sec = time % 60;
+    VideoTime time = get_project_length();
+    time = (VideoTime) std::ceil(time / ((double) framerate));
+    VideoTime sec = time % 60;
     time = (time - sec) / 60;
-    TimelineUnit min = time % 60;
+    VideoTime min = time % 60;
     time = (time - min) / 60;
-    TimelineUnit hr = time;
+    VideoTime hr = time;
     return (std::stringstream{} << std::setfill('0')
         << std::setw(2) << hr << "h "
         << std::setw(2) << min << "m "
@@ -263,7 +263,7 @@ std::string Project::get_project_length_approx()
     ).str();
 }
 
-std::string Project::to_string(TimelineUnit timeline_time)
+std::string Project::to_string(VideoTime timeline_time)
 {
     int time = (int) timeline_time;
     int frame = time % framerate;
@@ -285,7 +285,7 @@ std::string Project::to_string(TimelineUnit timeline_time)
 // you can continue without running into a clip
 // 0 if inside of clip
 
-TimelineUnit Project::get_gap_ahead(TimelineUnit time)
+VideoTime Project::get_gap_ahead(VideoTime time)
 {
     // Find the clip directly after the time (if applicable)
     // This clip is the only thing that can terminate the gap
@@ -313,7 +313,7 @@ TimelineUnit Project::get_gap_ahead(TimelineUnit time)
         return (TIMELINE_MAX - time);
 }
 
-TimelineUnit Project::get_gap_behind(TimelineUnit time)
+VideoTime Project::get_gap_behind(VideoTime time)
 {
     // The logic here is pretty similar to the function above
     // Instead, find the clip immediately before
@@ -337,7 +337,7 @@ TimelineUnit Project::get_gap_behind(TimelineUnit time)
         return time;
 }
 
-TimelineUnit Project::get_chain_ahead(TimelineUnit time)
+VideoTime Project::get_chain_ahead(VideoTime time)
 {
     auto curr = get_iter_at_time(time);
     if (curr == clip_vec.end())
@@ -346,7 +346,7 @@ TimelineUnit Project::get_chain_ahead(TimelineUnit time)
     // Keep chaining clips together until a gap is found
     // (or the end of the vector is reached)
 
-    TimelineUnit chain_length = (*curr)->get_end_time() - time;
+    VideoTime chain_length = (*curr)->get_end_time() - time;
     while (++curr != clip_vec.end())
     {
         // Gap is found when this clip doesn't start when the prev clip ends
@@ -438,7 +438,7 @@ void Project::export_video(std::filesystem::path filepath)
 
     export_task.buffer_size = 3 * resolution.x * resolution.y;
     export_task.buffer = new uint8_t[export_task.buffer_size];
-    export_task.final_frame = std::max<TimelineUnit>(get_project_length(), 1);
+    export_task.final_frame = std::max<VideoTime>(get_project_length(), 1);
     
     // Open thread using predefined function
 
@@ -450,7 +450,7 @@ void Project::export_video(std::filesystem::path filepath)
 // Exists as an intermediate function since having access to the iterator
 // is useful for a lot of member functions to save time
 
-std::vector<std::unique_ptr<ClipData>>::iterator Project::get_iter_at_time(TimelineUnit time)
+std::vector<std::unique_ptr<ClipData>>::iterator Project::get_iter_at_time(VideoTime time)
 {
     // Return early if:
     // a) empty timeline
@@ -482,7 +482,7 @@ void Project::proj_assert(bool condition, std::string fail_msg)
         throw ProjectLoadException(fail_msg);
 }
 
-void Project::write_frame_rgb24(TimelineUnit time, std::uint8_t* buffer)
+void Project::write_frame_rgb24(VideoTime time, std::uint8_t* buffer)
 {
     // For now, the entire frame is just one color
 

@@ -1,4 +1,4 @@
-#include "editor/core/DragScroll.h"
+#include "editor/core/mouse/DragScroll.h"
 
 DragScroll::DragScroll(EditorModule* target_module, float scroll_offset)
 {
