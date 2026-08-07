@@ -118,6 +118,7 @@ private:
 
     void select_clip(Clip* clip);
     void deselect_clip(Clip* clip);
+    void create_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
     void delete_clip(Clip* clip);
     
     void update_scroll();

@@ -111,7 +111,7 @@ public:
 
     // Timeline manipulation
 
-    bool add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
+    ClipData* add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color);
     void set_clip_start(ClipData* clip, TimelineUnit start);
     void set_clip_end(ClipData* clip, TimelineUnit end);
     void delete_clip(ClipData* clip);

@@ -124,7 +124,7 @@ sf::Vector2u Project::get_resolution()
 // Returns whether the operation was successful
 // It can fail if there's no space to insert the clip
 
-bool Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color)
+ClipData* Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color)
 {
     // Add the color clip to the timeline
     // Find the first position it can slot in before something
@@ -141,7 +141,7 @@ bool Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::C
 
             TimelineUnit new_length = std::min(length, (*next_clip)->get_start_time() - start_time);
             if (new_length <= 0)
-                return false;
+                return nullptr;
             new_clip->set_length(new_length);
 
             // If this passed, proceed to clip inserting logic
@@ -159,13 +159,13 @@ bool Project::add_color_clip(TimelineUnit start_time, TimelineUnit length, sf::C
     {
         auto prev_clip = next_clip - 1;
         if ((*prev_clip)->get_end_time() > start_time)
-            return false;
+            return nullptr;
     }
 
     // If all checks passed, insert clip
     
     clip_vec.insert(next_clip, std::unique_ptr<ClipData>(new_clip));
-    return true;
+    return new_clip;
 }
 
 void Project::set_clip_start(ClipData* clip, TimelineUnit start)

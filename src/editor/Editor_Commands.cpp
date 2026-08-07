@@ -124,8 +124,6 @@ std::string Editor::execute_command(CommandResult command)
     case CMD_LOAD:
     {
         block_if_exporting(project);
-        if (project->is_exporting())
-            throw ExecuteException("Cannot switch project while exporting.");
         if (!Project::exists(command.get_string(0)))
             throw ExecuteException("Nonexistent project \"" + command.get_string(0) + "\".");
         if (project != nullptr)

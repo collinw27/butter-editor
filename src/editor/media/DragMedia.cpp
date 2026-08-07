@@ -3,14 +3,8 @@
 #include "graphics/GLRectangle.h"
 
 DragMedia::DragMedia(sf::Color color)
-{
-    media_color = color;
-}
-
-sf::Color DragMedia::get_color()
-{
-    return media_color;
-}
+    : media_color{color}
+{}
 
 void DragMedia::create_node(GLNode* parent)
 {

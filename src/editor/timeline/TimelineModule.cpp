@@ -395,10 +395,12 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
             ghost_clip->set_visible(clip_length > 0);
             if (clip_length > 0)
             {
+                drag_media->start_time = clip_start;
+                drag_media->length = clip_length;
                 ghost_clip->set_position(sf::Vector2f((int) clip_start, 40));
                 ghost_clip->set_size(sf::Vector2f((int) clip_length, 100));
             }
-                
+            drag_media->valid = (clip_length > 0);
         }
     }
 
@@ -494,7 +496,13 @@ void TimelineModule::on_mouse_drop(sf::Vector2i position, DragMouse* drag_event)
 {
     if (auto drag_media = dynamic_cast<DragMedia*>(drag_event))
     {
-        // Logger().log("Dropped media");
+        // The media drop should use the same paramters as the ghost clip
+
+        if (drag_media->valid)
+        {
+            create_color_clip(drag_media->start_time, drag_media->length, drag_media->media_color);
+        }
+        ghost_clip->set_visible(false);
     }
 }
 
@@ -604,6 +612,13 @@ void TimelineModule::deselect_clip(Clip* clip)
         clip->get_rect()->reparent(clip_layer.get());
         clip_mem.deselect_clip(clip);
     }
+}
+
+void TimelineModule::create_color_clip(TimelineUnit start_time, TimelineUnit length, sf::Color color)
+{
+    Project* project = get_project();
+    ClipData* clip_data = project->add_color_clip(start_time, length, color);
+    clip_mem.add_clip(new Clip(clip_data, color, clip_layer.get()));
 }
 
 void TimelineModule::delete_clip(Clip* clip)

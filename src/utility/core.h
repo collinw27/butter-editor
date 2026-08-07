@@ -95,11 +95,13 @@ inline sf::Color hex_to_color(std::string hex)
 
 inline std::string color_to_hex(sf::Color color)
 {
-    return (std::stringstream{} << std::hex << std::setfill('0') << std::setw(2)
-        << ((std::uint32_t) color.r)
-        << ((std::uint32_t) color.g)
-        << ((std::uint32_t) color.b)
-    ).str();
+    return (std::stringstream{} << std::hex << std::setfill('0')
+        << std::setw(8) << color.toInteger()).str().substr(0, 6);
+    // return (std::stringstream{} << std::hex << std::setfill('0')
+    //     << std::setw(2) << ((std::uint32_t) color.r)
+    //     << std::setw(2) << ((std::uint32_t) color.g)
+    //     << std::setw(2) << ((std::uint32_t) color.b)
+    // ).str();
 }
 
 inline std::string to_lower(std::string source)
