@@ -207,10 +207,9 @@ void TimelineModule::on_update()
     {
         // Select & deselect all
 
-        if (Input().check_key_press(SF_KEY::A, KeyMod::CTRL))
+        if (Input().check_key_press(SF_KEY::A))
             select_all();
-        
-        if (Input().check_key_press(SF_KEY::Escape))
+        if (Input().check_key_press(SF_KEY::D))
             deselect_all();
         
         // Attempt to delete selection

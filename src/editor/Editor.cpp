@@ -258,7 +258,7 @@ void Editor::run()
             if (!flex_tabs.empty() && Input().check_key_press(SF_KEY::W, KeyMod::ALT))
                 switch_flex_tab(mod((int) current_flex_tab + 1, (int) flex_tabs.size()));
 
-            // Move timeline
+            // Alt+Arrow: Move timeline
 
             if (Input().check_key_press(SF_KEY::Left, KeyMod::ALT))
                 timeline_module->scroll_left();
@@ -268,6 +268,20 @@ void Editor::run()
                 timeline_module->zoom_out();
             if (Input().check_key_press(SF_KEY::Up, KeyMod::ALT))
                 timeline_module->zoom_in();
+
+            // Alt+1,2,3: Focus module
+            // A little unintuitive that the timeline module gets hotkey 1,
+            // but it is by far the most often focused and deserves the priority
+            // Alt+4/D: Unfocus modules
+
+            if (Input().check_key_press(SF_KEY::Num1, KeyMod::ALT))
+                focus_module(timeline_module);
+            if (Input().check_key_press(SF_KEY::Num2, KeyMod::ALT))
+                focus_module(preview_module);
+            if (Input().check_key_press(SF_KEY::Num3, KeyMod::ALT))
+                focus_module(flex_module);
+            if (Input().check_key_press(SF_KEY::Num4, KeyMod::ALT) || Input().check_key_press(SF_KEY::D, KeyMod::ALT))
+                focus_module(nullptr);
         }
 
         // Update all visible modules
@@ -499,6 +513,7 @@ void Editor::on_mouse_press(InputButton button)
     }
 
     // Switch focus if mouse is inside a module
+    // Sending `nullptr` to focus_module unfocuses everything
 
     EditorModule* new_focus = nullptr;
     for (EditorModule** module : visible_modules)
@@ -506,14 +521,7 @@ void Editor::on_mouse_press(InputButton button)
         if ((*module)->get_bounds().contains(mouse_position))
             new_focus = *module;
     }
-    if (new_focus != focused_module)
-    {
-        if (focused_module != nullptr)
-            focused_module->set_focused(false);
-        focused_module = new_focus;
-        if (focused_module != nullptr)
-            focused_module->set_focused(true);
-    }
+    focus_module(new_focus);
     
     // Trigger callback for each module
 
@@ -592,14 +600,16 @@ void Editor::resize_modules()
     menu_bar_text->set_char_size((unsigned int)(19.f * ui_scale));
 }
 
-void request_focus(EditorModule* module)
+void Editor::focus_module(EditorModule* module)
 {
-
-}
-
-void is_focused(EditorModule* module)
-{
-
+    if (module != focused_module)
+    {
+        if (focused_module != nullptr)
+            focused_module->set_focused(false);
+        focused_module = module;
+        if (focused_module != nullptr)
+            focused_module->set_focused(true);
+    }
 }
 
 void Editor::switch_flex_tab(unsigned int index)

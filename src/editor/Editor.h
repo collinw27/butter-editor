@@ -158,6 +158,7 @@ private:
     sf::Vector2i get_mouse_position();
 
     void resize_modules();
+    void focus_module(EditorModule* module);
 
     void switch_flex_tab(unsigned int index);
 
