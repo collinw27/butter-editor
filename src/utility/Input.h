@@ -4,17 +4,22 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 
-// Testing this out for potential use
-
 using SF_KEY = sf::Keyboard::Key;
 
-enum class KeyMod
+// No longer uses enum class to allow easy integer arithmetic
+
+namespace KeyMod
 {
-    NONE    = 0,
-    CTRL    = 1 << 0,
-    SHIFT   = 1 << 1,
-    ALT     = 1 << 2
-};
+    enum KeyMod
+    {
+        NONE    = 0,
+        CTRL    = 1 << 0,
+        SHIFT   = 1 << 1,
+        ALT     = 1 << 2,
+        ALL     = (1 << 3) - 1
+    };
+}
+using KeyMod_t = int;
 
 // Originally, the plan was to allow space to function like a mouse input
 // Some programs let you scroll with the space bar, and this was an attempt
@@ -49,8 +54,12 @@ public:
     void clear_keys();
     void add_key_press(SF_KEY key);
 
-    bool check_key(SF_KEY key, KeyMod mod = KeyMod::NONE);
-    bool check_key_press(SF_KEY key, KeyMod mod = KeyMod::NONE);
+    // KeyMod allows you to specify whether keys like CTRL, SHIFT, ALT need to be pressed
+    // You have 3 options for each key: required, blocked, or optional
+    // Any keys not passed to `required` or `optional` are blocked
+
+    bool check_key(SF_KEY key, KeyMod_t required = KeyMod::NONE, KeyMod_t optional = KeyMod::NONE);
+    bool check_key_press(SF_KEY key, KeyMod_t required = KeyMod::NONE, KeyMod_t optional = KeyMod::NONE);
     bool check_ctrl();
     bool check_shift();
     bool check_alt();

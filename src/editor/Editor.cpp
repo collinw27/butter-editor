@@ -188,7 +188,7 @@ void Editor::run()
             if (!using_terminal)
                 command_bar->set_typing(false);
         }
-        if (using_terminal && Input().check_key_press(SF_KEY::Enter))
+        if (using_terminal && Input().check_key_press(SF_KEY::Enter, KeyMod::NONE, KeyMod::ALL))
         {
             CommandResult command = command_parser.parse(command_bar->get_command());
             if (command_bar->get_command().empty())

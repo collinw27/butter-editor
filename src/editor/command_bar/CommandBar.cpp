@@ -40,13 +40,13 @@ void CommandBar::update(const std::string& typed_string)
         
     // Check for special keys
 
-    bool pressed_l = Input().check_key_press(SF_KEY::Left);
-    bool pressed_r = Input().check_key_press(SF_KEY::Right);
-    bool pressed_home = Input().check_key_press(SF_KEY::Home);
-    bool pressed_end = Input().check_key_press(SF_KEY::End);
-    if (Input().check_key_press(SF_KEY::Backspace))
+    bool pressed_l = Input().check_key_press(SF_KEY::Left, KeyMod::NONE, KeyMod::ALL);
+    bool pressed_r = Input().check_key_press(SF_KEY::Right, KeyMod::NONE, KeyMod::ALL);
+    bool pressed_home = Input().check_key_press(SF_KEY::Home, KeyMod::NONE, KeyMod::ALL);
+    bool pressed_end = Input().check_key_press(SF_KEY::End, KeyMod::NONE, KeyMod::ALL);
+    if (Input().check_key_press(SF_KEY::Backspace, KeyMod::NONE, KeyMod::ALL))
         backspace(Input().check_ctrl());
-    if (Input().check_key_press(SF_KEY::Delete))
+    if (Input().check_key_press(SF_KEY::Delete, KeyMod::NONE, KeyMod::ALL))
         delete_ahead(Input().check_ctrl());
     if (pressed_l || pressed_r)
         move_cursor(pressed_r, (Input().check_ctrl() ? MoveMode::WORD : MoveMode::ONE), Input().check_shift());
@@ -61,7 +61,7 @@ void CommandBar::update(const std::string& typed_string)
     }
     if (Input().check_key_press(SF_KEY::V, KeyMod::CTRL))
         paste();
-    if (Input().check_key_press(SF_KEY::A, KeyMod::CTRL))
+    if (Input().check_key_press(SF_KEY::A, KeyMod::CTRL, KeyMod::SHIFT))
         (Input().check_shift() ? reset_selection() : select_all());
     if (Input().check_key_press(SF_KEY::Up))
         traverse_history(1);
