@@ -60,6 +60,7 @@ void GraphicsSingleton::init(sf::VideoMode mode, std::string title, uint32_t sty
     if (glewInit() != GLEW_OK)
         throw ButterException("Cannot initialize GLEW");
     glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     if (FT_Init_FreeType(&ft_library))

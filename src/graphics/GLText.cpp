@@ -8,7 +8,7 @@
 #include "graphics/GLFont.h"
 
 GLText::GLText(GLNode* parent, GLFont* font, unsigned int char_size, std::string str)
-    : GLNode(parent)
+    : GLNode{parent}
 {
     this->font = font;
     if (font == nullptr)

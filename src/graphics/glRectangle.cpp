@@ -8,7 +8,7 @@
 #include "utility/Graphics.h"
 
 GLRectangle::GLRectangle(GLNode* parent, sf::Vector2f position, sf::Vector2f size)
-    : GLNode(parent)
+    : GLNode{parent}
 {
     this->position = position;
     this->size = size;

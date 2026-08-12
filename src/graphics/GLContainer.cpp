@@ -4,7 +4,7 @@
 #include "utility/Logger.h"
 
 GLContainer::GLContainer(GLNode* parent, sf::Vector2f position, sf::Vector2f size)
-    : GLNode(parent)
+    : GLNode{parent}
 {
     this->position = position;
     this->size = size;

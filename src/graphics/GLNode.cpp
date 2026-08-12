@@ -18,7 +18,7 @@ void GLNode::init()
 
 GLNode* GLNode::create(GLNode* parent)
 {
-    GLNode* instance = new GLNode(parent);
+    GLNode* instance = new GLNode{parent};
     instance->init();
     return instance;
 }

@@ -5,3 +5,4 @@
 #include "graphics/GLOutlinedRectangle.h"
 #include "graphics/GLContainer.h"
 #include "graphics/GLText.h"
+#include "graphics/GLSprite.h"
