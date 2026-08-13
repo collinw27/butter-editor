@@ -15,6 +15,8 @@ class TimelineModule : public EditorModule
     int zoom_factor;
     float scroll_amount;
     float zoom_amount;
+    int clips_y;
+    int playhead_time = 0;
     
     std::unique_ptr<GLNode> clips_anchor;
     std::unique_ptr<GLNode> clips_scaler;
@@ -36,8 +38,10 @@ class TimelineModule : public EditorModule
     std::unique_ptr<GLRectangle> ruler;
     std::unique_ptr<GLOutlinedRectangle> padding_rect;
     std::unique_ptr<GLTexture> tex_playhead;
-    std::unique_ptr<GLSprite> playhead;
-
+    std::unique_ptr<GLSprite> playhead_sprite;
+    std::unique_ptr<GLRectangle> playhead_line;
+    std::unique_ptr<GLNode> playhead;
+    
     // Dynamically-allocated Clips are stored sequentially in a vector
     // Other Clip-referencing variables are able to store pointers to these clips
     // Care must be taken to ensure dangling pointers are not created when clips
@@ -104,6 +108,8 @@ public:
     void scroll_right();
     void zoom_in();
     void zoom_out();
+    void playhead_forward(VideoTime time);
+    void playhead_backward(VideoTime time);
 
     void select_all();
     void deselect_all();
@@ -131,6 +137,7 @@ private:
     void update_scroll();
     void update_zoom();
     void update_scroll_color(bool hovering, bool dragging);
+    void update_playhead();
 };
 
 #endif

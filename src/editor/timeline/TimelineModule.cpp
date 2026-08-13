@@ -123,13 +123,11 @@ TimelineModule::TimelineModule(Editor& editor)
 
     clips_scaler.reset(GLNode::create(container.get()));
     clips_anchor.reset(GLNode::create(clips_scaler.get()));
+    clips_scaler->set_position(sf::Vector2f(START_PADDING, 0));
+
     clip_layer.reset(GLNode::create(clips_anchor.get()));
     outline_layer.reset(GLNode::create(clips_anchor.get()));
     selection_layer.reset(GLNode::create(clips_anchor.get()));
-    clips_scaler->set_position(sf::Vector2f(START_PADDING, 40));
-    
-    scroll_bar.reset(GLRectangle::create(container.get()));
-    scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
 
     ghost_clip.reset(GLRectangle::create(clip_layer.get(), sf::Vector2f(), sf::Vector2f(400, 100)));
     ghost_clip->set_fill_color(sf::Color::White);
@@ -137,8 +135,18 @@ TimelineModule::TimelineModule(Editor& editor)
 
     // Not yet, need to add space around timeline first
 
-    // tex_playhead.reset(new GLTexture(FileManager().get_res_path("tex/playhead.png")));
-    // playhead.reset(GLSprite::create(container.get(), tex_playhead.get(), sf::Vector2f(50, 50)));
+    playhead.reset(GLNode::create(clips_anchor.get()));
+    tex_playhead.reset(new GLTexture(FileManager().get_res_path("tex/playhead.png")));
+    playhead_sprite.reset(GLSprite::create(playhead.get(), tex_playhead.get()));
+    playhead_sprite->set_position(-playhead_sprite->get_size().componentWiseMul(sf::Vector2f(0.5, 1.0)));
+    playhead_line.reset(GLRectangle::create(playhead.get()));
+    playhead_line->set_fill_color(sf::Color::White);
+    update_playhead();
+
+    // Scroll is in front of everything
+    
+    scroll_bar.reset(GLRectangle::create(container.get()));
+    scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
 
     reset();
 }
@@ -175,14 +183,25 @@ void TimelineModule::apply_bounds()
     update_scroll();
     ruler->set_size(sf::Vector2f(bounds.size.x, intcast(30 * ui_scale)));
     padding_rect->set_size(sf::Vector2f(START_PADDING, bounds.size.y));
-    clips_scaler->set_position(sf::Vector2f(START_PADDING, ruler->get_size().y + 10));
+    playhead_line->set_size(sf::Vector2f(1, bounds.size.y));
+    
+    clips_y = ruler->get_size().y + 10;
+    clip_layer->set_position(sf::Vector2f(0, clips_y));
+    outline_layer->set_position(sf::Vector2f(0, clips_y));
+    selection_layer->set_position(sf::Vector2f(0, clips_y));
+    update_playhead();
 }
 
 void TimelineModule::apply_ui_scale()
 {
     update_scroll();
     ruler->set_size(sf::Vector2f(bounds.size.x, intcast(30 * ui_scale)));
-    clips_scaler->set_position(sf::Vector2f(START_PADDING, ruler->get_size().y + 10));
+    
+    clips_y = ruler->get_size().y + 10;
+    clip_layer->set_position(sf::Vector2f(0, clips_y));
+    outline_layer->set_position(sf::Vector2f(0, clips_y));
+    selection_layer->set_position(sf::Vector2f(0, clips_y));
+    update_playhead();
 }
 
 void TimelineModule::scroll_left()
@@ -209,6 +228,18 @@ void TimelineModule::zoom_out()
 {
     zoom_factor = clamp(zoom_factor - 1, ZOOM_MIN, ZOOM_MAX);
     update_zoom();
+}
+
+void TimelineModule::playhead_forward(VideoTime time)
+{
+    playhead_time = clamp(playhead_time + time, 0, scroll_max);
+    update_playhead();
+}
+
+void TimelineModule::playhead_backward(VideoTime time)
+{
+    playhead_time = clamp(playhead_time - time, 0, scroll_max);
+    update_playhead();
 }
 
 void TimelineModule::select_all()
@@ -452,7 +483,6 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
         // This could benefit from some optimization (since it currently performs 3 checks on every clip),
         // but that's a task for the far future
 
-        int clips_y = clips_scaler->get_position().y;
         if (focused && position.y >= clips_y && position.y < clips_y + 100)
         {
             for (Clip* clip : clip_mem.get_clips())
@@ -687,8 +717,8 @@ void TimelineModule::update_zoom()
     Project* project = get_project();
     zoom_amount = std::pow(2.0, zoom_factor) * 30.0 / (float) project->get_framerate();
     clips_scaler->set_scale(sf::Vector2f(zoom_amount, 1.0));
-
     padding_rect->set_position(sf::Vector2f(time_to_x(0) - START_PADDING, 0));
+    update_playhead();
 
     // Re-scale selection windows
 
@@ -701,4 +731,10 @@ void TimelineModule::update_zoom()
 void TimelineModule::update_scroll_color(bool hovering, bool dragging)
 {
     scroll_bar->set_fill_color(dragging ? Editor::C_SCROLL_DRAG : (hovering ? Editor::C_SCROLL_HOVER : Editor::C_SCROLL_STILL));
+}
+
+void TimelineModule::update_playhead()
+{
+    playhead->set_position(sf::Vector2f(playhead_time, ruler->get_size().y + 2));
+    playhead->set_scale(sf::Vector2f(1.0 / clips_scaler->get_scale().x, 1.0));
 }

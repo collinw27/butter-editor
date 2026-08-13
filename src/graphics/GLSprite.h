@@ -42,6 +42,7 @@ protected:
 public:
 
     sf::Vector2f get_size();
+    sf::Vector2f get_half_size();
 
 private:
 

@@ -272,6 +272,18 @@ void Editor::run()
             if (Input().check_key_press(SF_KEY::Up, KeyMod::ALT))
                 timeline_module->zoom_in();
 
+            // 1,2: Move playhead
+            // Ctrl = 10 frames
+
+            if (Input().check_key_press(SF_KEY::Num1))
+                timeline_module->playhead_backward(1);
+            if (Input().check_key_press(SF_KEY::Num2))
+                timeline_module->playhead_forward(1);
+            if (Input().check_key_press(SF_KEY::Num1, KeyMod::CTRL))
+                timeline_module->playhead_backward(10);
+            if (Input().check_key_press(SF_KEY::Num2, KeyMod::CTRL))
+                timeline_module->playhead_forward(10);
+
             // Alt+1,2,3: Focus module
             // A little unintuitive that the timeline module gets hotkey 1,
             // but it is by far the most often focused and deserves the priority

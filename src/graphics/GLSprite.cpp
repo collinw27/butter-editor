@@ -60,7 +60,12 @@ void GLSprite::apply_global_matrix()
 
 sf::Vector2f GLSprite::get_size()
 {
-    return sf::Vector2f(1, 1);
+    return size;
+}
+
+sf::Vector2f GLSprite::get_half_size()
+{
+    return size / 2.f;
 }
 
 void GLSprite::setup_GL()
