@@ -28,14 +28,17 @@ public:
     // These are defined as static so you don't need access to THE editor instance
     // This could be changed in the future, for example, if color customization is added
     
+    static const sf::Color C_BG_EMPTY;
     static const sf::Color C_BG;
-    static const sf::Color C_FG;
-    static const sf::Color C_HOVER;
+    static const sf::Color C_BORDER;
+    static const sf::Color C_BORDER_HOVER;
     static const sf::Color C_FOCUSED;
     static const sf::Color C_FOCUSED_HOVER;
     static const sf::Color C_HIGHLIGHT;
     static const sf::Color C_HIGHLIGHT_SUBTLE;
-    static const sf::Color C_FG_DESELECTED;
+    static const sf::Color C_TAB;
+    static const sf::Color C_TAB_DESELECTED;
+    static const sf::Color C_TAB_HOVER;
     static const sf::Color C_INVALID;
     static const sf::Color C_SCROLL_STILL;
     static const sf::Color C_SCROLL_HOVER;

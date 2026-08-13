@@ -12,7 +12,7 @@ FlexTab::FlexTab(Editor& editor, EditorModule* module, std::string name)
 
     container.reset(GLNode::create(nullptr));
     rect.reset(GLRectangle::create(container.get()));
-    rect->set_fill_color(Editor::C_FG_DESELECTED);
+    rect->set_fill_color(Editor::C_TAB_DESELECTED);
     text.reset(GLText::create(container.get(), Graphics().main_font(), 0u, name));
 }
 
@@ -52,7 +52,7 @@ void FlexTab::set_hovering(bool hovering)
     if (this->hovering != hovering)
     {
         this->hovering = hovering;
-        rect->set_fill_color(hovering ? Editor::C_HOVER : (selected ? Editor::C_FG : Editor::C_FG_DESELECTED));
+        rect->set_fill_color(hovering ? Editor::C_TAB_HOVER : (selected ? Editor::C_TAB : Editor::C_TAB_DESELECTED));
     }
 }
 
@@ -61,7 +61,7 @@ void FlexTab::set_selected(bool selected)
     if (this->selected != selected)
     {
         this->selected = selected;
-        rect->set_fill_color(hovering ? Editor::C_HOVER : (selected ? Editor::C_FG : Editor::C_FG_DESELECTED));
+        rect->set_fill_color(hovering ? Editor::C_TAB_HOVER : (selected ? Editor::C_TAB : Editor::C_TAB_DESELECTED));
         this->module->set_visible(selected);
     }
 }

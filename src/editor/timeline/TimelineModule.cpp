@@ -6,6 +6,7 @@
 #include "utility/core.h"
 #include "utility/Graphics.h"
 #include "utility/Input.h"
+#include "utility/FileManager.h"
 #include "editor/Editor.h"
 #include "editor/core/mouse/DragScroll.h"
 #include "editor/core/mouse/DragDirectScroll.h"
@@ -22,6 +23,9 @@ constexpr int SCROLLBAR_H = 12;
 constexpr int SCROLLBAR_W = 90;
 constexpr int ZOOM_MIN = -10;
 constexpr int ZOOM_MAX = 8;
+constexpr int START_PADDING = 10;
+
+const sf::Color C_RULER_BG {50, 50, 50};
 
 #define ClipMem TimelineModule::ClipMemoryManager
 
@@ -106,11 +110,23 @@ Clip* ClipMem::get_hovered_clip()
 TimelineModule::TimelineModule(Editor& editor)
     : EditorModule(editor)
 {
+    // Ruler appears below any clips
+    // The main reason is so the start padding can be layered over it,
+    // while allowing the clips to be layered over the padding
+
+    ruler.reset(GLRectangle::create(container.get()));
+    ruler->set_fill_color(C_RULER_BG);
+    padding_rect.reset(GLOutlinedRectangle::create(container.get()));
+    padding_rect->set_fill_color(sf::Color::Black);
+    padding_rect->set_outline_color(Editor::C_BORDER);
+    padding_rect->set_outline_thickness(1);
+
     clips_scaler.reset(GLNode::create(container.get()));
     clips_anchor.reset(GLNode::create(clips_scaler.get()));
     clip_layer.reset(GLNode::create(clips_anchor.get()));
     outline_layer.reset(GLNode::create(clips_anchor.get()));
     selection_layer.reset(GLNode::create(clips_anchor.get()));
+    clips_scaler->set_position(sf::Vector2f(START_PADDING, 40));
     
     scroll_bar.reset(GLRectangle::create(container.get()));
     scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
@@ -118,6 +134,11 @@ TimelineModule::TimelineModule(Editor& editor)
     ghost_clip.reset(GLRectangle::create(clip_layer.get(), sf::Vector2f(), sf::Vector2f(400, 100)));
     ghost_clip->set_fill_color(sf::Color::White);
     ghost_clip->set_visible(false);
+
+    // Not yet, need to add space around timeline first
+
+    // tex_playhead.reset(new GLTexture(FileManager().get_res_path("tex/playhead.png")));
+    // playhead.reset(GLSprite::create(container.get(), tex_playhead.get(), sf::Vector2f(50, 50)));
 
     reset();
 }
@@ -152,11 +173,16 @@ void TimelineModule::reset()
 void TimelineModule::apply_bounds()
 {
     update_scroll();
+    ruler->set_size(sf::Vector2f(bounds.size.x, intcast(30 * ui_scale)));
+    padding_rect->set_size(sf::Vector2f(START_PADDING, bounds.size.y));
+    clips_scaler->set_position(sf::Vector2f(START_PADDING, ruler->get_size().y + 10));
 }
 
 void TimelineModule::apply_ui_scale()
 {
     update_scroll();
+    ruler->set_size(sf::Vector2f(bounds.size.x, intcast(30 * ui_scale)));
+    clips_scaler->set_position(sf::Vector2f(START_PADDING, ruler->get_size().y + 10));
 }
 
 void TimelineModule::scroll_left()
@@ -396,7 +422,7 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
             {
                 drag_media_event->start_time = clip_start;
                 drag_media_event->length = clip_length;
-                ghost_clip->set_position(sf::Vector2f((int) clip_start, 40));
+                ghost_clip->set_position(sf::Vector2f((int) clip_start, 0));
                 ghost_clip->set_size(sf::Vector2f((int) clip_length, 100));
             }
             drag_media_event->valid = (clip_length > 0);
@@ -426,7 +452,8 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
         // This could benefit from some optimization (since it currently performs 3 checks on every clip),
         // but that's a task for the far future
 
-        if (focused && position.y >= 40 && position.y < 140)
+        int clips_y = clips_scaler->get_position().y;
+        if (focused && position.y >= clips_y && position.y < clips_y + 100)
         {
             for (Clip* clip : clip_mem.get_clips())
             {
@@ -519,12 +546,14 @@ bool TimelineModule::is_position_in_scroll(sf::Vector2i relative_pos)
     return rect.contains(relative_pos);
 }
 
+// Swapping between X and TIME is pretty simple
+// The one caveat is that a little padding is added before the
+// beginning of the timeline when scroll is at the beginning
+// This remains constant regardless of zoom
+
 float TimelineModule::x_to_time(int pos_x)
 {
-    // Instead of performing arithmetic on every clip bounds,
-    // find the time the mouse X represents within the timeline
-
-    float x_scaled = pos_x / zoom_amount;
+    float x_scaled = (pos_x - START_PADDING) / zoom_amount;
     float x_shifted = x_scaled + scroll_amount;
     return x_shifted;
 }
@@ -532,8 +561,8 @@ float TimelineModule::x_to_time(int pos_x)
 float TimelineModule::time_to_x(VideoTime time)
 {
     float time_shifted = (float) time - scroll_amount;
-    float time_scaled = time_shifted * zoom_amount;
-    return time_shifted;
+    float time_scaled = time_shifted * zoom_amount + START_PADDING;
+    return time_scaled;
 }
 
 // This function is used when a clip is dropped between other clips
@@ -644,6 +673,8 @@ void TimelineModule::update_scroll()
     scroll_amount = scroll_pct * scroll_max;
     clips_anchor->set_position(sf::Vector2f(-scroll_amount, 0));
     scroll_bar->set_position(sf::Vector2f(5 + intcast(scroll_pct * scroll_span), container->get_size().y - 5 - scroll_bar->get_size().y));
+
+    padding_rect->set_position(sf::Vector2f(time_to_x(0) - START_PADDING, 0));
 }
 
 void TimelineModule::update_zoom()
@@ -656,6 +687,8 @@ void TimelineModule::update_zoom()
     Project* project = get_project();
     zoom_amount = std::pow(2.0, zoom_factor) * 30.0 / (float) project->get_framerate();
     clips_scaler->set_scale(sf::Vector2f(zoom_amount, 1.0));
+
+    padding_rect->set_position(sf::Vector2f(time_to_x(0) - START_PADDING, 0));
 
     // Re-scale selection windows
 

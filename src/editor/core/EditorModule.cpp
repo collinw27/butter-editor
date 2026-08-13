@@ -8,8 +8,8 @@ EditorModule::EditorModule(Editor &editor) :
     editor{editor}
 {
     visible_rect.reset(GLOutlinedRectangle::create(nullptr));
-    visible_rect->set_fill_color(sf::Color::Transparent);
-    visible_rect->set_outline_color(Editor::C_HOVER);
+    visible_rect->set_fill_color(Editor::C_BG);
+    visible_rect->set_outline_color(Editor::C_BORDER);
     visible_rect->set_outline_thickness(2);
     container.reset(GLContainer::create(visible_rect.get(), sf::Vector2f(), sf::Vector2f(bounds.size)));
 }
@@ -54,7 +54,7 @@ void EditorModule::set_focused(bool focused)
     has_focus = focused;
     visible_rect->set_outline_color(has_focus ?
         (mouse_hover ? Editor::C_FOCUSED_HOVER : Editor::C_FOCUSED) :
-        (mouse_hover ? Editor::C_HOVER : Editor::C_FG)
+        (mouse_hover ? Editor::C_BORDER_HOVER : Editor::C_BORDER)
     );
 }
 
@@ -63,6 +63,6 @@ void EditorModule::set_hover_highlight(bool hover)
     mouse_hover = hover;
     visible_rect->set_outline_color(has_focus ?
         (mouse_hover ? Editor::C_FOCUSED_HOVER : Editor::C_FOCUSED) :
-        (mouse_hover ? Editor::C_HOVER : Editor::C_FG)
+        (mouse_hover ? Editor::C_BORDER_HOVER : Editor::C_BORDER)
     );
 }

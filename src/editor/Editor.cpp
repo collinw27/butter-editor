@@ -18,14 +18,17 @@ constexpr int TAB_HEIGHT = 30;
 constexpr int TAB_WIDTH = 90;
 constexpr int C_BAR_HEIGHT = 20;
 
-const sf::Color Editor::C_BG {0, 0, 0};
-const sf::Color Editor::C_FG {90, 90, 90};
-const sf::Color Editor::C_HOVER {130, 130, 130};
+const sf::Color Editor::C_BG_EMPTY {5, 5, 5};
+const sf::Color Editor::C_BG {20, 20, 20};
+const sf::Color Editor::C_BORDER {90, 90, 90};
+const sf::Color Editor::C_BORDER_HOVER {130, 130, 130};
 const sf::Color Editor::C_FOCUSED {160, 174, 186};
 const sf::Color Editor::C_FOCUSED_HOVER {182, 198, 212};
 const sf::Color Editor::C_HIGHLIGHT {90, 90, 90};
 const sf::Color Editor::C_HIGHLIGHT_SUBTLE {50, 50, 50};
-const sf::Color Editor::C_FG_DESELECTED {50, 50, 50};
+const sf::Color Editor::C_TAB {90, 90, 90};
+const sf::Color Editor::C_TAB_DESELECTED {50, 50, 50};
+const sf::Color Editor::C_TAB_HOVER {130, 130, 130};
 const sf::Color Editor::C_INVALID {255, 120, 120};
 const sf::Color Editor::C_SCROLL_STILL {255, 255, 255, 60};
 const sf::Color Editor::C_SCROLL_HOVER {255, 255, 255, 110};
@@ -36,7 +39,7 @@ Editor::Editor()
     // SFML setup
     
     Graphics().init(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close | sf::Style::Resize | sf::Style::Titlebar);
-    Graphics().set_clear_color(Editor::C_BG);
+    Graphics().set_clear_color(Editor::C_BG_EMPTY);
     window = &Graphics().get_window();
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));

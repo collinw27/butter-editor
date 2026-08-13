@@ -84,6 +84,7 @@ void GLOutlinedRectangle::set_size(sf::Vector2f size)
 {
     this->size = size;
     r_size = size + sf::Vector2f(2, 2) * std::max(outline_thickness, 0.f);
+    update_model_matrix();
 }
 
 sf::Color GLOutlinedRectangle::get_fill_color()

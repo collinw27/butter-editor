@@ -58,6 +58,7 @@ void GLText::draw()
     {
         sf::RenderWindow& window = Graphics().get_window();
         glUseProgram(shader_program);
+        glUniform1i(glGetUniformLocation(shader_program, "texture"), 0);
         glBindVertexArray(VAO);
         glActiveTexture(GL_TEXTURE0);
 

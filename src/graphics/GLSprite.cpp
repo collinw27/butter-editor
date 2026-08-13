@@ -37,10 +37,12 @@ void GLSprite::draw()
     sf::RenderWindow& window = Graphics().get_window();
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
+
+    // `tex` might not be default initialized to 0 on all systems
     
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture->get_texture_ID());
-    // glUniform1i(glGetUniformLocation(shader_program, "texture"), 0);
+    glUniform1i(glGetUniformLocation(shader_program, "tex"), 0);
 
     GLuint model_loc = glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));

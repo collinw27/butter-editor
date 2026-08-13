@@ -31,6 +31,13 @@ class TimelineModule : public EditorModule
 
     std::unique_ptr<GLRectangle> ghost_clip;
 
+    // The ruler will be given its own shader to show ruler lines eventually
+
+    std::unique_ptr<GLRectangle> ruler;
+    std::unique_ptr<GLOutlinedRectangle> padding_rect;
+    std::unique_ptr<GLTexture> tex_playhead;
+    std::unique_ptr<GLSprite> playhead;
+
     // Dynamically-allocated Clips are stored sequentially in a vector
     // Other Clip-referencing variables are able to store pointers to these clips
     // Care must be taken to ensure dangling pointers are not created when clips
