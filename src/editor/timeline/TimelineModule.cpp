@@ -8,10 +8,12 @@
 #include "utility/Input.h"
 #include "utility/FileManager.h"
 #include "editor/Editor.h"
+
 #include "editor/core/mouse/DragScroll.h"
 #include "editor/core/mouse/DragDirectScroll.h"
 #include "editor/media/DragMedia.h"
 #include "editor/timeline/mouse/ExtendClip.h"
+#include "editor/timeline/mouse/DragPlayhead.h"
 
 #include "project/Project.h"
 #include "project/clip/ClipData.h"
@@ -340,6 +342,17 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
                 update_scroll_color(false, true);
             }
 
+            // Drag playhead
+
+            else if (sf::IntRect(sf::Vector2i(0, 0), sf::Vector2i(ruler->get_size())).contains(position))
+            {
+                editor.set_drag_event(std::unique_ptr<DragPlayhead>(new DragPlayhead(this)));
+                editor.set_cursor(sf::Cursor::Type::SizeHorizontal);
+                VideoTime new_time = x_to_time(position.x);
+                playhead_time = new_time;
+                update_playhead();
+            }
+
             else
             {
                 // Select hovered clip
@@ -431,6 +444,17 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
             float x_pct_delta = x_delta / (float) scroll_max / zoom_amount;
             scroll_pct = clamp<float>(dd_event->get_start_pct() - x_pct_delta, 0.f, 1.f);
             update_scroll();
+        }
+
+        // Update playhead drag
+
+        if (auto playhead_event = dynamic_cast<DragPlayhead*>(drag_event))
+        {
+            // Translate the clicked position to the time
+
+            VideoTime new_time = x_to_time(position.x);
+            playhead_time = new_time;
+            update_playhead();
         }
 
         // Update clip extend
@@ -566,6 +590,7 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
 void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouseEvent* drag_event)
 {
     auto extend_event = dynamic_cast<ExtendClip*>(drag_event);
+    if (extend_event != nullptr)
     {
         // When extending a clip, timeline updates are buffered until this point
 
@@ -583,6 +608,12 @@ void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, Input
                 hovered_clip->set_hovering(false);
             clip_mem.set_hovered_clip(nullptr);
         }
+    }
+    
+    auto playhead_event = dynamic_cast<DragPlayhead*>(drag_event);
+    if (playhead_event != nullptr)
+    {
+        editor.set_cursor(sf::Cursor::Type::Arrow);
     }
 
     ghost_clip->set_visible(false);
