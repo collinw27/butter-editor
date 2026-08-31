@@ -242,6 +242,35 @@ void TimelineModule::playhead_backward(VideoTime time)
     update_playhead();
 }
 
+void TimelineModule::playhead_to_start()
+{
+    playhead_time = 0;
+    update_playhead();
+}
+
+void TimelineModule::playhead_to_end()
+{
+    playhead_time = scroll_max;
+    update_playhead();
+}
+
+// Scrolls the timeline so the playhead position is in
+// the center of the screen (if possible)
+
+void TimelineModule::focus_playhead()
+{
+    // An offset of 64 frames needs to be added for the playhead to be centered
+    // Why this specific number?
+    // Literally no clue. It was determined through experimentation.
+
+    VideoTime offset_time = 64.0 / zoom_amount;
+
+    VideoTime half_frames_visible = (VideoTime) (scroll_span / zoom_amount * 0.5);
+    VideoTime scroll_time = clamp<VideoTime>(playhead_time - half_frames_visible - offset_time, 0, scroll_max);
+    scroll_pct = scroll_time / (float) scroll_max;
+    update_scroll();
+}
+
 void TimelineModule::select_all()
 {
     for (Clip* clip : clip_mem.get_clips())
@@ -268,6 +297,18 @@ void TimelineModule::on_update()
             select_all();
         if (Input().check_key_press(SF_KEY::D))
             deselect_all();
+
+        // Playhead to start/end
+
+        if (Input().check_key_press(SF_KEY::Home))
+            playhead_to_start();
+        if (Input().check_key_press(SF_KEY::End))
+            playhead_to_end();
+
+        // Focus playhead
+
+        if (Input().check_key_press(SF_KEY::F))
+            focus_playhead();
         
         // Attempt to delete selection
 

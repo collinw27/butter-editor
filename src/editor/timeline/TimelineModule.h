@@ -110,6 +110,9 @@ public:
     void zoom_out();
     void playhead_forward(VideoTime time);
     void playhead_backward(VideoTime time);
+    void playhead_to_start();
+    void playhead_to_end();
+    void focus_playhead();
 
     void select_all();
     void deselect_all();

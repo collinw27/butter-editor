@@ -284,6 +284,18 @@ void Editor::run()
             if (Input().check_key_press(SF_KEY::Num2, KeyMod::CTRL))
                 timeline_module->playhead_forward(10);
 
+            // Alt+Home,End: Move playhead to start/end
+            // F: Focus playhead
+            // TimelineModule has a separate check for these that doesn't
+            // require ALT if the module is focused
+
+            if (Input().check_key_press(SF_KEY::Home, KeyMod::ALT))
+                timeline_module->playhead_to_start();
+            if (Input().check_key_press(SF_KEY::End, KeyMod::ALT))
+                timeline_module->playhead_to_end();
+            if (Input().check_key_press(SF_KEY::F, KeyMod::ALT))
+                timeline_module->focus_playhead();
+
             // Alt+1,2,3: Focus module
             // A little unintuitive that the timeline module gets hotkey 1,
             // but it is by far the most often focused and deserves the priority
