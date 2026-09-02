@@ -6,16 +6,21 @@
 #include <algorithm>
 #include <chrono>
 
+#include "editor/Editor.h"
+#include "editor/notifs.h"
 #include "utility/core.h"
 #include "utility/FileManager.h"
 #include "utility/Logger.h"
 #include "project/exceptions.h"
 
-#include "project/clip/ColorClipData.h"
+#include "project/clip/ColorClip.h"
 
 void export_async();
 
-LockedProject::LockedProject() : basic_mutex{} {}
+LockedProject::LockedProject(Editor& editor) :
+    editor{editor},
+    basic_mutex{}
+{}
 
 LockedProject::~LockedProject() {}
 
@@ -31,7 +36,7 @@ int LockedProject::get_export_percentage()
     return export_finished ? 100 : export_progress;
 }
 
-Project::Project() : LockedProject{}
+Project::Project(Editor& editor) : LockedProject{editor}
 {
     name = std::nullopt;
 
@@ -41,7 +46,7 @@ Project::Project() : LockedProject{}
     resolution = sf::Vector2u(400, 300);
 }
 
-Project::Project(std::string name) : LockedProject{}
+Project::Project(Editor& editor, std::string name) : LockedProject{editor}
 {
     this->name = name;
     
@@ -67,7 +72,7 @@ Project::Project(std::string name) : LockedProject{}
     file >> clip_total;
 
     int clip_type;
-    ClipData* new_clip = nullptr;
+    Clip* new_clip = nullptr;
     int clip_start;
     int clip_length;
 
@@ -83,12 +88,13 @@ Project::Project(std::string name) : LockedProject{}
         switch (static_cast<ClipType>(clip_type))
         {
         case ClipType::COLOR:
-            new_clip = new ColorClipData(clip_start, clip_length, file);
+            new_clip = new ColorClip(clip_start, clip_length, generate_clip_id(), file);
         break;
         default:
             throw ButterException("Invalid clip type: " + std::to_string(clip_type));
         }
-        clip_vec.push_back(std::unique_ptr<ClipData>(new_clip));
+        clip_vec.push_back(std::unique_ptr<Clip>(new_clip));
+        clip_map.insert({new_clip->id, new_clip});
     }
 
     file.close();
@@ -124,13 +130,13 @@ sf::Vector2u Project::get_resolution()
 // Returns whether the operation was successful
 // It can fail if there's no space to insert the clip
 
-ClipData* Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
+id_s Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
 {
     // Add the color clip to the timeline
     // Find the first position it can slot in before something
     // If this doesn't exist, insert it at the end
 
-    ColorClipData* new_clip = new ColorClipData(start_time, length, color);
+    ColorClip* new_clip = new ColorClip(start_time, length, generate_clip_id(), color);
     auto next_clip = clip_vec.begin();
     while (next_clip < clip_vec.end())
     {
@@ -141,7 +147,7 @@ ClipData* Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Co
 
             VideoTime new_length = std::min(length, (*next_clip)->get_start_time() - start_time);
             if (new_length <= 0)
-                return nullptr;
+                return ID_NULL;
             new_clip->set_length(new_length);
 
             // If this passed, proceed to clip inserting logic
@@ -159,61 +165,71 @@ ClipData* Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Co
     {
         auto prev_clip = next_clip - 1;
         if ((*prev_clip)->get_end_time() > start_time)
-            return nullptr;
+            return ID_NULL;
     }
 
     // If all checks passed, insert clip
     
-    clip_vec.insert(next_clip, std::unique_ptr<ClipData>(new_clip));
-    return new_clip;
+    clip_vec.insert(next_clip, std::unique_ptr<Clip>(new_clip));
+    return new_clip->id;
 }
 
-void Project::set_clip_start(ClipData* clip, VideoTime start)
+void Project::set_clip_start(id_s clip_id, VideoTime start)
 {
     // This method exits prematurely if this clip will cut into its neighbor
     // or if it will result in a clip with length 0
 
-    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip] (std::unique_ptr<ClipData>& smart_ptr) { return smart_ptr.get() == clip; } );
-    if (it == clip_vec.end())
-        throw ButterException("Cannot extend clip");
+    auto it = get_iter_from_id(clip_id);
+    Clip* clip = (*it).get();
+
     if (start >= clip->get_end_time())
         return;
     if (it != clip_vec.begin())
     {
-        ClipData* clip_before = (it - 1)->get();
+        Clip* clip_before = (it - 1)->get();
         if (start < clip_before->get_end_time())
             return;
     }
     VideoTime old_end = clip->get_end_time();
     clip->set_start_time(start);
     clip->set_end_time(old_end);
+    
+    void* notif_args[1] = {(void*) &clip_id};
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED, 1, notif_args);
 }
 
-void Project::set_clip_end(ClipData* clip, VideoTime end)
+void Project::set_clip_end(id_s clip_id, VideoTime end)
 {
     // This method exits prematurely if this clip will cut into its neighbor,
     // or if it will result in a clip with length 0
 
-    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip] (std::unique_ptr<ClipData>& smart_ptr) { return smart_ptr.get() == clip; } );
-    if (it == clip_vec.end())
-        throw ButterException("Cannot extend clip");
+    auto it = get_iter_from_id(clip_id);
+    Clip* clip = (*it).get();
+
     if (end <= clip->get_start_time())
         return;
     if (it + 1 != clip_vec.end())
     {
-        ClipData* clip_after = (it + 1)->get();
+        Clip* clip_after = (it + 1)->get();
         if (end > clip_after->get_start_time())
             return;
     }
     clip->set_end_time(end);
+    
+    void* notif_args[1] = {(void*) &clip_id};
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED, 1, notif_args);
 }
 
-void Project::delete_clip(ClipData* clip)
+void Project::delete_clip(id_s clip_id)
 {
-    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip] (std::unique_ptr<ClipData>& smart_ptr) { return smart_ptr.get() == clip; } );
+    auto it = get_iter_from_id(clip_id);
     if (it == clip_vec.end())
-        throw ButterException("Cannot delete clip");
+        throw ButterException("Cannot find clip");
     clip_vec.erase(it);
+    clip_map.erase(clip_map.find((*it)->id));
+
+    void* notif_args[1] = {(void*) &clip_id};
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_DELETED, 1, notif_args);
 }
 
 unsigned int Project::get_clip_total()
@@ -221,22 +237,22 @@ unsigned int Project::get_clip_total()
     return clip_vec.size();
 }
 
-ClipData* Project::get_clip_at_index(unsigned int index)
+id_s Project::get_clip_at_index(unsigned int index)
 {
     try
     {
-        return clip_vec.at(index).get();
+        return clip_vec.at(index).get()->id;
     }
     catch (std::out_of_range e)
     {
-        return nullptr;
+        return ID_NULL;
     }
 }
 
-ClipData* Project::get_clip_at_time(VideoTime time)
+id_s Project::get_clip_at_time(VideoTime time)
 {
     auto it = get_iter_at_time(time);
-    return (it == clip_vec.end()) ? nullptr : (*it).get();
+    return (it == clip_vec.end()) ? ID_NULL : (*it).get()->id;
 }
 
 VideoTime Project::get_project_length()
@@ -300,7 +316,7 @@ VideoTime Project::get_gap_ahead(VideoTime time)
         else
             break;
     }
-    ClipData* after = (index != -1) ? clip_vec.at(index).get() : nullptr;
+    Clip* after = (index != -1) ? clip_vec.at(index).get() : nullptr;
 
     // Return the distance to the start of the proceeding clip
     // If the start is before the given time (i.e. the time is inside the clip),
@@ -326,7 +342,7 @@ VideoTime Project::get_gap_behind(VideoTime time)
         else
             break;
     }
-    ClipData* before = (index != -1) ? clip_vec.at(index).get() : nullptr;
+    Clip* before = (index != -1) ? clip_vec.at(index).get() : nullptr;
 
     // The only difference here is the clip does not extend infinitely;
     // it gets cut off at time 0 (hence, length = time)
@@ -359,6 +375,30 @@ VideoTime Project::get_chain_ahead(VideoTime time)
     return chain_length;
 }
 
+// These methods have no error checking for nonexistent clips!
+
+VideoTime Project::get_clip_start(id_s clip_id)
+{
+    return (*get_iter_from_id(clip_id))->get_start_time();
+}
+
+VideoTime Project::get_clip_length(id_s clip_id)
+{
+    return (*get_iter_from_id(clip_id))->get_length();
+}
+
+VideoTime Project::get_clip_end(id_s clip_id)
+{
+    return (*get_iter_from_id(clip_id))->get_end_time();
+}
+
+sf::Color Project::get_clip_color(id_s clip_id)
+{
+    Clip* clip = (*get_iter_from_id(clip_id)).get();
+    ColorClip* col_clip = dynamic_cast<ColorClip*>(clip);
+    return col_clip->get_color();
+}
+
 void Project::save()
 {
     // Must have name to save
@@ -386,7 +426,7 @@ void Project::save()
     file << clip_vec.size() << " ";
     for (int i = 0; i < clip_vec.size(); ++i)
     {
-        ClipData* clip = clip_vec.at(i).get();
+        Clip* clip = clip_vec.at(i).get();
         file << clip->get_clip_type() << " " << clip->get_start_time() << " " << clip->get_length() << " ";
         clip->save(file);
     }
@@ -446,34 +486,15 @@ void Project::export_video(std::filesystem::path filepath)
     export_task.thread.detach();
 }
 
-// Used internally by `get_clip_at_time()`
-// Exists as an intermediate function since having access to the iterator
-// is useful for a lot of member functions to save time
-
-std::vector<std::unique_ptr<ClipData>>::iterator Project::get_iter_at_time(VideoTime time)
+uint32_t Project::generate_clip_id()
 {
-    // Return early if:
-    // a) empty timeline
-    // b) negative time, or
-    // c) every clip starts after the provided time
+    ++next_clip_id;
+    return next_clip_id;
+}
 
-    if (clip_vec.empty())
-        return clip_vec.end();
-    if (time < 0)
-        return clip_vec.end();
-    if (time < clip_vec.at(0)->get_start_time())
-        return clip_vec.end();
-
-    // Attempt to find a clip that begins before the time
-    // and ends after the time
-    // Beginning is inclusive, end is exclusive
-
-    for (auto it = clip_vec.begin(); it != clip_vec.end(); ++it)
-    {
-        if (time >= (*it)->get_start_time() && time < (*it)->get_end_time())
-            return it;
-    }
-    return clip_vec.end();
+bool Project::exists(std::string name)
+{
+    return std::filesystem::exists(FileManager().get_data_path("projects/" + name + ".proj"));
 }
 
 void Project::proj_assert(bool condition, std::string fail_msg)
@@ -486,8 +507,8 @@ void Project::write_frame_rgb24(VideoTime time, std::uint8_t* buffer)
 {
     // For now, the entire frame is just one color
 
-    ClipData* current_clip = get_clip_at_time(time);
-    sf::Color color = (current_clip == nullptr) ? sf::Color::Black : (dynamic_cast<ColorClipData*>(current_clip)->get_color());
+    Clip* current_clip = get_iter_at_time(time)->get();
+    sf::Color color = (current_clip == nullptr) ? sf::Color::Black : (dynamic_cast<ColorClip*>(current_clip)->get_color());
 
     // Buffer size = (width * height * 3) chars
 
@@ -531,7 +552,40 @@ void Project::export_async()
     lock.unlock();
 }
 
-bool Project::exists(std::string name)
+// Used internally by `get_clip_at_time()`
+// Exists as an intermediate function since having access to the iterator
+// is useful for a lot of member functions to save time
+
+std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_at_time(VideoTime time)
 {
-    return std::filesystem::exists(FileManager().get_data_path("projects/" + name + ".proj"));
+    // Return early if:
+    // a) empty timeline
+    // b) negative time, or
+    // c) every clip starts after the provided time
+
+    if (clip_vec.empty())
+        return clip_vec.end();
+    if (time < 0)
+        return clip_vec.end();
+    if (time < clip_vec.at(0)->get_start_time())
+        return clip_vec.end();
+
+    // Attempt to find a clip that begins before the time
+    // and ends after the time
+    // Beginning is inclusive, end is exclusive
+
+    for (auto it = clip_vec.begin(); it != clip_vec.end(); ++it)
+    {
+        if (time >= (*it)->get_start_time() && time < (*it)->get_end_time())
+            return it;
+    }
+    return clip_vec.end();
+}
+
+std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_from_id(id_s clip_id)
+{
+    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip_id] (std::unique_ptr<Clip>& smart_ptr) { return smart_ptr->id == clip_id; } );
+    if (it == clip_vec.end())
+        throw ButterException("Cannot find clip");
+    return it;
 }

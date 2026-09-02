@@ -1,6 +1,7 @@
 #ifndef EDITOR_MODULE_H
 #define EDITOR_MODULE_H
 
+#include <vector>
 #include <memory>
 #include "utility/Input.h"
 #include "graphics/nodes.h"
@@ -19,6 +20,7 @@ protected:
     std::unique_ptr<GLContainer> container;
     bool mouse_hover = false;
     bool has_focus = false;
+    std::vector<int> notif_classes {};
 
 public:
 
@@ -37,6 +39,11 @@ public:
     void set_visible(bool visible);
     void set_focused(bool focused);
     void set_hover_highlight(bool hover);
+    
+    // See Editor class for notes on notifications
+
+    bool receives_notifs(int notif_class);
+    virtual void on_notif(int notif_class, int notif_type, size_t num_args, void** arg_ptrs) {}
 
     // `update()` is called every frame
     // When possible, behavior should instead be delegated to mouse functions
@@ -57,6 +64,10 @@ public:
     // This event only triggers when a mouse event is released over this module
 
     virtual void on_mouse_drop(sf::Vector2i position, DragMouseEvent* drag_event) {}
+
+protected:
+
+    void opt_into_notifs(int notif_class);
 };
 
 #endif

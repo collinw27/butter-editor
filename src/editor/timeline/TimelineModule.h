@@ -2,10 +2,12 @@
 #define TIMELINE_MODULE
 
 #include <tuple>
+#include <unordered_map>
+#include "utility/core.h"
 #include "editor/core/EditorModule.h"
 #include "editor/core/mouse/DragMouseEvent.h"
 #include "graphics/nodes.h"
-#include "editor/timeline/Clip.h"
+#include "editor/timeline/TimelineClip.h"
 
 class TimelineModule : public EditorModule
 {
@@ -52,25 +54,26 @@ class TimelineModule : public EditorModule
 
     class ClipMemoryManager
     {
-        std::vector<Clip*> clips;
-        std::vector<Clip*> selected_clips;
-        Clip* hovered_clip = nullptr;
+        std::unordered_map<id_s, TimelineClip*> clip_map;
+        std::vector<TimelineClip*> selected_clips;
+        TimelineClip* hovered_clip = nullptr;
 
     public:
 
         ~ClipMemoryManager();
 
-        void add_clip(Clip* clip);
-        void remove_clip(Clip* clip);
+        void add_clip(TimelineClip* clip);
+        void remove_clip(TimelineClip* clip);
         void clear_all();
-        const std::vector<Clip*>& get_clips();
+        TimelineClip* get_clip(id_s clip_id);
+        const std::unordered_map<id_s, TimelineClip*>& get_clips();
 
-        void select_clip(Clip* clip);
-        void deselect_clip(Clip* clip);
-        const std::vector<Clip*>& get_selected_clips();
+        void select_clip(TimelineClip* clip);
+        void deselect_clip(TimelineClip* clip);
+        const std::vector<TimelineClip*>& get_selected_clips();
 
-        void set_hovered_clip(Clip* clip);
-        Clip* get_hovered_clip();
+        void set_hovered_clip(TimelineClip* clip);
+        TimelineClip* get_hovered_clip();
     };
     ClipMemoryManager clip_mem;
 
@@ -123,6 +126,8 @@ public:
     virtual void on_mouse_release(sf::Vector2i position, bool focused, InputButton button, DragMouseEvent* drag_event) override;
     virtual void on_mouse_drop(sf::Vector2i position, DragMouseEvent* drag_event) override;
 
+    virtual void on_notif(int notif_class, int notif_type, size_t num_args, void** arg_ptrs) override;
+
 private:
 
     Project* get_project();
@@ -132,10 +137,10 @@ private:
     float time_to_x(VideoTime time);
     std::tuple<VideoTime, VideoTime> get_fitted_clip(VideoTime start_time, VideoTime length);
 
-    void select_clip(Clip* clip);
-    void deselect_clip(Clip* clip);
+    void select_clip(TimelineClip* clip);
+    void deselect_clip(TimelineClip* clip);
     void create_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
-    void delete_clip(Clip* clip);
+    void delete_clip(TimelineClip* clip);
     
     void update_scroll();
     void update_zoom();

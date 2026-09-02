@@ -48,7 +48,7 @@ Editor::Editor()
 
     // Create default project
 
-    create_project(new Project());
+    create_project(new Project(*this));
     locked_project = (LockedProject*) project;
 
     // Module setup
@@ -61,6 +61,14 @@ Editor::Editor()
     project_module = new ProjectModule(*this);
     debug_module = new DebugModule(*this);
     visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, (EditorModule**) &timeline_module});
+    all_modules.insert(all_modules.end(), {
+        preview_module,
+        timeline_module,
+        log_module,
+        media_module,
+        project_module,
+        debug_module
+    });
 
     // Flex module setup
     // Like the modules themselves, tab parameters are set during `resize_modules()`
@@ -115,7 +123,6 @@ Editor::Editor()
 Editor::~Editor()
 {
     delete preview_module;
-    delete flex_module;
     delete timeline_module;
     delete log_module;
     delete media_module;
@@ -418,6 +425,21 @@ Project* Editor::get_project()
 LockedProject* Editor::get_locked_project()
 {
     return locked_project;
+}
+
+// The arguments are stored as a sequence of void*
+// Although a little unsafe, this is still fine in theory since all notification types
+// should have a well-defined sequence of argument types
+
+void Editor::notify_modules(int notif_class, int notif_type, size_t num_args, void** arg_ptrs)
+{
+    // Even non-visible modules are notified
+
+    for (EditorModule* module : all_modules)
+    {
+        if (module->receives_notifs(notif_class))
+            module->on_notif(notif_class, notif_type, num_args, arg_ptrs);
+    }
 }
 
 void Editor::on_timeline_update()

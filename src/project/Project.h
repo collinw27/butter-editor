@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <optional>
 #include <mutex>
 #include <filesystem>
@@ -10,7 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <subprocess.hpp>
 #include "utility/core.h"
-#include "project/clip/ClipData.h"
+#include "project/clip/Clip.h"
 
 // All project loading logic is within this class instead of FileManager
 // This does require duplicating some logic, but this strategy is much quicker
@@ -50,6 +51,8 @@
 // Whenever an external class modifies the project data, it should call one of this class' update methods
 // to keep it in sync with the new update
 
+class Editor;
+
 struct ExportTask
 {
     subprocess::Popen ffmpeg_pipe;
@@ -63,6 +66,8 @@ class LockedProject
 {
 protected:
 
+    Editor& editor;
+
     // Thread-safe export information
 
     bool export_finished = true;
@@ -72,7 +77,7 @@ protected:
     // This class should not be instantiated by itself
     // Therefore: protected constructor
     
-    LockedProject();
+    LockedProject(Editor& editor);
 
 public:
 
@@ -92,13 +97,18 @@ class Project : public LockedProject
 
     // State
 
-    std::vector<std::unique_ptr<ClipData>> clip_vec;
+    std::vector<std::unique_ptr<Clip>> clip_vec;
+    std::unordered_map<id_s, Clip*> clip_map;
     ExportTask export_task;
+
+    // IDs
+
+    id_s next_clip_id = ID_START;
 
 public:
 
-    Project();
-    Project(std::string name);
+    Project(Editor& editor);
+    Project(Editor& editor, std::string name);
     virtual ~Project();
 
     // Basic info
@@ -111,16 +121,16 @@ public:
 
     // Timeline manipulation
 
-    ClipData* add_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
-    void set_clip_start(ClipData* clip, VideoTime start);
-    void set_clip_end(ClipData* clip, VideoTime end);
-    void delete_clip(ClipData* clip);
+    id_s add_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
+    void set_clip_start(id_s clip_id, VideoTime start);
+    void set_clip_end(id_s clip_id, VideoTime end);
+    void delete_clip(id_s clip_id);
 
     // Timeline reading
 
     unsigned int get_clip_total();
-    ClipData* get_clip_at_index(unsigned int index);
-    ClipData* get_clip_at_time(VideoTime time);
+    id_s get_clip_at_index(unsigned int index);
+    id_s get_clip_at_time(VideoTime time);
     VideoTime get_project_length();
     std::string get_project_length_approx();
     std::string to_string(VideoTime time);
@@ -128,10 +138,21 @@ public:
     VideoTime get_gap_behind(VideoTime time);
     VideoTime get_chain_ahead(VideoTime time);
 
+    // Clip information
+
+    VideoTime get_clip_start(id_s clip_id);
+    VideoTime get_clip_length(id_s clip_id);
+    VideoTime get_clip_end(id_s clip_id);
+    sf::Color get_clip_color(id_s clip_id);
+
     // Output
     
     void save();
     void export_video(std::filesystem::path filepath);
+
+    // IDs
+
+    id_s generate_clip_id();
 
     // Misc
     
@@ -139,7 +160,8 @@ public:
 
 private:
 
-    std::vector<std::unique_ptr<ClipData>>::iterator get_iter_at_time(VideoTime time);
+    std::vector<std::unique_ptr<Clip>>::iterator get_iter_from_id(id_s clip_id);
+    std::vector<std::unique_ptr<Clip>>::iterator get_iter_at_time(VideoTime time);
 
     void proj_assert(bool condition, std::string fail_msg);
     void write_frame_rgb24(VideoTime time, std::uint8_t* buffer);

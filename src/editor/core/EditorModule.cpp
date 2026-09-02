@@ -12,6 +12,7 @@ EditorModule::EditorModule(Editor &editor) :
     visible_rect->set_outline_color(Editor::C_BORDER);
     visible_rect->set_outline_thickness(2);
     container.reset(GLContainer::create(visible_rect.get(), sf::Vector2f(), sf::Vector2f(bounds.size)));
+    notif_classes.clear();
 }
 
 GLNode* EditorModule::get_node()
@@ -65,4 +66,15 @@ void EditorModule::set_hover_highlight(bool hover)
         (mouse_hover ? Editor::C_FOCUSED_HOVER : Editor::C_FOCUSED) :
         (mouse_hover ? Editor::C_BORDER_HOVER : Editor::C_BORDER)
     );
+}
+
+bool EditorModule::receives_notifs(int notif_class)
+{
+    return (std::find(notif_classes.begin(), notif_classes.end(), notif_class) != notif_classes.end());
+}
+
+void EditorModule::opt_into_notifs(int notif_class)
+{
+    if (std::find(notif_classes.begin(), notif_classes.end(), notif_class) == notif_classes.end())
+        notif_classes.push_back(notif_class);
 }

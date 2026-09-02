@@ -72,6 +72,7 @@ private:
     MediaModule* media_module;
     ProjectModule* project_module;
     DebugModule* debug_module;
+    std::vector<EditorModule*> all_modules;
 
     // Command processing
     
@@ -141,14 +142,13 @@ public:
     Project* get_project();
     LockedProject* get_locked_project();
 
-    // `on_timeline_update()` is used for when a timeline action causes
-    // effects within other modules
-    // Modules needing to notify other modules of updates will end up being
-    // a common occurance, so a more robust system should be created for this
-    // in the future
-    // A sensible approach to me seems like having an enumeration of update events;
-    // modules can emit these update events to the Editor, and individual modules
-    // can choose which events they want to listen for
+    // Often times, an event in one module will need to cause an update in another
+    // Also, modules that reflect some aspect of the project data will need
+    // to be updated when the project information changes
+    // Modules can choose classes of notifications they would like to receive,
+    // and `notify_modules` will prompt the `on_notified()` method
+
+    void notify_modules(int notif_class, int notif_type, size_t num_args, void** arg_ptrs);
 
     void on_timeline_update();
 

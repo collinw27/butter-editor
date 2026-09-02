@@ -98,7 +98,7 @@ std::string Editor::execute_command(CommandResult command)
         block_if_exporting(project);
         if (project != nullptr)
             delete project;
-        create_project(new Project());
+        create_project(new Project(*this));
         command_bar->set_status_name(project->get_name());
         timeline_module->reset();
         on_timeline_update();
@@ -130,7 +130,7 @@ std::string Editor::execute_command(CommandResult command)
             delete project;
         try
         {
-            create_project(new Project(command.get_string(0)));
+            create_project(new Project(*this, command.get_string(0)));
             locked_project = (LockedProject*) project;
             command_bar->set_status_name(project->get_name());
             timeline_module->reset();

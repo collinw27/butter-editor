@@ -1,5 +1,5 @@
-#ifndef CLIP_DATA_H
-#define CLIP_DATA_H
+#ifndef CLIP_H
+#define CLIP_H
 
 #include <fstream>
 #include "utility/core.h"
@@ -14,15 +14,21 @@ enum class ClipType
     COLOR
 };
 
-class ClipData
+class Clip
 {
+public:
+
+    const id_s id;
+
+private:
+
     VideoTime start_time;
     VideoTime length;
 
 public:
 
-    ClipData(VideoTime start_time, VideoTime length);
-    virtual ~ClipData();
+    Clip(VideoTime start_time, VideoTime length, id_s id);
+    virtual ~Clip();
 
     virtual int get_clip_type() = 0;
     void set_start_time(VideoTime start_time);

@@ -13,6 +13,9 @@
 
 using VideoTime = std::int32_t;
 constexpr VideoTime TIMELINE_MAX = 107892000; // 999 hours at 30 FPS
+using id_s = uint32_t; // Standard id type, can't be id_t because of collsion with <sys/types.h>
+constexpr id_s ID_NULL = 0;
+constexpr id_s ID_START = 1;
 
 // Doesn't validate that a < b
 

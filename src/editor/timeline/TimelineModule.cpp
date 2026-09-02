@@ -8,6 +8,7 @@
 #include "utility/Input.h"
 #include "utility/FileManager.h"
 #include "editor/Editor.h"
+#include "editor/notifs.h"
 
 #include "editor/core/mouse/DragScroll.h"
 #include "editor/core/mouse/DragDirectScroll.h"
@@ -16,8 +17,8 @@
 #include "editor/timeline/mouse/DragPlayhead.h"
 
 #include "project/Project.h"
-#include "project/clip/ClipData.h"
-#include "project/clip/ColorClipData.h"
+#include "project/clip/Clip.h"
+#include "project/clip/ColorClip.h"
 
 #include "utility/Logger.h"
 
@@ -36,12 +37,12 @@ ClipMem::~ClipMemoryManager()
     clear_all();
 }
 
-void ClipMem::add_clip(Clip* clip)
+void ClipMem::add_clip(TimelineClip* clip)
 {
-    clips.push_back(clip);
+    clip_map.insert({clip->clip_id, clip});
 }
 
-void ClipMem::remove_clip(Clip* clip)
+void ClipMem::remove_clip(TimelineClip* clip)
 {
     // Remove potential danging pointers
     // Extend mode is also reset, just to avoid any weirdness
@@ -52,9 +53,9 @@ void ClipMem::remove_clip(Clip* clip)
 
     // The clip must be manually deleted (no smart pointer)
         
-    auto it = std::find(clips.begin(), clips.end(), clip);
-    if (it != clips.end())
-        clips.erase(it);
+    auto it = clip_map.find(clip->clip_id);
+    if (it != clip_map.end())
+        clip_map.erase(it);
     delete clip;
 }
 
@@ -63,11 +64,11 @@ void ClipMem::clear_all()
     // Easier to just store clips as raw pointers and delete them here
     // This prevents any interators over `clips` from having to use type std::unique_ptr<Clip>
 
-    for (auto clip : clips)
+    for (auto clip : clip_map)
     {
-        delete clip;
+        delete clip.second;
     }
-    clips.clear();
+    clip_map.clear();
 
     // Don't forget to prevent danging references
 
@@ -75,36 +76,42 @@ void ClipMem::clear_all()
     hovered_clip = nullptr;
 }
 
-const std::vector<Clip*>& ClipMem::get_clips()
+TimelineClip* ClipMem::get_clip(id_s clip_id)
 {
-    return clips;
+    auto it = clip_map.find(clip_id);
+    return (it == clip_map.end()) ? nullptr : it->second;
 }
 
-void ClipMem::select_clip(Clip* clip)
+const std::unordered_map<id_s, TimelineClip*>& ClipMem::get_clips()
+{
+    return clip_map;
+}
+
+void ClipMem::select_clip(TimelineClip* clip)
 {
     auto it = std::find(selected_clips.begin(), selected_clips.end(), clip);
     if (it == selected_clips.end())
         selected_clips.push_back(clip);
 }
 
-void ClipMem::deselect_clip(Clip* clip)
+void ClipMem::deselect_clip(TimelineClip* clip)
 {
     auto it = std::find(selected_clips.begin(), selected_clips.end(), clip);
     if (it != selected_clips.end())
         selected_clips.erase(it);
 }
 
-const std::vector<Clip*>& ClipMem::get_selected_clips()
+const std::vector<TimelineClip*>& ClipMem::get_selected_clips()
 {
     return selected_clips;
 }
 
-void ClipMem::set_hovered_clip(Clip* clip)
+void ClipMem::set_hovered_clip(TimelineClip* clip)
 {
     hovered_clip = clip;
 }
 
-Clip* ClipMem::get_hovered_clip()
+TimelineClip* ClipMem::get_hovered_clip()
 {
     return hovered_clip;
 }
@@ -135,8 +142,6 @@ TimelineModule::TimelineModule(Editor& editor)
     ghost_clip->set_fill_color(sf::Color::White);
     ghost_clip->set_visible(false);
 
-    // Not yet, need to add space around timeline first
-
     playhead.reset(GLNode::create(clips_anchor.get()));
     tex_playhead.reset(new GLTexture(FileManager().get_res_path("tex/playhead.png")));
     playhead_sprite.reset(GLSprite::create(playhead.get(), tex_playhead.get()));
@@ -149,6 +154,10 @@ TimelineModule::TimelineModule(Editor& editor)
     
     scroll_bar.reset(GLRectangle::create(container.get()));
     scroll_bar->set_fill_color(Editor::C_SCROLL_STILL);
+
+    // Sync with project updates
+
+    opt_into_notifs(NOTIF_TIMELINE::ID);
 
     reset();
 }
@@ -165,8 +174,11 @@ void TimelineModule::reset()
     
     for (int i = 0; i < project->get_clip_total(); ++i)
     {
-        ClipData* clip_data = project->get_clip_at_index(i);
-        Clip* new_clip = new Clip(clip_data, ((ColorClipData*) clip_data)->get_color(), clip_layer.get());
+        id_s clip_id = project->get_clip_at_index(i);
+        TimelineClip* new_clip = new TimelineClip(clip_id, clip_layer.get());
+        new_clip->set_clip_start(project->get_clip_start(clip_id));
+        new_clip->set_clip_length(project->get_clip_length(clip_id));
+        new_clip->set_thumbnail_color(project->get_clip_color(clip_id));
         clip_mem.add_clip(new_clip);
     }
     
@@ -275,17 +287,17 @@ void TimelineModule::focus_playhead()
 
 void TimelineModule::select_all()
 {
-    for (Clip* clip : clip_mem.get_clips())
+    for (std::pair<id_s, TimelineClip*> clip : clip_mem.get_clips())
     {
-        select_clip(clip);
+        select_clip(clip.second);
     }
 }
 
 void TimelineModule::deselect_all()
 {
-    for (Clip* clip : clip_mem.get_clips())
+    for (std::pair<id_s, TimelineClip*> clip : clip_mem.get_clips())
     {
-        deselect_clip(clip);
+        deselect_clip(clip.second);
     }
 }
 
@@ -320,7 +332,7 @@ void TimelineModule::on_update()
             // in-place during this operation
 
             std::vector selected_clips_copy {clip_mem.get_selected_clips()};
-            for (Clip* clip : selected_clips_copy)
+            for (TimelineClip* clip : selected_clips_copy)
             {
                 delete_clip(clip);
             }
@@ -348,8 +360,7 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
             {
                 editor.set_drag_event(std::unique_ptr<DragPlayhead>(new DragPlayhead(this)));
                 editor.set_cursor(sf::Cursor::Type::SizeHorizontal);
-                VideoTime new_time = x_to_time(position.x);
-                playhead_time = new_time;
+                playhead_time = std::max<VideoTime>(x_to_time(position.x), 0);
                 update_playhead();
             }
 
@@ -382,7 +393,7 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
                     {
                         // Only the hovered clip will be extended (for now)
 
-                        Clip* extend_clip = clip_mem.get_hovered_clip();
+                        TimelineClip* extend_clip = clip_mem.get_hovered_clip();
                         deselect_all();
                         select_clip(extend_clip);
 
@@ -393,16 +404,16 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
                         bool forward = (extend_mode == ExtendMode::RIGHT);
                         if (forward)
                         {
-                            VideoTime start_time = extend_clip->get_clip_data()->get_end_time();
-                            VideoTime gap = project->get_gap_ahead(extend_clip->get_clip_data()->get_end_time());
-                            VideoTime max_trim = extend_clip->get_clip_data()->get_length() - 1;
+                            VideoTime start_time = project->get_clip_end(extend_clip->clip_id);
+                            VideoTime gap = project->get_gap_ahead(project->get_clip_end(extend_clip->clip_id));
+                            VideoTime max_trim = project->get_clip_length(extend_clip->clip_id) - 1;
                             editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, max_trim)));
                         }
                         else
                         {
-                            VideoTime start_time = extend_clip->get_clip_data()->get_start_time();
-                            VideoTime gap = project->get_gap_behind(extend_clip->get_clip_data()->get_start_time());
-                            VideoTime max_trim = extend_clip->get_clip_data()->get_length() - 1;
+                            VideoTime start_time = project->get_clip_start(extend_clip->clip_id);
+                            VideoTime gap = project->get_gap_behind(project->get_clip_start(extend_clip->clip_id));
+                            VideoTime max_trim = project->get_clip_length(extend_clip->clip_id) - 1;
                             editor.set_drag_event(std::unique_ptr<ExtendClip>(new ExtendClip(this, forward, start_time, gap, max_trim)));
                         }
                     }
@@ -451,9 +462,8 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
         if (auto playhead_event = dynamic_cast<DragPlayhead*>(drag_event))
         {
             // Translate the clicked position to the time
-
-            VideoTime new_time = x_to_time(position.x);
-            playhead_time = new_time;
+            
+            playhead_time = std::max<VideoTime>(x_to_time(position.x), 0);
             update_playhead();
         }
 
@@ -476,16 +486,16 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
                 VideoTime time_diff = (VideoTime) (x_diff / zoom_amount);
                 time_diff = clamp(time_diff, -extend_event->max_trim, extend_event->max_extend);
 
-                Clip* selected_clip = clip_mem.get_selected_clips().front();
+                TimelineClip* selected_clip = clip_mem.get_selected_clips().front();
                 Project* project = get_project();
                 if (extend_event->forward)
                 {
-                    selected_clip->set_clip_end(project, extend_event->start_time + time_diff);
+                    project->set_clip_end(selected_clip->clip_id, extend_event->start_time + time_diff);
                     selected_clip->render_selected(outline_layer.get(), zoom_amount);
                 }
                 else
                 {
-                    selected_clip->set_clip_start(project, extend_event->start_time - time_diff);
+                    project->set_clip_start(selected_clip->clip_id, extend_event->start_time - time_diff);
                     selected_clip->render_selected(outline_layer.get(), zoom_amount);
                 }
 
@@ -550,27 +560,27 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
 
         if (focused && position.y >= clips_y && position.y < clips_y + 100)
         {
-            for (Clip* clip : clip_mem.get_clips())
+            for (std::pair<id_s, TimelineClip*> clip : clip_mem.get_clips())
             {
-                if (clip->is_start_within(extend_margin_l, time_pos_f))
+                if (clip.second->is_start_within(extend_margin_l, time_pos_f))
                 {
-                    clip_mem.set_hovered_clip(clip);
+                    clip_mem.set_hovered_clip(clip.second);
                     extend_mode = ExtendMode::LEFT;
-                    clip->set_hovering(true);
+                    clip.second->set_hovering(true);
                     break;
                 }
-                if (clip->is_end_within(time_pos_f, extend_margin_r))
+                if (clip.second->is_end_within(time_pos_f, extend_margin_r))
                 {
-                    clip_mem.set_hovered_clip(clip);
+                    clip_mem.set_hovered_clip(clip.second);
                     extend_mode = ExtendMode::RIGHT;
-                    clip->set_hovering(true);
+                    clip.second->set_hovering(true);
                     break;
                 }
-                if (clip->is_time_within(time_pos))
+                if (clip.second->is_time_within(time_pos))
                 {
-                    clip_mem.set_hovered_clip(clip);
+                    clip_mem.set_hovered_clip(clip.second);
                     extend_mode = ExtendMode::NONE;
-                    clip->set_hovering(true);
+                    clip.second->set_hovering(true);
                     break;
                 }
             }
@@ -603,7 +613,7 @@ void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, Input
             editor.on_timeline_update();
             extend_mode = ExtendMode::NONE;
             editor.set_cursor(sf::Cursor::Type::Arrow);
-            Clip* hovered_clip = clip_mem.get_hovered_clip();
+            TimelineClip* hovered_clip = clip_mem.get_hovered_clip();
             if (hovered_clip != nullptr)
                 hovered_clip->set_hovering(false);
             clip_mem.set_hovered_clip(nullptr);
@@ -631,6 +641,34 @@ void TimelineModule::on_mouse_drop(sf::Vector2i position, DragMouseEvent* drag_e
             create_color_clip(drag_media_event->start_time, drag_media_event->length, drag_media_event->media_color);
         }
         ghost_clip->set_visible(false);
+    }
+}
+
+void TimelineModule::on_notif(int notif_class, int notif_type, size_t num_args, void** arg_ptrs)
+{
+    if (notif_class == NOTIF_TIMELINE::ID)
+    {
+        switch (notif_type)
+        {
+        case NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED:
+        {
+            id_s clip_id = *((id_s*) arg_ptrs[0]);
+            TimelineClip* clip = clip_mem.get_clip(clip_id);
+            Project* project = editor.get_project();
+            clip->set_clip_start(project->get_clip_start(clip_id));
+            clip->set_clip_length(project->get_clip_length(clip_id));
+        }
+        break;
+        case NOTIF_TIMELINE::CLIP_DELETED:
+        {
+            // GLNodes should automatically be removed by their destructor
+
+            id_s clip_id = *((id_s*) arg_ptrs[0]);
+            TimelineClip* deleted_clip = clip_mem.get_clip(clip_id);
+            clip_mem.remove_clip(deleted_clip);
+        }
+        break;
+        }
     }
 }
 
@@ -685,7 +723,7 @@ std::tuple<VideoTime, VideoTime> TimelineModule::get_fitted_clip(VideoTime start
 
     // (1) & (2) take place if the start position is free
 
-    if (project->get_clip_at_time(start_time) == nullptr)
+    if (project->get_clip_at_time(start_time) == ID_NULL)
     {
         // 1) Attempt to place it normally
 
@@ -724,7 +762,7 @@ std::tuple<VideoTime, VideoTime> TimelineModule::get_fitted_clip(VideoTime start
     }
 }
 
-void TimelineModule::select_clip(Clip* clip)
+void TimelineModule::select_clip(TimelineClip* clip)
 {
     if (!clip->selected())
     {
@@ -734,7 +772,7 @@ void TimelineModule::select_clip(Clip* clip)
     }
 }
 
-void TimelineModule::deselect_clip(Clip* clip)
+void TimelineModule::deselect_clip(TimelineClip* clip)
 {
     if (clip->selected())
     {
@@ -747,18 +785,18 @@ void TimelineModule::deselect_clip(Clip* clip)
 void TimelineModule::create_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
 {
     Project* project = get_project();
-    ClipData* clip_data = project->add_color_clip(start_time, length, color);
-    clip_mem.add_clip(new Clip(clip_data, color, clip_layer.get()));
+    id_s clip_id = project->add_color_clip(start_time, length, color);
+    TimelineClip* new_clip = new TimelineClip(clip_id, clip_layer.get());
+    new_clip->set_clip_start(project->get_clip_start(clip_id));
+    new_clip->set_clip_length(project->get_clip_length(clip_id));
+    new_clip->set_thumbnail_color(project->get_clip_color(clip_id));
+    clip_mem.add_clip(new_clip);
 }
 
-void TimelineModule::delete_clip(Clip* clip)
+void TimelineModule::delete_clip(TimelineClip* clip)
 {
     Project* project = get_project();
-    clip->delete_clip(project);
-    
-    // GLNodes should automatically be removed by their destructor
-
-    clip_mem.remove_clip(clip);
+    project->delete_clip(clip->clip_id);
 }
 
 // `update_scroll()` and `update_zoom()` are split into two different functions
@@ -794,7 +832,7 @@ void TimelineModule::update_zoom()
 
     // Re-scale selection windows
 
-    for (Clip* clip : clip_mem.get_selected_clips())
+    for (TimelineClip* clip : clip_mem.get_selected_clips())
     {
         clip->render_selected(outline_layer.get(), zoom_amount);
     }
