@@ -10,6 +10,7 @@
 #include "utility/FileManager.h"
 #include "utility/file_formats/UserSettings.h"
 #include "utility/Debugger.h"
+#include "editor/notifs.h"
 #include "editor/core/mouse/DragDivider.h"
 #include "command/exceptions.h"
 
@@ -45,67 +46,6 @@ Editor::Editor()
     window->setMinimumSize(sf::Vector2u(300, 200));
     window->setFramerateLimit(150);
     root.reset(GLRootNode::create());
-
-    // Create default project
-
-    create_project(new Project(*this));
-    locked_project = (LockedProject*) project;
-
-    // Module setup
-
-    preview_module = new EditorModule(*this);
-    timeline_module = new TimelineModule(*this);
-    command_bar = new CommandBar(*this);
-    log_module = new LogModule(*this);
-    media_module = new MediaModule(*this);
-    project_module = new ProjectModule(*this);
-    debug_module = new DebugModule(*this);
-    visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, (EditorModule**) &timeline_module});
-    all_modules.insert(all_modules.end(), {
-        preview_module,
-        timeline_module,
-        log_module,
-        media_module,
-        project_module,
-        debug_module
-    });
-
-    // Flex module setup
-    // Like the modules themselves, tab parameters are set during `resize_modules()`
-
-    current_flex_tab = 0;
-    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, log_module, "Log")));
-    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, media_module, "Media")));
-    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, project_module, "Project")));
-    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, debug_module, "Debug")));
-    flex_tabs.at(current_flex_tab)->set_selected(true);
-    flex_module = &flex_tabs.at(current_flex_tab)->get_module();
-
-    // Node tree setup
-    // Currently, nodes are drawn in the order they're added to the vector
-    // There will likely be support for layers added later on
-
-    root->add_child(preview_module->get_node());
-    root->add_child(timeline_module->get_node());
-    root->add_child(command_bar->get_node());
-    for (std::unique_ptr<FlexTab>& tab : flex_tabs)
-        root->add_child(tab->get_node());
-    for (std::unique_ptr<FlexTab>& tab : flex_tabs)
-        root->add_child(tab->get_module().get_node());
-    temp_menu_bar.reset(GLContainer::create(root.get(), sf::Vector2f(), sf::Vector2f()));
-    menu_bar_text.reset(GLText::create(temp_menu_bar.get(), Graphics().main_font(), 0u, "File   Edit   Settings   Export"));
-
-    // UI parameters
-    // `resize_modules()` must ALWAYS be called
-    // Module properties are dependent on calculations whose implementation
-    // are only provided in said function
-    
-    y_divider = 360;
-    x_divider = 640;
-    ui_scale_index = FileManager().get_user_settings().ui_scale_index;
-    ui_scale = 1.f + (float)ui_scale_index * 0.1f;
-    resize_modules();
-
     clock = sf::Clock();
     clock.start();
 
@@ -113,11 +53,21 @@ Editor::Editor()
 
     initialize_commands();
 
-    // Other project setup
+    // UI parameters
+    // `resize_modules()` must ALWAYS be called, since module properties
+    // are dependent on calculations whose implementation are only provided in said function
+    // Basic UI parameters are preserved across projects, so this takes place outside of `load_project()`
+    
+    y_divider = 360;
+    x_divider = 640;
+    ui_scale_index = FileManager().get_user_settings().ui_scale_index;
+    ui_scale = 1.f + (float)ui_scale_index * 0.1f;
 
-    project_module->refresh_info();
-    command_bar->set_status_name(project->get_name());
-    command_bar->set_status_length(project->get_project_length_approx());
+    // Create default project
+    // Loading a project resets most editor properties, so this step
+    // is where most initialization happens
+
+    load_project(new Project(*this));
 }
 
 Editor::~Editor()
@@ -345,6 +295,13 @@ void Editor::run()
             }
         }
 
+        // Load a new project if needed
+        // This is buffered until the end of the update loop to prevent
+        // weirdness from switching out project data mid-function
+
+        if (queued_project != nullptr)
+            load_project(queued_project);
+
         // Update debug module with most recent info
 
         std::stringstream debug_info {};
@@ -440,13 +397,106 @@ void Editor::notify_modules(int notif_class, int notif_type, size_t num_args, vo
         if (module->receives_notifs(notif_class))
             module->on_notif(notif_class, notif_type, num_args, arg_ptrs);
     }
+
+    // The Editor can also react to notifications
+
+    if (notif_class == NOTIF_PROJECT_INFO::ID)
+    {
+        if (notif_type == NOTIF_PROJECT_INFO::LENGTH_CHANGED)
+        {
+            command_bar->set_status_length(project->get_project_length_approx());
+        }
+    }
 }
 
-void Editor::on_timeline_update()
+void Editor::load_project(Project* new_project)
 {
+    project = new_project;
+    locked_project = (LockedProject*) project;
+    exporting = false;
+
+    // All child nodes are first be orphaned
+    // This by itself doesn't free the memory
+    // The memory is instead freed when the respective smart pointers are
+    // freed during module deletion and similar events
+
+    root->free_children();
+
+    // Make sure any leftover data is reset first
+
+    delete preview_module;
+    delete timeline_module;
+    delete log_module;
+    delete media_module;
+    delete project_module;
+    delete debug_module;
+    delete command_bar;
+
+    using_terminal = false;
+    all_modules.clear();
+    visible_modules.clear();
+    flex_tabs.clear();
+    flex_module = nullptr;
+    focused_module = nullptr;
+
+    // Module setup
+
+    preview_module = new EditorModule(*this);
+    timeline_module = new TimelineModule(*this);
+    command_bar = new CommandBar(*this);
+    log_module = new LogModule(*this);
+    media_module = new MediaModule(*this);
+    project_module = new ProjectModule(*this);
+    debug_module = new DebugModule(*this);
+    visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, (EditorModule**) &timeline_module});
+    all_modules.insert(all_modules.end(), {
+        preview_module,
+        timeline_module,
+        log_module,
+        media_module,
+        project_module,
+        debug_module
+    });
+
+    // Flex module setup
+    // Like the modules themselves, tab parameters are set during `resize_modules()`
+
+    current_flex_tab = 0;
+    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, log_module, "Log")));
+    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, media_module, "Media")));
+    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, project_module, "Project")));
+    flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, debug_module, "Debug")));
+    flex_tabs.at(current_flex_tab)->set_selected(true);
+    flex_module = &flex_tabs.at(current_flex_tab)->get_module();
+
+    // Node tree setup
+    // Nodes are drawn in the order they're added to the vector
+
+    root->add_child(preview_module->get_node());
+    root->add_child(timeline_module->get_node());
+    root->add_child(command_bar->get_node());
+    for (std::unique_ptr<FlexTab>& tab : flex_tabs)
+        root->add_child(tab->get_node());
+    for (std::unique_ptr<FlexTab>& tab : flex_tabs)
+        root->add_child(tab->get_module().get_node());
+    temp_menu_bar.reset(GLContainer::create(root.get(), sf::Vector2f(), sf::Vector2f()));
+    menu_bar_text.reset(GLText::create(temp_menu_bar.get(), Graphics().main_font(), 0u, "File   Edit   Settings   Export"));
+
+    // Other project setup
+
     project_module->refresh_info();
-    if (project)
-        command_bar->set_status_length(project->get_project_length_approx());
+    command_bar->set_status_name(project->get_name());
+    command_bar->set_status_length(project->get_project_length_approx());
+
+    // Reset mouse events
+
+    drag_mouse_event.release();
+
+    // Now that nodes are setup, properly set their sizes
+    
+    resize_modules();
+
+    queued_project = nullptr;
 }
 
 void Editor::on_resized(sf::Vector2i new_size)
@@ -667,12 +717,6 @@ void Editor::switch_flex_tab(unsigned int index)
     flex_tabs.at(index)->set_selected(true);
     current_flex_tab = index;
     flex_module = &flex_tabs.at(index)->get_module();
-}
-
-void Editor::create_project(Project* new_project)
-{
-    project = new_project;
-    locked_project = (LockedProject*) project;
 }
 
 void Editor::lock_project()

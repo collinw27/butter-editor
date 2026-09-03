@@ -82,7 +82,9 @@ public:
     void remove_child(GLNode* child);
     void orphan();
     void reparent(GLNode* new_parent);
+    void free_children();
     GLNode* get_parent();
+    const std::vector<GLNode*> get_children();
 
     bool is_visible();
     void set_visible(bool visible);

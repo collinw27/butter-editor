@@ -15,6 +15,7 @@ public:
     ProjectModule(Editor& editor);
 
     virtual void apply_ui_scale() override;
+    virtual void on_notif(int notif_class, int notif_type, size_t num_args, void** arg_ptrs) override;
     void refresh_info();
 };
 

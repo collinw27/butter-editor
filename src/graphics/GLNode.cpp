@@ -81,9 +81,20 @@ void GLNode::reparent(GLNode* new_parent)
         new_parent->add_child(this);
 }
 
+void GLNode::free_children()
+{
+    for (GLNode* child : children)
+        child->orphan();
+}
+
 GLNode* GLNode::get_parent()
 {
     return parent;
+}
+
+const std::vector<GLNode*> GLNode::get_children()
+{
+    return children;
 }
 
 bool GLNode::is_visible()

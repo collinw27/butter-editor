@@ -171,6 +171,7 @@ id_s Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Color c
     // If all checks passed, insert clip
     
     clip_vec.insert(next_clip, std::unique_ptr<Clip>(new_clip));
+    clip_map.insert({new_clip->id, new_clip});
     return new_clip->id;
 }
 
@@ -225,8 +226,8 @@ void Project::delete_clip(id_s clip_id)
     auto it = get_iter_from_id(clip_id);
     if (it == clip_vec.end())
         throw ButterException("Cannot find clip");
-    clip_vec.erase(it);
     clip_map.erase(clip_map.find((*it)->id));
+    clip_vec.erase(it);
 
     void* notif_args[1] = {(void*) &clip_id};
     editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_DELETED, 1, notif_args);

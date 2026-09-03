@@ -18,9 +18,7 @@ FlexTab::FlexTab(Editor& editor, EditorModule* module, std::string name)
 
 FlexTab::~FlexTab()
 {
-    // For now, this class is responsible for its corresponding module
-
-    delete module;
+    
 }
 
 GLNode* FlexTab::get_node()

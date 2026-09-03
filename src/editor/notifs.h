@@ -15,4 +15,15 @@ namespace NOTIF_TIMELINE
     };
 }
 
+namespace NOTIF_PROJECT_INFO
+{
+    constexpr int ID = 2;
+
+    enum Notif
+    {
+        LENGTH_CHANGED
+        // Args: ()
+    };
+}
+
 #endif

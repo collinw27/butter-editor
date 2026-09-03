@@ -65,13 +65,13 @@ private:
     // Flex modules can be toggled between each other using
     // a list of tabs that appear over it
 
-    EditorModule* preview_module;
-    EditorModule* flex_module;
-    TimelineModule* timeline_module;
-    LogModule* log_module;
-    MediaModule* media_module;
-    ProjectModule* project_module;
-    DebugModule* debug_module;
+    EditorModule* preview_module = nullptr;
+    EditorModule* flex_module = nullptr;
+    TimelineModule* timeline_module = nullptr;
+    LogModule* log_module = nullptr;
+    MediaModule* media_module = nullptr;
+    ProjectModule* project_module = nullptr;
+    DebugModule* debug_module = nullptr;
     std::vector<EditorModule*> all_modules;
 
     // Command processing
@@ -80,7 +80,7 @@ private:
 
     // Top and bottom HUD
 
-    CommandBar* command_bar;
+    CommandBar* command_bar = nullptr;
     std::vector<std::unique_ptr<FlexTab>> flex_tabs;
     unsigned int current_flex_tab;
     std::unique_ptr<GLContainer> temp_menu_bar;
@@ -115,9 +115,11 @@ private:
     // See Project.h for explanation of project "locking"
     // Project must be initialized before all modules
     // `project` MUST NOT be stored persistently in any other classes!
+    // See `run()` for information about `queued_project`
 
     LockedProject* locked_project = nullptr;
     Project* project = nullptr;
+    Project* queued_project = nullptr;
 
     // Special information for asynchronous export task
 
@@ -150,9 +152,9 @@ public:
 
     void notify_modules(int notif_class, int notif_type, size_t num_args, void** arg_ptrs);
 
-    void on_timeline_update();
-
 private:
+
+    void load_project(Project* project);
 
     void on_resized(sf::Vector2i new_size);
     void on_mouse_move(sf::Vector2i position);
@@ -165,7 +167,6 @@ private:
 
     void switch_flex_tab(unsigned int index);
 
-    void create_project(Project* new_project);
     void lock_project();
     void unlock_project();
     

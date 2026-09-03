@@ -610,7 +610,7 @@ void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, Input
         if (old_scroll_max != scroll_max)
         {
             update_scroll();
-            editor.on_timeline_update();
+            editor.notify_modules(NOTIF_PROJECT_INFO::ID, NOTIF_PROJECT_INFO::LENGTH_CHANGED, 0, nullptr);
             extend_mode = ExtendMode::NONE;
             editor.set_cursor(sf::Cursor::Type::Arrow);
             TimelineClip* hovered_clip = clip_mem.get_hovered_clip();

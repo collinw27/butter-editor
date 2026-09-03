@@ -98,10 +98,7 @@ std::string Editor::execute_command(CommandResult command)
         block_if_exporting(project);
         if (project != nullptr)
             delete project;
-        create_project(new Project(*this));
-        command_bar->set_status_name(project->get_name());
-        timeline_module->reset();
-        on_timeline_update();
+        queued_project = new Project(*this);
         return "Created new project.";
     }
     case CMD_SAVE:
@@ -130,11 +127,7 @@ std::string Editor::execute_command(CommandResult command)
             delete project;
         try
         {
-            create_project(new Project(*this, command.get_string(0)));
-            locked_project = (LockedProject*) project;
-            command_bar->set_status_name(project->get_name());
-            timeline_module->reset();
-            on_timeline_update();
+            queued_project = new Project(*this, command.get_string(0));
             return "Loaded project \"" + project->get_name() + "\".";
         }
         catch (ProjectLoadException error)
@@ -161,7 +154,6 @@ std::string Editor::execute_command(CommandResult command)
         if (command.get_int(1) <= 0)
             throw ExecuteException("Clip length must be positive.");
         bool successful = project->add_color_clip(command.get_int(0), command.get_int(1), hex_to_color(colors.at(c_index)));
-        on_timeline_update();
         return successful ? "Created clip." : "Could not create clip.";
         */
     }
