@@ -12,6 +12,7 @@
 #include <subprocess.hpp>
 #include "utility/core.h"
 #include "project/clip/Clip.h"
+#include "project/media/MediaItem.h"
 
 // All project loading logic is within this class instead of FileManager
 // This does require duplicating some logic, but this strategy is much quicker
@@ -97,6 +98,8 @@ class Project : public LockedProject
 
     // State
 
+    std::vector<std::unique_ptr<MediaItem>> media_vec;
+    std::unordered_map<id_s, MediaItem*> media_map;
     std::vector<std::unique_ptr<Clip>> clip_vec;
     std::unordered_map<id_s, Clip*> clip_map;
     ExportTask export_task;
@@ -104,6 +107,7 @@ class Project : public LockedProject
     // IDs
 
     id_s next_clip_id = ID_START;
+    id_s next_media_id = ID_START;
 
 public:
 
@@ -119,6 +123,14 @@ public:
     int get_framerate();
     sf::Vector2u get_resolution();
 
+    // Media manipulation/reading
+
+    id_s add_color_media(std::string display_name, sf::Color color);
+    size_t get_media_total();
+    id_s get_media_at_index(size_t index);
+    std::string get_media_name(id_s media_id);
+    sf::Color get_media_color(id_s media_id);
+
     // Timeline manipulation
 
     id_s add_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
@@ -128,8 +140,8 @@ public:
 
     // Timeline reading
 
-    unsigned int get_clip_total();
-    id_s get_clip_at_index(unsigned int index);
+    size_t get_clip_total();
+    id_s get_clip_at_index(size_t index);
     id_s get_clip_at_time(VideoTime time);
     VideoTime get_project_length();
     std::string get_project_length_approx();
@@ -150,16 +162,13 @@ public:
     void save();
     void export_video(std::filesystem::path filepath);
 
-    // IDs
-
-    id_s generate_clip_id();
-
     // Misc
     
     static bool exists(std::string name);
 
 private:
 
+    std::vector<std::unique_ptr<MediaItem>>::iterator get_media_iter(id_s media_id);
     std::vector<std::unique_ptr<Clip>>::iterator get_iter_from_id(id_s clip_id);
     std::vector<std::unique_ptr<Clip>>::iterator get_iter_at_time(VideoTime time);
 

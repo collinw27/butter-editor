@@ -1,10 +1,11 @@
 #include "editor/Editor.h"
 
+#include <stdlib.h>
+#include <regex>
 #include "command/exceptions.h"
 #include "project/exceptions.h"
 #include "utility/FileManager.h"
 #include "utility/file_formats/UserSettings.h"
-#include <stdlib.h>
 
 enum {
     CMD_LOG,
@@ -17,7 +18,8 @@ enum {
     CMD_CREATE_CLIP,
     CMD_EXPORT,
     CMD_SELECT_ALL,
-    CMD_DESELECT
+    CMD_DESELECT,
+    CMD_NEW_COLOR_MEDIA
 };
 
 // Prevent certain operations while exporting
@@ -62,6 +64,10 @@ void Editor::initialize_commands()
     );
     command_parser.define_command(command_parser.new_command("select_all", (int) CMD_SELECT_ALL));
     command_parser.define_command(command_parser.new_command("deselect", (int) CMD_DESELECT));
+    command_parser.define_command(command_parser.new_command("new_color_media", (int) CMD_NEW_COLOR_MEDIA)
+        .add_parameter("name", CommandParser::ParamType::STRING)
+        .add_parameter("hex_color", CommandParser::ParamType::STRING)
+    );
 }
 
 std::string Editor::execute_command(CommandResult command)
@@ -185,6 +191,18 @@ std::string Editor::execute_command(CommandResult command)
     {
         timeline_module->deselect_all();
         return "Deselected all clips.";
+    }
+    case CMD_NEW_COLOR_MEDIA:
+    {
+        block_if_exporting(project);
+
+        std::string media_name = command.get_string(0);
+        std::string color_name = command.get_string(1);
+        std::regex col_regex {"\\#[0-9A-Fa-f]{6}"};
+        if (!std::regex_match(color_name, col_regex))
+            throw ExecuteException("Invalid color");
+        project->add_color_media(media_name, hex_to_color(color_name));
+        return "Created media.";
     }
     }
         

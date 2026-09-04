@@ -12,8 +12,8 @@ class ColorClip : public Clip
 
 public:
 
-    ColorClip(VideoTime start_time, VideoTime length, id_s id, sf::Color color);
-    ColorClip(VideoTime start_time, VideoTime length, id_s id, std::ifstream& file);
+    ColorClip(id_s id, VideoTime start_time, VideoTime length, sf::Color color);
+    ColorClip(id_s id, VideoTime start_time, VideoTime length, std::ifstream& file);
     
     virtual int get_clip_type() override;
     virtual void save(std::ofstream& file) override;

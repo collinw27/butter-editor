@@ -159,10 +159,10 @@ TimelineModule::TimelineModule(Editor& editor)
 
     opt_into_notifs(NOTIF_TIMELINE::ID);
 
-    reset();
+    reload();
 }
 
-void TimelineModule::reset()
+void TimelineModule::reload()
 {
     // Clear pre-existing clips
 

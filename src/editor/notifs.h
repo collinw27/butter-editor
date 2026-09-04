@@ -26,4 +26,15 @@ namespace NOTIF_PROJECT_INFO
     };
 }
 
+namespace NOTIF_MEDIA
+{
+    constexpr int ID = 3;
+
+    enum Notif
+    {
+        MEDIA_CREATED
+        // Args: (id_s* media_id)
+    };
+}
+
 #endif

@@ -102,7 +102,7 @@ class TimelineModule : public EditorModule
 public:
 
     TimelineModule(Editor& editor);
-    void reset();
+    void reload();
 
     virtual void apply_bounds() override;
     virtual void apply_ui_scale() override;

@@ -14,6 +14,7 @@
 #include "project/exceptions.h"
 
 #include "project/clip/ColorClip.h"
+#include "project/media/ColorMedia.h"
 
 void export_async();
 
@@ -44,6 +45,12 @@ Project::Project(Editor& editor) : LockedProject{editor}
 
     framerate = 30;
     resolution = sf::Vector2u(400, 300);
+
+    // The standard project comes with 3 colors (for now)
+
+    add_color_media("Red", sf::Color::Red);
+    add_color_media("Green", sf::Color::Green);
+    add_color_media("Blue", sf::Color::Blue);
 }
 
 Project::Project(Editor& editor, std::string name) : LockedProject{editor}
@@ -65,6 +72,32 @@ Project::Project(Editor& editor, std::string name) : LockedProject{editor}
     file >> int_buffer;
     framerate = int_buffer;
     proj_assert(framerate > 0, "Invalid framerate");
+
+    // Individually load each media item
+
+    int media_total;
+    file >> media_total;
+
+    int media_type;
+    MediaItem* new_media = nullptr;
+    std::string media_name;
+
+    for (int i = 0; i < media_total; ++i)
+    {
+        file >> media_type;
+        file >> media_name;
+
+        switch (static_cast<MediaType>(media_type))
+        {
+        case MediaType::COLOR:
+            new_media = new ColorMedia(++next_media_id, media_name, file);
+        break;
+        default:
+            throw ButterException("Invalid media type: " + std::to_string(media_type));
+        }
+        media_vec.push_back(std::unique_ptr<MediaItem>(new_media));
+        media_map.insert({new_media->id, new_media});
+    }
 
     // Individually load each clip
 
@@ -88,7 +121,7 @@ Project::Project(Editor& editor, std::string name) : LockedProject{editor}
         switch (static_cast<ClipType>(clip_type))
         {
         case ClipType::COLOR:
-            new_clip = new ColorClip(clip_start, clip_length, generate_clip_id(), file);
+            new_clip = new ColorClip(++next_clip_id, clip_start, clip_length, file);
         break;
         default:
             throw ButterException("Invalid clip type: " + std::to_string(clip_type));
@@ -127,6 +160,45 @@ sf::Vector2u Project::get_resolution()
     return resolution;
 }
 
+id_s Project::add_color_media(std::string display_name, sf::Color color)
+{
+    ColorMedia* new_media = new ColorMedia(++next_media_id, display_name, color);
+    media_vec.push_back(std::unique_ptr<MediaItem>(new_media));
+    media_map.insert({new_media->id, new_media});
+
+    id_s media_id = new_media->id;
+    void* notif_args[1] = {(void*) &media_id};
+    editor.notify_modules(NOTIF_MEDIA::ID, NOTIF_MEDIA::MEDIA_CREATED, 1, notif_args);
+    return media_id;
+}
+
+size_t Project::get_media_total()
+{
+    return media_vec.size();
+}
+
+id_s Project::get_media_at_index(size_t index)
+{
+    return media_vec.at(index)->id;
+}
+
+std::string Project::get_media_name(id_s media_id)
+{
+    auto it = get_media_iter(media_id);
+    return (*it)->get_display_name();
+}
+
+sf::Color Project::get_media_color(id_s media_id)
+{
+    auto it = get_media_iter(media_id);
+    MediaItem* media = it->get();
+    if (ColorMedia* color_media = dynamic_cast<ColorMedia*>(media))
+    {
+        return color_media->get_color();
+    }
+    throw ButterException("Unexpected media type");
+}
+
 // Returns whether the operation was successful
 // It can fail if there's no space to insert the clip
 
@@ -136,7 +208,7 @@ id_s Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Color c
     // Find the first position it can slot in before something
     // If this doesn't exist, insert it at the end
 
-    ColorClip* new_clip = new ColorClip(start_time, length, generate_clip_id(), color);
+    ColorClip* new_clip = new ColorClip(++next_clip_id, start_time, length, color);
     auto next_clip = clip_vec.begin();
     while (next_clip < clip_vec.end())
     {
@@ -233,12 +305,12 @@ void Project::delete_clip(id_s clip_id)
     editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_DELETED, 1, notif_args);
 }
 
-unsigned int Project::get_clip_total()
+size_t Project::get_clip_total()
 {
     return clip_vec.size();
 }
 
-id_s Project::get_clip_at_index(unsigned int index)
+id_s Project::get_clip_at_index(size_t index)
 {
     try
     {
@@ -420,6 +492,17 @@ void Project::save()
     file << resolution.x << " " << resolution.y << " ";
     file << framerate << " ";
 
+    // Start with number specifying # of media items
+    // Then, each media item begins with its media type (enum value)
+
+    file << media_vec.size() << " ";
+    for (int i = 0; i < media_vec.size(); ++i)
+    {
+        MediaItem* media = media_vec.at(i).get();
+        file << media->get_media_type() << " " << media->get_display_name() << " ";
+        media->save(file);
+    }
+
     // Timeline starts with a number specifying the number of clips
     // Then, each clip begins with its clip type (enum value), start position, and length
     // Each clip is then free to define its own serialization methods
@@ -487,12 +570,6 @@ void Project::export_video(std::filesystem::path filepath)
     export_task.thread.detach();
 }
 
-uint32_t Project::generate_clip_id()
-{
-    ++next_clip_id;
-    return next_clip_id;
-}
-
 bool Project::exists(std::string name)
 {
     return std::filesystem::exists(FileManager().get_data_path("projects/" + name + ".proj"));
@@ -553,9 +630,21 @@ void Project::export_async()
     lock.unlock();
 }
 
-// Used internally by `get_clip_at_time()`
-// Exists as an intermediate function since having access to the iterator
-// is useful for a lot of member functions to save time
+std::vector<std::unique_ptr<MediaItem>>::iterator Project::get_media_iter(id_s media_id)
+{
+    auto it = std::find_if(media_vec.begin(), media_vec.end(), [media_id] (std::unique_ptr<MediaItem>& smart_ptr) { return smart_ptr->id == media_id; } );
+    if (it == media_vec.end())
+        throw ButterException("Cannot find clip");
+    return it;
+}
+
+std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_from_id(id_s clip_id)
+{
+    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip_id] (std::unique_ptr<Clip>& smart_ptr) { return smart_ptr->id == clip_id; } );
+    if (it == clip_vec.end())
+        throw ButterException("Cannot find clip");
+    return it;
+}
 
 std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_at_time(VideoTime time)
 {
@@ -581,12 +670,4 @@ std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_at_time(VideoTime
             return it;
     }
     return clip_vec.end();
-}
-
-std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_from_id(id_s clip_id)
-{
-    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip_id] (std::unique_ptr<Clip>& smart_ptr) { return smart_ptr->id == clip_id; } );
-    if (it == clip_vec.end())
-        throw ButterException("Cannot find clip");
-    return it;
 }
