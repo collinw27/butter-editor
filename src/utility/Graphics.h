@@ -47,6 +47,7 @@ class GraphicsSingleton
 
     GLFont* main_font_obj;
     GLFont* mono_font_obj;
+    sf::Image error_image_obj;
 
     glm::mat4 world_to_view_matrix;
     glm::mat4 world_to_screen_matrix;
@@ -68,6 +69,7 @@ public:
     
     GLFont* main_font();
     GLFont* mono_font();
+    const sf::Image& error_image();
 
     std::string get_builtin_shader(BuiltinShader shader_id);
     GLuint link_shader(BuiltinShader vertex_shader, BuiltinShader fragment_shader);

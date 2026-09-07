@@ -13,6 +13,7 @@
 #include "utility/core.h"
 #include "project/clip/Clip.h"
 #include "project/media/MediaItem.h"
+#include "graphics/GLTexture.h"
 
 // All project loading logic is within this class instead of FileManager
 // This does require duplicating some logic, but this strategy is much quicker
@@ -125,18 +126,12 @@ public:
 
     // Media manipulation/reading
 
-    id_s add_color_media(std::string display_name, sf::Color color);
     size_t get_media_total();
     id_s get_media_at_index(size_t index);
     std::string get_media_name(id_s media_id);
-    sf::Color get_media_color(id_s media_id);
-
-    // Timeline manipulation
-
-    id_s add_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
-    void set_clip_start(id_s clip_id, VideoTime start);
-    void set_clip_end(id_s clip_id, VideoTime end);
-    void delete_clip(id_s clip_id);
+    const GLTexture& get_media_thumbnail(id_s media_id);
+    id_s add_color_media(std::string display_name, sf::Color color);
+    id_s add_image_media(std::string display_name, std::string filepath);
 
     // Timeline reading
 
@@ -149,6 +144,13 @@ public:
     VideoTime get_gap_ahead(VideoTime time);
     VideoTime get_gap_behind(VideoTime time);
     VideoTime get_chain_ahead(VideoTime time);
+
+    // Timeline manipulation
+
+    id_s add_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
+    void set_clip_start(id_s clip_id, VideoTime start);
+    void set_clip_end(id_s clip_id, VideoTime end);
+    void delete_clip(id_s clip_id);
 
     // Clip information
 
@@ -165,6 +167,8 @@ public:
     // Misc
     
     static bool exists(std::string name);
+    static std::string read_string(std::ifstream& file);
+    static void write_string(std::ofstream& file, const std::string& str);
 
 private:
 

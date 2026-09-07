@@ -3,21 +3,37 @@
 #include "utility/core.h"
 #include "utility/Graphics.h"
 
-GLTexture::GLTexture(std::filesystem::path tex_location)
+GLTexture::GLTexture(std::filesystem::path image_location)
 {
-    Graphics().window_set_active(true);
-
     // Load raw texture data
     // SFML used instead of STB since it's readily available
 
-    sf::Image tex_image;
-    bool success = tex_image.loadFromFile(tex_location);
+    bool success = tex_image.loadFromFile(image_location);
     if (!success)
-        throw ButterException("Cannot load texture \"" + tex_location.string() + "\"");
-    size = tex_image.getSize();
+        throw ButterException("Cannot load texture \"" + image_location.string() + "\"");
+    finish_setup();
+}
+
+GLTexture::GLTexture(const sf::Image& source_image)
+    : tex_image{source_image}
+{
+    tex_image = source_image;
+    finish_setup();
+}
+
+GLTexture::GLTexture(const GLTexture& source)
+{
+    tex_image = source.tex_image;
+    finish_setup();
+}
+
+void GLTexture::finish_setup()
+{
+    Graphics().window_set_active(true);
 
     // Generate texture
 
+    size = tex_image.getSize();
     glGenTextures(1, &texture_ID);
     glBindTexture(GL_TEXTURE_2D, texture_ID);
     glTexImage2D(
@@ -49,12 +65,12 @@ GLTexture::GLTexture(std::filesystem::path tex_location)
 
 GLTexture::~GLTexture() {}
 
-GLuint GLTexture::get_texture_ID()
+GLuint GLTexture::get_texture_ID() const
 {
     return texture_ID;
 }
 
-sf::Vector2f GLTexture::get_size()
+sf::Vector2f GLTexture::get_size() const
 {
     return sf::Vector2f(size);
 }

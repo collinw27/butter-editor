@@ -1,7 +1,9 @@
 #ifndef MEDIA_ITEM_H
 #define MEDIA_ITEM_H
 
+#include <SFML/Graphics.hpp>
 #include "utility/core.h"
+#include "graphics/GLTexture.h"
 
 // Enum for serializing media instances
 // Having to store all subclasses in this file feels weird, but
@@ -10,7 +12,8 @@
 enum class MediaType
 {
     EMPTY,
-    COLOR
+    COLOR,
+    IMAGE
 };
 
 class MediaItem
@@ -27,8 +30,9 @@ public:
 
     MediaItem(id_s id, std::string display_name);
     std::string get_display_name();
-    virtual int get_media_type() = 0;
 
+    virtual int get_media_type() = 0;
+    virtual const GLTexture& get_thumbnail() = 0;
     virtual void save(std::ofstream& file);
 };
 

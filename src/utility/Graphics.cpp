@@ -70,6 +70,18 @@ void GraphicsSingleton::init(sf::VideoMode mode, std::string title, uint32_t sty
 
     main_font_obj = new GLFont(FileManager().get_res_path("font/Lato-Bold.ttf"));
     mono_font_obj = new GLFont(FileManager().get_res_path("font/Consolas.ttf"));
+    
+    // Create error image (simple checkerboard)
+
+    constexpr int ISIZE = 32;
+    error_image_obj = sf::Image(sf::Vector2u(ISIZE, ISIZE), sf::Color::White);
+    for (int x = 0; x < ISIZE; ++x)
+    {
+        for (int y = 0; y < ISIZE; ++y)
+        {
+            error_image_obj.setPixel(sf::Vector2u(x, y), ((x * 2 < ISIZE) != (y * 2 < ISIZE)) ? sf::Color::Red : sf::Color::Black);
+        }
+    }
 }
 
 void GraphicsSingleton::display(GLRootNode* root)
@@ -127,6 +139,11 @@ GLFont* GraphicsSingleton::main_font()
 GLFont* GraphicsSingleton::mono_font()
 {
     return mono_font_obj;
+}
+
+const sf::Image& GraphicsSingleton::error_image()
+{
+    return error_image_obj;
 }
 
 std::string GraphicsSingleton::get_builtin_shader(BuiltinShader shader_id)

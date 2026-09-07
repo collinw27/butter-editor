@@ -11,12 +11,13 @@
 #include "utility/core.h"
 #include "utility/Input.h"
 #include "graphics/nodes.h"
+#include "project/Project.h"
 
 struct MediaData
 {
     id_s id;
-    sf::Color color;
-    std::unique_ptr<GLRectangle> color_node;
+    std::unique_ptr<GLTexture> thumbnail_tex;
+    std::unique_ptr<GLSprite> thumbnail_node;
     std::unique_ptr<GLText> text_node;
 };
 
@@ -41,6 +42,7 @@ public:
 
 private:
 
+    void add_item(Project* project, id_s media_id);
     void render_items();
     sf::IntRect get_item_bounds(int index);
 };

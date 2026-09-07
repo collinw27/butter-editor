@@ -15,6 +15,7 @@
 
 #include "project/clip/ColorClip.h"
 #include "project/media/ColorMedia.h"
+#include "project/media/ImageMedia.h"
 
 void export_async();
 
@@ -85,12 +86,15 @@ Project::Project(Editor& editor, std::string name) : LockedProject{editor}
     for (int i = 0; i < media_total; ++i)
     {
         file >> media_type;
-        file >> media_name;
+        media_name = read_string(file);
 
         switch (static_cast<MediaType>(media_type))
         {
         case MediaType::COLOR:
             new_media = new ColorMedia(++next_media_id, media_name, file);
+        break;
+        case MediaType::IMAGE:
+            new_media = new ImageMedia(++next_media_id, media_name, file);
         break;
         default:
             throw ButterException("Invalid media type: " + std::to_string(media_type));
@@ -160,18 +164,6 @@ sf::Vector2u Project::get_resolution()
     return resolution;
 }
 
-id_s Project::add_color_media(std::string display_name, sf::Color color)
-{
-    ColorMedia* new_media = new ColorMedia(++next_media_id, display_name, color);
-    media_vec.push_back(std::unique_ptr<MediaItem>(new_media));
-    media_map.insert({new_media->id, new_media});
-
-    id_s media_id = new_media->id;
-    void* notif_args[1] = {(void*) &media_id};
-    editor.notify_modules(NOTIF_MEDIA::ID, NOTIF_MEDIA::MEDIA_CREATED, 1, notif_args);
-    return media_id;
-}
-
 size_t Project::get_media_total()
 {
     return media_vec.size();
@@ -188,121 +180,34 @@ std::string Project::get_media_name(id_s media_id)
     return (*it)->get_display_name();
 }
 
-sf::Color Project::get_media_color(id_s media_id)
+const GLTexture& Project::get_media_thumbnail(id_s media_id)
 {
     auto it = get_media_iter(media_id);
-    MediaItem* media = it->get();
-    if (ColorMedia* color_media = dynamic_cast<ColorMedia*>(media))
-    {
-        return color_media->get_color();
-    }
-    throw ButterException("Unexpected media type");
+    return (*it)->get_thumbnail();
 }
 
-// Returns whether the operation was successful
-// It can fail if there's no space to insert the clip
-
-id_s Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
+id_s Project::add_color_media(std::string display_name, sf::Color color)
 {
-    // Add the color clip to the timeline
-    // Find the first position it can slot in before something
-    // If this doesn't exist, insert it at the end
+    ColorMedia* new_media = new ColorMedia(++next_media_id, display_name, color);
+    media_vec.push_back(std::unique_ptr<MediaItem>(new_media));
+    media_map.insert({new_media->id, new_media});
 
-    ColorClip* new_clip = new ColorClip(++next_clip_id, start_time, length, color);
-    auto next_clip = clip_vec.begin();
-    while (next_clip < clip_vec.end())
-    {
-        if (start_time < (*next_clip)->get_start_time())
-        {
-            // The clip afterward can trim the length of the clip
-            // (0 length = no clip inserted)
-
-            VideoTime new_length = std::min(length, (*next_clip)->get_start_time() - start_time);
-            if (new_length <= 0)
-                return ID_NULL;
-            new_clip->set_length(new_length);
-
-            // If this passed, proceed to clip inserting logic
-            // (Takes place after loop to also account for case where the clip
-            // is inserted at the end of the vector)
-
-            break;
-        }
-        ++next_clip;
-    }
-
-    // If the start is placed inside another clip, no clip is created
-
-    if (next_clip != clip_vec.begin())
-    {
-        auto prev_clip = next_clip - 1;
-        if ((*prev_clip)->get_end_time() > start_time)
-            return ID_NULL;
-    }
-
-    // If all checks passed, insert clip
-    
-    clip_vec.insert(next_clip, std::unique_ptr<Clip>(new_clip));
-    clip_map.insert({new_clip->id, new_clip});
-    return new_clip->id;
+    id_s media_id = new_media->id;
+    void* notif_args[1] = {(void*) &media_id};
+    editor.notify_modules(NOTIF_MEDIA::ID, NOTIF_MEDIA::MEDIA_CREATED, 1, notif_args);
+    return media_id;
 }
 
-void Project::set_clip_start(id_s clip_id, VideoTime start)
+id_s Project::add_image_media(std::string display_name, std::string filepath)
 {
-    // This method exits prematurely if this clip will cut into its neighbor
-    // or if it will result in a clip with length 0
+    ImageMedia* new_media = new ImageMedia(++next_media_id, display_name, filepath);
+    media_vec.push_back(std::unique_ptr<MediaItem>(new_media));
+    media_map.insert({new_media->id, new_media});
 
-    auto it = get_iter_from_id(clip_id);
-    Clip* clip = (*it).get();
-
-    if (start >= clip->get_end_time())
-        return;
-    if (it != clip_vec.begin())
-    {
-        Clip* clip_before = (it - 1)->get();
-        if (start < clip_before->get_end_time())
-            return;
-    }
-    VideoTime old_end = clip->get_end_time();
-    clip->set_start_time(start);
-    clip->set_end_time(old_end);
-    
-    void* notif_args[1] = {(void*) &clip_id};
-    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED, 1, notif_args);
-}
-
-void Project::set_clip_end(id_s clip_id, VideoTime end)
-{
-    // This method exits prematurely if this clip will cut into its neighbor,
-    // or if it will result in a clip with length 0
-
-    auto it = get_iter_from_id(clip_id);
-    Clip* clip = (*it).get();
-
-    if (end <= clip->get_start_time())
-        return;
-    if (it + 1 != clip_vec.end())
-    {
-        Clip* clip_after = (it + 1)->get();
-        if (end > clip_after->get_start_time())
-            return;
-    }
-    clip->set_end_time(end);
-    
-    void* notif_args[1] = {(void*) &clip_id};
-    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED, 1, notif_args);
-}
-
-void Project::delete_clip(id_s clip_id)
-{
-    auto it = get_iter_from_id(clip_id);
-    if (it == clip_vec.end())
-        throw ButterException("Cannot find clip");
-    clip_map.erase(clip_map.find((*it)->id));
-    clip_vec.erase(it);
-
-    void* notif_args[1] = {(void*) &clip_id};
-    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_DELETED, 1, notif_args);
+    id_s media_id = new_media->id;
+    void* notif_args[1] = {(void*) &media_id};
+    editor.notify_modules(NOTIF_MEDIA::ID, NOTIF_MEDIA::MEDIA_CREATED, 1, notif_args);
+    return media_id;
 }
 
 size_t Project::get_clip_total()
@@ -448,6 +353,112 @@ VideoTime Project::get_chain_ahead(VideoTime time)
     return chain_length;
 }
 
+// Returns whether the operation was successful
+// It can fail if there's no space to insert the clip
+
+id_s Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
+{
+    // Add the color clip to the timeline
+    // Find the first position it can slot in before something
+    // If this doesn't exist, insert it at the end
+
+    ColorClip* new_clip = new ColorClip(++next_clip_id, start_time, length, color);
+    auto next_clip = clip_vec.begin();
+    while (next_clip < clip_vec.end())
+    {
+        if (start_time < (*next_clip)->get_start_time())
+        {
+            // The clip afterward can trim the length of the clip
+            // (0 length = no clip inserted)
+
+            VideoTime new_length = std::min(length, (*next_clip)->get_start_time() - start_time);
+            if (new_length <= 0)
+                return ID_NULL;
+            new_clip->set_length(new_length);
+
+            // If this passed, proceed to clip inserting logic
+            // (Takes place after loop to also account for case where the clip
+            // is inserted at the end of the vector)
+
+            break;
+        }
+        ++next_clip;
+    }
+
+    // If the start is placed inside another clip, no clip is created
+
+    if (next_clip != clip_vec.begin())
+    {
+        auto prev_clip = next_clip - 1;
+        if ((*prev_clip)->get_end_time() > start_time)
+            return ID_NULL;
+    }
+
+    // If all checks passed, insert clip
+    
+    clip_vec.insert(next_clip, std::unique_ptr<Clip>(new_clip));
+    clip_map.insert({new_clip->id, new_clip});
+    return new_clip->id;
+}
+
+void Project::set_clip_start(id_s clip_id, VideoTime start)
+{
+    // This method exits prematurely if this clip will cut into its neighbor
+    // or if it will result in a clip with length 0
+
+    auto it = get_iter_from_id(clip_id);
+    Clip* clip = (*it).get();
+
+    if (start >= clip->get_end_time())
+        return;
+    if (it != clip_vec.begin())
+    {
+        Clip* clip_before = (it - 1)->get();
+        if (start < clip_before->get_end_time())
+            return;
+    }
+    VideoTime old_end = clip->get_end_time();
+    clip->set_start_time(start);
+    clip->set_end_time(old_end);
+    
+    void* notif_args[1] = {(void*) &clip_id};
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED, 1, notif_args);
+}
+
+void Project::set_clip_end(id_s clip_id, VideoTime end)
+{
+    // This method exits prematurely if this clip will cut into its neighbor,
+    // or if it will result in a clip with length 0
+
+    auto it = get_iter_from_id(clip_id);
+    Clip* clip = (*it).get();
+
+    if (end <= clip->get_start_time())
+        return;
+    if (it + 1 != clip_vec.end())
+    {
+        Clip* clip_after = (it + 1)->get();
+        if (end > clip_after->get_start_time())
+            return;
+    }
+    clip->set_end_time(end);
+    
+    void* notif_args[1] = {(void*) &clip_id};
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED, 1, notif_args);
+}
+
+void Project::delete_clip(id_s clip_id)
+{
+    auto it = get_iter_from_id(clip_id);
+    if (it == clip_vec.end())
+        throw ButterException("Cannot find clip");
+    clip_map.erase(clip_map.find((*it)->id));
+    clip_vec.erase(it);
+
+    void* notif_args[1] = {(void*) &clip_id};
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_DELETED, 1, notif_args);
+}
+
 // These methods have no error checking for nonexistent clips!
 
 VideoTime Project::get_clip_start(id_s clip_id)
@@ -499,7 +510,8 @@ void Project::save()
     for (int i = 0; i < media_vec.size(); ++i)
     {
         MediaItem* media = media_vec.at(i).get();
-        file << media->get_media_type() << " " << media->get_display_name() << " ";
+        file << media->get_media_type() << " ";
+        write_string(file, media->get_display_name());
         media->save(file);
     }
 
@@ -573,6 +585,28 @@ void Project::export_video(std::filesystem::path filepath)
 bool Project::exists(std::string name)
 {
     return std::filesystem::exists(FileManager().get_data_path("projects/" + name + ".proj"));
+}
+
+std::string Project::read_string(std::ifstream& file)
+{
+    // Keep reading characters until EOF or null terminator
+
+    std::string output;
+    char c;
+    file.read(&c, 1);
+    while (!file.eof())
+    {
+        file.read(&c, 1);
+        if (c == '\0')
+            break;
+        output += c;
+    }
+    return output;
+}
+
+void Project::write_string(std::ofstream& file, const std::string& str)
+{
+    file << str << '\0' << ' ';
 }
 
 void Project::proj_assert(bool condition, std::string fail_msg)

@@ -19,7 +19,8 @@ enum {
     CMD_EXPORT,
     CMD_SELECT_ALL,
     CMD_DESELECT,
-    CMD_NEW_COLOR_MEDIA
+    CMD_NEW_COLOR_MEDIA,
+    CMD_NEW_IMAGE_MEDIA
 };
 
 // Prevent certain operations while exporting
@@ -67,6 +68,10 @@ void Editor::initialize_commands()
     command_parser.define_command(command_parser.new_command("new_color_media", (int) CMD_NEW_COLOR_MEDIA)
         .add_parameter("name", CommandParser::ParamType::STRING)
         .add_parameter("hex_color", CommandParser::ParamType::STRING)
+    );
+    command_parser.define_command(command_parser.new_command("new_image_media", (int) CMD_NEW_IMAGE_MEDIA)
+        .add_parameter("name", CommandParser::ParamType::STRING)
+        .add_parameter("filepath", CommandParser::ParamType::STRING)
     );
 }
 
@@ -202,6 +207,15 @@ std::string Editor::execute_command(CommandResult command)
         if (!std::regex_match(color_name, col_regex))
             throw ExecuteException("Invalid color");
         project->add_color_media(media_name, hex_to_color(color_name));
+        return "Created media.";
+    }
+    case CMD_NEW_IMAGE_MEDIA:
+    {
+        block_if_exporting(project);
+
+        std::string media_name = command.get_string(0);
+        std::string filepath = command.get_string(1);
+        project->add_image_media(media_name, filepath);
         return "Created media.";
     }
     }
