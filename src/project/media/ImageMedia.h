@@ -18,8 +18,8 @@ public:
     ImageMedia(id_s id, std::string display_name, std::filesystem::path image_path);
     ImageMedia(id_s id, std::string display_name, std::ifstream& file);
     
-    virtual int get_media_type();
-    virtual const GLTexture& get_thumbnail() override;
+    virtual MediaType get_media_type();
+    virtual const GLTexture* get_thumbnail() override;
     virtual void save(std::ofstream& file) override;
 };
 

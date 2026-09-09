@@ -1,78 +1,85 @@
-#include "graphics/GLSprite.h"
+#include "graphics/GLShaderRectangle.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
+#include "utility/core.h"
 #include "utility/Graphics.h"
 
-GLSprite::GLSprite(GLNode* parent, const GLTexture* texture, sf::Vector2f position)
+GLShaderRectangle::GLShaderRectangle(GLNode* parent, GLShaderProgram* program, sf::Vector2f position, sf::Vector2f size)
     : GLNode{parent}
 {
-    this->texture = texture;
     this->position = position;
-    size = this->texture->get_size();
+    this->size = size;
+    shader_program = std::unique_ptr<GLShaderProgram>(program);
 }
 
-void GLSprite::init()
+// `setup_GL()` called from `init()` to allow running virtual functions
+// responsible for making sure internal values are correct
+
+void GLShaderRectangle::init()
 {
     GLNode::init();
     setup_GL();
 }
 
-GLSprite* GLSprite::create(GLNode* parent, const GLTexture* texture, sf::Vector2f position)
+GLShaderRectangle* GLShaderRectangle::create(GLNode* parent, GLShaderProgram* program, sf::Vector2f position, sf::Vector2f size)
 {
-    GLSprite* instance = new GLSprite(parent, texture, position);
+    GLShaderRectangle* instance = new GLShaderRectangle(parent, program, position, size);
     instance->init();
     return instance;
 }
 
-void GLSprite::on_window_resized()
+void GLShaderRectangle::on_window_resized()
 {
     update_model_matrix();
 }
 
-void GLSprite::draw()
+void GLShaderRectangle::draw()
 {
     sf::RenderWindow& window = Graphics().get_window();
-    glUseProgram(shader_program);
     glBindVertexArray(VAO);
 
-    // `tex` might not be default initialized to 0 on all systems
-    
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture->get_texture_ID());
-    glUniform1i(glGetUniformLocation(shader_program, "tex"), 0);
+    shader_program->prepare_shader();
 
-    GLuint model_loc = glGetUniformLocation(shader_program, "model");
+    GLuint model_loc = glGetUniformLocation(shader_program->shader_program, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(u_model_mat));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+
+    shader_program->after_shader();
 
     GLNode::draw();
 }
 
-void GLSprite::apply_global_matrix()
+void GLShaderRectangle::apply_global_matrix()
 {
     update_model_matrix();
 }
 
-sf::Vector2f GLSprite::get_size()
+sf::Vector2f GLShaderRectangle::get_size()
 {
     return size;
 }
 
-sf::Vector2f GLSprite::get_half_size()
+void GLShaderRectangle::set_size(sf::Vector2f size)
 {
-    return size / 2.f;
+    this->size = size;
+    update_model_matrix();
 }
 
-void GLSprite::setup_GL()
+GLShaderProgram* GLShaderRectangle::get_shader()
+{
+    return shader_program.get();
+}
+
+void GLShaderRectangle::setup_GL()
 {
     Graphics().window_set_active(true);
 
-    shader_program = Graphics().link_shader(BuiltinShader::V_TEX_RECT, BuiltinShader::F_TEX_RECT);
+    // The corner is on the origin to make scaling easy
+    // Negative y coordinate is used for parity with GLNode position
     
     GLfloat vertices[] = {
         0.f, 0.f, 0.f, 0.f, 0.f,
@@ -101,9 +108,13 @@ void GLSprite::setup_GL()
     Graphics().window_set_active(false);
 }
 
-void GLSprite::update_model_matrix()
+void GLShaderRectangle::update_model_matrix()
 {
-    // See GLRectangle
+    // Our coordinates range from (0, 0) -> (window_width, window_height),
+    // whereas OpenGL coordinate range from (-1, -1) -> (1, 1)
+    // Note that this is where the factor of 2 comes from: 1 - (-1)
+    // These transformations should be self-explanatory, but note that
+    // these are applied in reverse order as per matrix multiplication convention
 
     u_model_mat = glm::scale(glm::mat4(1), glm::vec3(size.x, size.y, 1.f));
     u_model_mat = Graphics().world_to_view() * global_matrix * u_model_mat;

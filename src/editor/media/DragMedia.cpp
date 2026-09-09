@@ -2,13 +2,18 @@
 
 #include "graphics/GLRectangle.h"
 
-DragMedia::DragMedia(sf::Color color)
-    : media_color{color}
-{}
+DragMedia::DragMedia(id_s media_id, GLTexture* thumbnail_tex)
+    : media_id{media_id}, thumbnail_tex{thumbnail_tex}
+{
+    this->thumbnail_tex = thumbnail_tex;
+}
 
 void DragMedia::create_node(GLNode* parent)
 {
-    GLRectangle* node = GLRectangle::create(parent, sf::Vector2f(), sf::Vector2f(50, 50));
-    node->set_fill_color(media_color);
+    // Height scaled down to 40
+    // Width can be arbitrarily large/small
+
+    GLSprite* node = GLSprite::create(parent, thumbnail_tex);
+    node->set_scale(sf::Vector2f(40, 40) / thumbnail_tex->get_size().y);
     visible_node = node;
 }

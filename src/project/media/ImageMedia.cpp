@@ -2,6 +2,12 @@
 
 #include "utility/FileManager.h"
 #include "utility/Graphics.h"
+#include "project/types.h"
+
+// Importing Project is not ideal, but also not a big problem
+// since only static helper methods are used
+// These methods should probably just be placed in another file
+
 #include "project/Project.h"
 
 ImageMedia::ImageMedia(id_s id, std::string display_name, std::filesystem::path image_path)
@@ -24,14 +30,14 @@ ImageMedia::ImageMedia(id_s id, std::string display_name, std::ifstream& file)
         this->image_tex.reset(new GLTexture(Graphics().error_image()));
 }
 
-int ImageMedia::get_media_type()
+MediaType ImageMedia::get_media_type()
 {
-    return (int) MediaType::IMAGE;
+    return MediaType::IMAGE;
 }
 
-const GLTexture& ImageMedia::get_thumbnail()
+const GLTexture* ImageMedia::get_thumbnail()
 {
-    return *image_tex.get();
+    return image_tex.get();
 }
 
 void ImageMedia::save(std::ofstream& file)

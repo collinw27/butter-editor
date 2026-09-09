@@ -55,11 +55,14 @@ void MediaModule::on_mouse_press(sf::Vector2i position, bool focused, InputButto
         // There's a more efficient way to resolve this than using a for loop,
         // but it's fine for the time being
 
+        Project* project = editor.get_project();
         for (int i = 0; i < media_vec.size(); ++i)
         {
             if (get_item_bounds(i).contains(position))
             {
-                editor.set_drag_event(std::unique_ptr<DragMedia>(new DragMedia(sf::Color::White)));
+                id_s media_id = project->get_media_at_index(i);
+                GLTexture* thumbnail_tex = new GLTexture(*project->get_media_thumbnail(media_id));
+                editor.set_drag_event(std::unique_ptr<DragMedia>(new DragMedia(media_id, thumbnail_tex)));
                 break;
             }
         }
@@ -102,13 +105,13 @@ void MediaModule::on_notif(int notif_class, int notif_type, size_t num_args, voi
 
 void MediaModule::add_item(Project* project, id_s media_id)
 {
-    GLTexture* thumbnail_tex = new GLTexture(project->get_media_thumbnail(media_id));
+    const GLTexture* thumbnail_tex = project->get_media_thumbnail(media_id);
     GLSprite* thumbnail_node = GLSprite::create(container.get(), thumbnail_tex);
     thumbnail_node->set_scale(sf::Vector2f(12, 12).componentWiseDiv(sf::Vector2f(thumbnail_tex->get_size())));
     GLText* text_node = GLText::create(container.get(), Graphics().mono_font(), 0u, project->get_media_name(media_id));
     media_vec.push_back(MediaData{
         media_id,
-        std::unique_ptr<GLTexture>(thumbnail_tex),
+        thumbnail_tex,
         std::unique_ptr<GLSprite>(thumbnail_node),
         std::unique_ptr<GLText>(text_node)
     });

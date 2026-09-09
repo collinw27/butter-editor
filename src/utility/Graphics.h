@@ -33,7 +33,8 @@ enum class BuiltinShader
     F_RECT,
     F_RECT_OUTLINED,
     F_TEX_RECT,
-    F_GLYPH
+    F_GLYPH,
+    F_CLIP_THUMBNAIL
 };
 
 class GraphicsSingleton

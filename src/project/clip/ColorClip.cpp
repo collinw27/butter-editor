@@ -1,11 +1,13 @@
 #include "project/clip/ColorClip.h"
 
 #include "utility/core.h"
+#include "project/types.h"
 
 ColorClip::ColorClip(id_s id, VideoTime start_time, VideoTime length, sf::Color color)
     : Clip(start_time, length, id)
 {
     this->color = color;
+    thumbnail_tex.reset(new GLTexture(sf::Image(sf::Vector2u(8, 8), color)));
 }
 
 ColorClip::ColorClip(id_s id, VideoTime start_time, VideoTime length, std::ifstream& file)
@@ -14,11 +16,17 @@ ColorClip::ColorClip(id_s id, VideoTime start_time, VideoTime length, std::ifstr
     std::string hex_color;
     file >> hex_color;
     color = hex_to_color("#" + hex_color);
+    thumbnail_tex.reset(new GLTexture(sf::Image(sf::Vector2u(8, 8), color)));
 }
 
-int ColorClip::get_clip_type()
+ClipType ColorClip::get_clip_type()
 {
-    return (int) ClipType::COLOR;
+    return ClipType::COLOR;
+}
+
+const GLTexture* ColorClip::get_thumbnail()
+{
+    return thumbnail_tex.get();
 }
 
 void ColorClip::save(std::ofstream& file)

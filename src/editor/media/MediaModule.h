@@ -16,7 +16,7 @@
 struct MediaData
 {
     id_s id;
-    std::unique_ptr<GLTexture> thumbnail_tex;
+    const GLTexture* thumbnail_tex;
     std::unique_ptr<GLSprite> thumbnail_node;
     std::unique_ptr<GLText> text_node;
 };

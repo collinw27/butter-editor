@@ -11,6 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <subprocess.hpp>
 #include "utility/core.h"
+#include "project/types.h"
 #include "project/clip/Clip.h"
 #include "project/media/MediaItem.h"
 #include "graphics/GLTexture.h"
@@ -129,7 +130,8 @@ public:
     size_t get_media_total();
     id_s get_media_at_index(size_t index);
     std::string get_media_name(id_s media_id);
-    const GLTexture& get_media_thumbnail(id_s media_id);
+    const GLTexture* get_media_thumbnail(id_s media_id);
+    MediaType get_media_type(id_s media_id);
     id_s add_color_media(std::string display_name, sf::Color color);
     id_s add_image_media(std::string display_name, std::string filepath);
 
@@ -138,6 +140,7 @@ public:
     size_t get_clip_total();
     id_s get_clip_at_index(size_t index);
     id_s get_clip_at_time(VideoTime time);
+    const GLTexture* get_clip_thumbnail(id_s clip_id);
     VideoTime get_project_length();
     std::string get_project_length_approx();
     std::string to_string(VideoTime time);
@@ -148,6 +151,8 @@ public:
     // Timeline manipulation
 
     id_s add_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
+    id_s add_color_clip(VideoTime start_time, VideoTime length, id_s media_id);
+    id_s add_image_clip(VideoTime start_time, VideoTime length, id_s media_id);
     void set_clip_start(id_s clip_id, VideoTime start);
     void set_clip_end(id_s clip_id, VideoTime end);
     void delete_clip(id_s clip_id);
@@ -157,7 +162,7 @@ public:
     VideoTime get_clip_start(id_s clip_id);
     VideoTime get_clip_length(id_s clip_id);
     VideoTime get_clip_end(id_s clip_id);
-    sf::Color get_clip_color(id_s clip_id);
+    sf::Color get_clip_bg_color(id_s clip_id);
 
     // Output
     
@@ -175,6 +180,8 @@ private:
     std::vector<std::unique_ptr<MediaItem>>::iterator get_media_iter(id_s media_id);
     std::vector<std::unique_ptr<Clip>>::iterator get_iter_from_id(id_s clip_id);
     std::vector<std::unique_ptr<Clip>>::iterator get_iter_at_time(VideoTime time);
+
+    id_s add_generic_clip(VideoTime start_time, VideoTime length, Clip* new_clip);
 
     void proj_assert(bool condition, std::string fail_msg);
     void write_frame_rgb24(VideoTime time, std::uint8_t* buffer);

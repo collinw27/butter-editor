@@ -5,7 +5,8 @@
 #include "utility/core.h"
 #include "project/clip/Clip.h"
 #include "project/Project.h"
-#include "graphics/GLRectangle.h"
+#include "graphics/nodes.h"
+#include "graphics/GLShaderRectangle.h"
 
 // The state of each instance should reflect the state of the clip
 // within the Project instance
@@ -22,10 +23,13 @@ public:
 
 private:
 
+    std::unique_ptr<GLNode> node;
     std::unique_ptr<GLRectangle> rect;
+    std::unique_ptr<GLShaderRectangle> thumbnail;
     std::unique_ptr<GLRectangle> border;
     sf::Color thumbnail_color;
     bool is_selected = false;
+    float t_scale = 1.f;
     VideoTime clip_start = 0;
     VideoTime clip_length = 0;
 
@@ -34,11 +38,13 @@ public:
     TimelineClip(id_s clip_id, GLNode* container);
     virtual ~TimelineClip() {}
 
+    GLNode* get_node();
     GLRectangle* get_rect();
+    GLShaderRectangle* get_thumbnail();
     GLRectangle* get_border();
 
     bool selected();
-    void render_selected(GLNode* container, float t_scale);
+    void render_selected(GLNode* container);
     void deselect();
     void set_hovering(bool hovering);
 
@@ -46,10 +52,16 @@ public:
     bool is_start_within(float left, float right);
     bool is_end_within(float left, float right);
 
+    void set_t_scale(float t_scale);
     void set_clip_start(VideoTime start);
     void set_clip_length(VideoTime length);
     void set_clip_end(VideoTime end);
-    void set_thumbnail_color(sf::Color color);
+    void set_bg_color(sf::Color color);
+    void set_thumbnail_texture(const GLTexture* texture);
+
+private:
+
+    void update_length_visuals();
 };
 
 #endif

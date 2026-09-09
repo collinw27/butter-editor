@@ -7,6 +7,9 @@ namespace NOTIF_TIMELINE
     
     enum Notif
     {
+        CLIP_CREATED,
+        // Args: (id_s* clip_id)
+
         CLIP_BOUNDS_CHANGED,
         // Args: (id_s* clip_id)
 

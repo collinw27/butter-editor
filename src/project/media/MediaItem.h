@@ -3,18 +3,8 @@
 
 #include <SFML/Graphics.hpp>
 #include "utility/core.h"
+#include "project/types.h"
 #include "graphics/GLTexture.h"
-
-// Enum for serializing media instances
-// Having to store all subclasses in this file feels weird, but
-// an enum is the easiest way to prevent ID collisions
-
-enum class MediaType
-{
-    EMPTY,
-    COLOR,
-    IMAGE
-};
 
 class MediaItem
 {
@@ -30,9 +20,15 @@ public:
 
     MediaItem(id_s id, std::string display_name);
     std::string get_display_name();
+    
+    // Important: The thumbnail reference returned by `get_thumbnail()`
+    // is shared by any other object that displays the thumbnail
+    // (ex. clips, drag events)
+    // It is therefore very important to maintain the lifetime of the
+    // texture throughout the existence of the media in the project
 
-    virtual int get_media_type() = 0;
-    virtual const GLTexture& get_thumbnail() = 0;
+    virtual MediaType get_media_type() = 0;
+    virtual const GLTexture* get_thumbnail() = 0;
     virtual void save(std::ofstream& file);
 };
 

@@ -15,9 +15,11 @@ public:
     ColorMedia(id_s id, std::string display_name, sf::Color color);
     ColorMedia(id_s id, std::string display_name, std::ifstream& file);
     
-    virtual int get_media_type();
-    virtual const GLTexture& get_thumbnail() override;
+    virtual MediaType get_media_type();
+    virtual const GLTexture* get_thumbnail() override;
     virtual void save(std::ofstream& file) override;
+
+    sf::Color get_color();
 };
 
 #endif

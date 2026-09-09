@@ -4,10 +4,11 @@
 #include <tuple>
 #include <unordered_map>
 #include "utility/core.h"
+#include "project/Project.h"
 #include "editor/core/EditorModule.h"
 #include "editor/core/mouse/DragMouseEvent.h"
-#include "graphics/nodes.h"
 #include "editor/timeline/TimelineClip.h"
+#include "graphics/nodes.h"
 
 class TimelineModule : public EditorModule
 {
@@ -137,9 +138,9 @@ private:
     float time_to_x(VideoTime time);
     std::tuple<VideoTime, VideoTime> get_fitted_clip(VideoTime start_time, VideoTime length);
 
+    void add_clip(Project* project, id_s clip_id);
     void select_clip(TimelineClip* clip);
     void deselect_clip(TimelineClip* clip);
-    void create_color_clip(VideoTime start_time, VideoTime length, sf::Color color);
     void delete_clip(TimelineClip* clip);
     
     void update_scroll();

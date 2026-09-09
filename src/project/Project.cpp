@@ -13,9 +13,10 @@
 #include "utility/Logger.h"
 #include "project/exceptions.h"
 
-#include "project/clip/ColorClip.h"
 #include "project/media/ColorMedia.h"
+#include "project/clip/ColorClip.h"
 #include "project/media/ImageMedia.h"
+#include "project/clip/ImageClip.h"
 
 void export_async();
 
@@ -75,63 +76,88 @@ Project::Project(Editor& editor, std::string name) : LockedProject{editor}
     proj_assert(framerate > 0, "Invalid framerate");
 
     // Individually load each media item
+    // A lot of variable namess can conflict with other variable names later on,
+    // so it's more sensible to contain this within its own scope
 
-    int media_total;
-    file >> media_total;
-
-    int media_type;
-    MediaItem* new_media = nullptr;
-    std::string media_name;
-
-    for (int i = 0; i < media_total; ++i)
     {
-        file >> media_type;
-        media_name = read_string(file);
+        int media_total;
+        file >> media_total;
 
-        switch (static_cast<MediaType>(media_type))
+        id_s media_id;
+        int media_type;
+        MediaItem* new_media = nullptr;
+        std::string media_name;
+
+        for (int i = 0; i < media_total; ++i)
         {
-        case MediaType::COLOR:
-            new_media = new ColorMedia(++next_media_id, media_name, file);
-        break;
-        case MediaType::IMAGE:
-            new_media = new ImageMedia(++next_media_id, media_name, file);
-        break;
-        default:
-            throw ButterException("Invalid media type: " + std::to_string(media_type));
+            file >> media_id;
+            file >> media_type;
+            media_name = read_string(file);
+            next_media_id = std::max(media_id + 1, next_media_id);
+
+            switch (static_cast<MediaType>(media_type))
+            {
+            case MediaType::COLOR:
+                new_media = new ColorMedia(media_id, media_name, file);
+            break;
+            case MediaType::IMAGE:
+                new_media = new ImageMedia(media_id, media_name, file);
+            break;
+            default:
+                throw ButterException("Invalid media type: " + std::to_string(media_type));
+            }
+            media_vec.push_back(std::unique_ptr<MediaItem>(new_media));
+            media_map.insert({new_media->id, new_media});
         }
-        media_vec.push_back(std::unique_ptr<MediaItem>(new_media));
-        media_map.insert({new_media->id, new_media});
     }
 
     // Individually load each clip
 
-    int clip_total;
-    file >> clip_total;
-
-    int clip_type;
-    Clip* new_clip = nullptr;
-    int clip_start;
-    int clip_length;
-
-    for (int i = 0; i < clip_total; ++i)
     {
-        // Switch statement here is a little ugly
-        // std::function can be used to make this more compact but less optimized,
-        // so in this case I'll opt to use boilerplate for more efficiency
+        int clip_total;
+        file >> clip_total;
 
-        file >> clip_type;
-        file >> clip_start;
-        file >> clip_length;
-        switch (static_cast<ClipType>(clip_type))
+        id_s clip_id;
+        int clip_type;
+        Clip* new_clip = nullptr;
+        int clip_start;
+        int clip_length;
+
+        for (int i = 0; i < clip_total; ++i)
         {
-        case ClipType::COLOR:
-            new_clip = new ColorClip(++next_clip_id, clip_start, clip_length, file);
-        break;
-        default:
-            throw ButterException("Invalid clip type: " + std::to_string(clip_type));
+            // Switch statement here is a little ugly
+            // std::function can be used to make this more compact but less optimized,
+            // so in this case I'll opt to use boilerplate for more efficiency
+
+            file >> clip_id;
+            file >> clip_type;
+            file >> clip_start;
+            file >> clip_length;
+            next_clip_id = std::max(clip_id + 1, next_clip_id);
+
+            switch (static_cast<ClipType>(clip_type))
+            {
+            case ClipType::COLOR:
+            {
+                new_clip = new ColorClip(clip_id, clip_start, clip_length, file);
+            }
+            break;
+            case ClipType::IMAGE:
+            {
+                id_s media_id;
+                file >> media_id;
+                ImageMedia* media = dynamic_cast<ImageMedia*>(get_media_iter(media_id)->get());
+                if (media == nullptr)
+                    throw ButterException("Attempted to create image clip with incorrect media type");
+                new_clip = new ImageClip(clip_id, clip_start, clip_length, media);
+            }
+            break;
+            default:
+                throw ButterException("Invalid clip type: " + std::to_string(clip_type));
+            }
+            clip_vec.push_back(std::unique_ptr<Clip>(new_clip));
+            clip_map.insert({new_clip->id, new_clip});
         }
-        clip_vec.push_back(std::unique_ptr<Clip>(new_clip));
-        clip_map.insert({new_clip->id, new_clip});
     }
 
     file.close();
@@ -180,10 +206,16 @@ std::string Project::get_media_name(id_s media_id)
     return (*it)->get_display_name();
 }
 
-const GLTexture& Project::get_media_thumbnail(id_s media_id)
+const GLTexture* Project::get_media_thumbnail(id_s media_id)
 {
     auto it = get_media_iter(media_id);
     return (*it)->get_thumbnail();
+}
+
+MediaType Project::get_media_type(id_s media_id)
+{
+    auto it = get_media_iter(media_id);
+    return (*it)->get_media_type();
 }
 
 id_s Project::add_color_media(std::string display_name, sf::Color color)
@@ -231,6 +263,11 @@ id_s Project::get_clip_at_time(VideoTime time)
 {
     auto it = get_iter_at_time(time);
     return (it == clip_vec.end()) ? ID_NULL : (*it).get()->id;
+}
+
+const GLTexture* Project::get_clip_thumbnail(id_s clip_id)
+{
+    return (*get_iter_from_id(clip_id))->get_thumbnail();
 }
 
 VideoTime Project::get_project_length()
@@ -358,47 +395,27 @@ VideoTime Project::get_chain_ahead(VideoTime time)
 
 id_s Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
 {
-    // Add the color clip to the timeline
-    // Find the first position it can slot in before something
-    // If this doesn't exist, insert it at the end
-
     ColorClip* new_clip = new ColorClip(++next_clip_id, start_time, length, color);
-    auto next_clip = clip_vec.begin();
-    while (next_clip < clip_vec.end())
-    {
-        if (start_time < (*next_clip)->get_start_time())
-        {
-            // The clip afterward can trim the length of the clip
-            // (0 length = no clip inserted)
+    return add_generic_clip(start_time, length, new_clip);
+}
 
-            VideoTime new_length = std::min(length, (*next_clip)->get_start_time() - start_time);
-            if (new_length <= 0)
-                return ID_NULL;
-            new_clip->set_length(new_length);
+id_s Project::add_color_clip(VideoTime start_time, VideoTime length, id_s media_id)
+{
+    auto a = get_media_iter(media_id)->get();
+    ColorMedia* media = dynamic_cast<ColorMedia*>(get_media_iter(media_id)->get());
+    if (media == nullptr)
+        throw ButterException("Attempted to create color clip with incorrect media type");
+    ColorClip* new_clip = new ColorClip(++next_clip_id, start_time, length, media->get_color());
+    return add_generic_clip(start_time, length, new_clip);
+}
 
-            // If this passed, proceed to clip inserting logic
-            // (Takes place after loop to also account for case where the clip
-            // is inserted at the end of the vector)
-
-            break;
-        }
-        ++next_clip;
-    }
-
-    // If the start is placed inside another clip, no clip is created
-
-    if (next_clip != clip_vec.begin())
-    {
-        auto prev_clip = next_clip - 1;
-        if ((*prev_clip)->get_end_time() > start_time)
-            return ID_NULL;
-    }
-
-    // If all checks passed, insert clip
-    
-    clip_vec.insert(next_clip, std::unique_ptr<Clip>(new_clip));
-    clip_map.insert({new_clip->id, new_clip});
-    return new_clip->id;
+id_s Project::add_image_clip(VideoTime start_time, VideoTime length, id_s media_id)
+{
+    ImageMedia* media = dynamic_cast<ImageMedia*>(get_media_iter(media_id)->get());
+    if (media == nullptr)
+        throw ButterException("Attempted to create image clip with incorrect media type");
+    ImageClip* new_clip = new ImageClip(++next_clip_id, start_time, length, media);
+    return add_generic_clip(start_time, length, new_clip);
 }
 
 void Project::set_clip_start(id_s clip_id, VideoTime start)
@@ -476,11 +493,16 @@ VideoTime Project::get_clip_end(id_s clip_id)
     return (*get_iter_from_id(clip_id))->get_end_time();
 }
 
-sf::Color Project::get_clip_color(id_s clip_id)
+sf::Color Project::get_clip_bg_color(id_s clip_id)
 {
-    Clip* clip = (*get_iter_from_id(clip_id)).get();
-    ColorClip* col_clip = dynamic_cast<ColorClip*>(clip);
-    return col_clip->get_color();
+    // Right now, clips all have the same blue color as their background
+    // This will likely get more customization in the future
+
+    Clip* clip = get_iter_from_id(clip_id)->get();
+    if (clip->get_clip_type() == ClipType::COLOR)
+        return sf::Color(107, 107, 107);
+    else
+        return sf::Color(57, 85, 179);
 }
 
 void Project::save()
@@ -504,26 +526,29 @@ void Project::save()
     file << framerate << " ";
 
     // Start with number specifying # of media items
-    // Then, each media item begins with its media type (enum value)
+    // Then, each media item begins with its ID and media type (enum value)
 
     file << media_vec.size() << " ";
     for (int i = 0; i < media_vec.size(); ++i)
     {
         MediaItem* media = media_vec.at(i).get();
-        file << media->get_media_type() << " ";
+        file << media->id << " ";
+        file << (int) media->get_media_type() << " ";
         write_string(file, media->get_display_name());
         media->save(file);
     }
 
     // Timeline starts with a number specifying the number of clips
-    // Then, each clip begins with its clip type (enum value), start position, and length
+    // Then, each clip begins with its ID, clip type (enum value), start position, and length
     // Each clip is then free to define its own serialization methods
 
     file << clip_vec.size() << " ";
     for (int i = 0; i < clip_vec.size(); ++i)
     {
         Clip* clip = clip_vec.at(i).get();
-        file << clip->get_clip_type() << " " << clip->get_start_time() << " " << clip->get_length() << " ";
+        file << clip->id << " ";
+        file << (int) clip->get_clip_type() << " ";
+        file << clip->get_start_time() << " " << clip->get_length() << " ";
         clip->save(file);
     }
 
@@ -609,6 +634,96 @@ void Project::write_string(std::ofstream& file, const std::string& str)
     file << str << '\0' << ' ';
 }
 
+std::vector<std::unique_ptr<MediaItem>>::iterator Project::get_media_iter(id_s media_id)
+{
+    auto it = std::find_if(media_vec.begin(), media_vec.end(), [media_id] (std::unique_ptr<MediaItem>& smart_ptr) { return smart_ptr->id == media_id; } );
+    if (it == media_vec.end())
+        throw ButterException("Cannot find media");
+    return it;
+}
+
+std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_from_id(id_s clip_id)
+{
+    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip_id] (std::unique_ptr<Clip>& smart_ptr) { return smart_ptr->id == clip_id; } );
+    if (it == clip_vec.end())
+        throw ButterException("Cannot find clip");
+    return it;
+}
+
+std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_at_time(VideoTime time)
+{
+    // Return early if:
+    // a) empty timeline
+    // b) negative time, or
+    // c) every clip starts after the provided time
+
+    if (clip_vec.empty())
+        return clip_vec.end();
+    if (time < 0)
+        return clip_vec.end();
+    if (time < clip_vec.at(0)->get_start_time())
+        return clip_vec.end();
+
+    // Attempt to find a clip that begins before the time
+    // and ends after the time
+    // Beginning is inclusive, end is exclusive
+
+    for (auto it = clip_vec.begin(); it != clip_vec.end(); ++it)
+    {
+        if (time >= (*it)->get_start_time() && time < (*it)->get_end_time())
+            return it;
+    }
+    return clip_vec.end();
+}
+
+id_s Project::add_generic_clip(VideoTime start_time, VideoTime length, Clip* new_clip)
+{
+    // Find the first position it can slot in before something
+    // If this doesn't exist, insert it at the end
+
+    auto next_clip = clip_vec.begin();
+    while (next_clip < clip_vec.end())
+    {
+        if (start_time < (*next_clip)->get_start_time())
+        {
+            // The clip afterward can trim the length of the clip
+            // (0 length = no clip inserted)
+
+            VideoTime new_length = std::min(length, (*next_clip)->get_start_time() - start_time);
+            if (new_length <= 0)
+                return ID_NULL;
+            new_clip->set_length(new_length);
+
+            // If this passed, proceed to clip inserting logic
+            // (Takes place after loop to also account for case where the clip
+            // is inserted at the end of the vector)
+
+            break;
+        }
+        ++next_clip;
+    }
+
+    // If the start is placed inside another clip, no clip is created
+
+    if (next_clip != clip_vec.begin())
+    {
+        auto prev_clip = next_clip - 1;
+        if ((*prev_clip)->get_end_time() > start_time)
+            return ID_NULL;
+    }
+
+    // If all checks passed, insert clip
+    
+    clip_vec.insert(next_clip, std::unique_ptr<Clip>(new_clip));
+    clip_map.insert({new_clip->id, new_clip});
+    
+    id_s clip_id = new_clip->id;
+    void* notif_args[1] = {(void*) &clip_id};
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_CREATED, 1, notif_args);
+
+    return new_clip->id;
+}
+
 void Project::proj_assert(bool condition, std::string fail_msg)
 {
     if (!condition)
@@ -662,46 +777,4 @@ void Project::export_async()
     export_task.ffmpeg_pipe.close();
     delete[] export_task.buffer;
     lock.unlock();
-}
-
-std::vector<std::unique_ptr<MediaItem>>::iterator Project::get_media_iter(id_s media_id)
-{
-    auto it = std::find_if(media_vec.begin(), media_vec.end(), [media_id] (std::unique_ptr<MediaItem>& smart_ptr) { return smart_ptr->id == media_id; } );
-    if (it == media_vec.end())
-        throw ButterException("Cannot find clip");
-    return it;
-}
-
-std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_from_id(id_s clip_id)
-{
-    auto it = std::find_if(clip_vec.begin(), clip_vec.end(), [clip_id] (std::unique_ptr<Clip>& smart_ptr) { return smart_ptr->id == clip_id; } );
-    if (it == clip_vec.end())
-        throw ButterException("Cannot find clip");
-    return it;
-}
-
-std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_at_time(VideoTime time)
-{
-    // Return early if:
-    // a) empty timeline
-    // b) negative time, or
-    // c) every clip starts after the provided time
-
-    if (clip_vec.empty())
-        return clip_vec.end();
-    if (time < 0)
-        return clip_vec.end();
-    if (time < clip_vec.at(0)->get_start_time())
-        return clip_vec.end();
-
-    // Attempt to find a clip that begins before the time
-    // and ends after the time
-    // Beginning is inclusive, end is exclusive
-
-    for (auto it = clip_vec.begin(); it != clip_vec.end(); ++it)
-    {
-        if (time >= (*it)->get_start_time() && time < (*it)->get_end_time())
-            return it;
-    }
-    return clip_vec.end();
 }

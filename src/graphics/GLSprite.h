@@ -9,7 +9,7 @@
 
 class GLSprite : public GLNode
 {
-    GLTexture* texture;
+    const GLTexture* texture;
     
     // Sprites use size the same way rectangles do
     // The difference is that size cannot be modified externally and
@@ -26,12 +26,12 @@ class GLSprite : public GLNode
 
 protected:
     
-    GLSprite(GLNode* parent, GLTexture* texture, sf::Vector2f position);
+    GLSprite(GLNode* parent, const GLTexture* texture, sf::Vector2f position);
     virtual void init() override;
 
 public:
 
-    static GLSprite* create(GLNode* parent, GLTexture* texture, sf::Vector2f position = {0, 0});
+    static GLSprite* create(GLNode* parent, const GLTexture* texture, sf::Vector2f position = {0, 0});
 
 protected:
 

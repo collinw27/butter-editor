@@ -17,6 +17,7 @@
 #include "editor/timeline/mouse/DragPlayhead.h"
 
 #include "project/Project.h"
+#include "project/types.h"
 #include "project/clip/Clip.h"
 #include "project/clip/ColorClip.h"
 
@@ -175,11 +176,7 @@ void TimelineModule::reload()
     for (int i = 0; i < project->get_clip_total(); ++i)
     {
         id_s clip_id = project->get_clip_at_index(i);
-        TimelineClip* new_clip = new TimelineClip(clip_id, clip_layer.get());
-        new_clip->set_clip_start(project->get_clip_start(clip_id));
-        new_clip->set_clip_length(project->get_clip_length(clip_id));
-        new_clip->set_thumbnail_color(project->get_clip_color(clip_id));
-        clip_mem.add_clip(new_clip);
+        add_clip(project, clip_id);
     }
     
     // Reset parameters
@@ -491,12 +488,12 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
                 if (extend_event->forward)
                 {
                     project->set_clip_end(selected_clip->clip_id, extend_event->start_time + time_diff);
-                    selected_clip->render_selected(outline_layer.get(), zoom_amount);
+                    selected_clip->render_selected(outline_layer.get());
                 }
                 else
                 {
                     project->set_clip_start(selected_clip->clip_id, extend_event->start_time - time_diff);
-                    selected_clip->render_selected(outline_layer.get(), zoom_amount);
+                    selected_clip->render_selected(outline_layer.get());
                 }
 
                 // The scroll & project aren't updated here
@@ -634,11 +631,27 @@ void TimelineModule::on_mouse_drop(sf::Vector2i position, DragMouseEvent* drag_e
 {
     if (auto drag_media_event = dynamic_cast<DragMedia*>(drag_event))
     {
-        // The media drop should use the same paramters as the ghost clip
+        // The media drop should use the same parameters as the ghost clip
 
         if (drag_media_event->valid)
         {
-            create_color_clip(drag_media_event->start_time, drag_media_event->length, drag_media_event->media_color);
+            Project* project = editor.get_project();
+            MediaType media_type = project->get_media_type(drag_media_event->media_id);
+            switch (media_type)
+            {
+            case MediaType::COLOR:
+            {
+                project->add_color_clip(drag_media_event->start_time, drag_media_event->length, drag_media_event->media_id);
+            }
+            break;
+            case MediaType::IMAGE:
+            {
+                project->add_image_clip(drag_media_event->start_time, drag_media_event->length, drag_media_event->media_id);
+            }
+            break;
+            default:
+                throw ButterException("Invalid media type");
+            }
         }
         ghost_clip->set_visible(false);
     }
@@ -650,6 +663,13 @@ void TimelineModule::on_notif(int notif_class, int notif_type, size_t num_args, 
     {
         switch (notif_type)
         {
+        case NOTIF_TIMELINE::CLIP_CREATED:
+        {
+            id_s clip_id = *((id_s*) arg_ptrs[0]);
+            Project* project = editor.get_project();
+            add_clip(project, clip_id);
+        }
+        break;
         case NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED:
         {
             id_s clip_id = *((id_s*) arg_ptrs[0]);
@@ -762,12 +782,23 @@ std::tuple<VideoTime, VideoTime> TimelineModule::get_fitted_clip(VideoTime start
     }
 }
 
+void TimelineModule::add_clip(Project* project, id_s clip_id)
+{
+    TimelineClip* new_clip = new TimelineClip(clip_id, clip_layer.get());
+    new_clip->set_clip_start(project->get_clip_start(clip_id));
+    new_clip->set_clip_length(project->get_clip_length(clip_id));
+    new_clip->set_bg_color(project->get_clip_bg_color(clip_id));
+    new_clip->set_thumbnail_texture(project->get_clip_thumbnail(clip_id));
+    new_clip->set_t_scale(zoom_amount);
+    clip_mem.add_clip(new_clip);
+}
+
 void TimelineModule::select_clip(TimelineClip* clip)
 {
     if (!clip->selected())
     {
-        clip->render_selected(outline_layer.get(), zoom_amount);
-        clip->get_rect()->reparent(selection_layer.get());
+        clip->render_selected(outline_layer.get());
+        clip->get_node()->reparent(selection_layer.get());
         clip_mem.select_clip(clip);
     }
 }
@@ -777,20 +808,9 @@ void TimelineModule::deselect_clip(TimelineClip* clip)
     if (clip->selected())
     {
         clip->deselect();
-        clip->get_rect()->reparent(clip_layer.get());
+        clip->get_node()->reparent(clip_layer.get());
         clip_mem.deselect_clip(clip);
     }
-}
-
-void TimelineModule::create_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
-{
-    Project* project = get_project();
-    id_s clip_id = project->add_color_clip(start_time, length, color);
-    TimelineClip* new_clip = new TimelineClip(clip_id, clip_layer.get());
-    new_clip->set_clip_start(project->get_clip_start(clip_id));
-    new_clip->set_clip_length(project->get_clip_length(clip_id));
-    new_clip->set_thumbnail_color(project->get_clip_color(clip_id));
-    clip_mem.add_clip(new_clip);
 }
 
 void TimelineModule::delete_clip(TimelineClip* clip)
@@ -830,11 +850,11 @@ void TimelineModule::update_zoom()
     padding_rect->set_position(sf::Vector2f(time_to_x(0) - START_PADDING, 0));
     update_playhead();
 
-    // Re-scale selection windows
+    // Re-scale clips
 
-    for (TimelineClip* clip : clip_mem.get_selected_clips())
+    for (std::pair<id_s, TimelineClip*> clip : clip_mem.get_clips())
     {
-        clip->render_selected(outline_layer.get(), zoom_amount);
+        clip.second->set_t_scale(zoom_amount);
     }
 }
 
