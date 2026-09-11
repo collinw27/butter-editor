@@ -38,7 +38,6 @@ void GLShaderRectangle::on_window_resized()
 
 void GLShaderRectangle::draw()
 {
-    sf::RenderWindow& window = Graphics().get_window();
     glBindVertexArray(VAO);
 
     shader_program->prepare_shader();
@@ -76,8 +75,6 @@ GLShaderProgram* GLShaderRectangle::get_shader()
 
 void GLShaderRectangle::setup_GL()
 {
-    Graphics().window_set_active(true);
-
     // The corner is on the origin to make scaling easy
     // Negative y coordinate is used for parity with GLNode position
     
@@ -104,8 +101,6 @@ void GLShaderRectangle::setup_GL()
     glBindVertexArray(0);
 
     update_model_matrix();
-    
-    Graphics().window_set_active(false);
 }
 
 void GLShaderRectangle::update_model_matrix()

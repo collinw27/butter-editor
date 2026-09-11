@@ -52,7 +52,6 @@ void GLOutlinedRectangle::apply_scale()
 
 void GLOutlinedRectangle::draw()
 {
-    sf::RenderWindow& window = Graphics().get_window();
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
 
@@ -124,8 +123,6 @@ void GLOutlinedRectangle::set_outline_thickness(float thickness)
 
 void GLOutlinedRectangle::setup_GL()
 {
-    Graphics().window_set_active(true);
-
     shader_program = Graphics().link_shader(BuiltinShader::V_RECT_OUTLINED, BuiltinShader::F_RECT_OUTLINED);
 
     // The corner is on the origin to make scaling easy
@@ -157,8 +154,6 @@ void GLOutlinedRectangle::setup_GL()
 
     update_model_matrix();
     set_fill_color(fill_color);
-    
-    Graphics().window_set_active(false);
 }
 
 void GLOutlinedRectangle::update_model_matrix()

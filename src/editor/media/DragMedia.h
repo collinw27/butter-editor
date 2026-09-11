@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "graphics/nodes.h"
+#include "graphics/texture/GLTexture.h"
 #include "utility/core.h"
 #include "editor/core/mouse/DragMouseEvent.h"
 

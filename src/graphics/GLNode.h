@@ -26,7 +26,7 @@ enum class Axis
 // Giving nodes the ability to delete their children would be problematic,
 // since it would result in two different objects managing the memory
 
-class GLRootNode;
+class GLWindowNode;
 
 class GLNode
 {
@@ -84,6 +84,7 @@ public:
     void reparent(GLNode* new_parent);
     void free_children();
     GLNode* get_parent();
+    GLNode* get_root();
     const std::vector<GLNode*> get_children();
 
     bool is_visible();
@@ -103,7 +104,7 @@ public:
     glm::mat4 get_global_matrix();
     void update_global_matrix();
 
-    friend GLRootNode;
+    friend GLWindowNode;
 };
 
 #endif

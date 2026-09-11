@@ -242,8 +242,6 @@ sf::Vector2f GLText::find_char_pos(unsigned int index)
 
 void GLText::setup_GL()
 {
-    Graphics().window_set_active(true);
-    
     shader_program = Graphics().link_shader(BuiltinShader::V_TEX_RECT, BuiltinShader::F_GLYPH);
     
     glGenVertexArrays(1, &VAO);
@@ -263,8 +261,6 @@ void GLText::setup_GL()
     glBindVertexArray(0);
 
     update_model_matrix();
-    
-    Graphics().window_set_active(false);
 }
 
 void GLText::update_model_matrix()

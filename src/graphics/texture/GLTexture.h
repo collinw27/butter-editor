@@ -6,14 +6,9 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 #include "graphics/GLNode.h"
+#include "graphics/texture/GLTextureBase.h"
 
-// Shares a lot of functionality with sf::Texture, but it's
-// a separate class for two reasons:
-// 1) Allows custom GLSprite class to access functionality
-// 2) Allows extension in the future if more features are needed
-// (Very similar situation to GLFont/GLText)
-
-class GLTexture
+class GLTexture : public GLTextureBase
 {
     // `tex_image` doesn't technically need to be persistently stored
     // in order for OpenGL to draw it
@@ -35,8 +30,6 @@ private:
     void finish_setup();
 
 public:
-
-    ~GLTexture();
 
     GLuint get_texture_ID() const;
     sf::Vector2f get_size() const;

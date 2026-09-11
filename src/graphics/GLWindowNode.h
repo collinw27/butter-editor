@@ -1,21 +1,21 @@
-#ifndef BUTTERGL_ROOT_NODE_H
-#define BUTTERGL_ROOT_NODE_H
+#ifndef BUTTERGL_WINDOW_NODE_H
+#define BUTTERGL_WINDOW_NODE_H
 
 #include "graphics/GLNode.h"
 
-// Similar to any other node, but provides an interface for
-// sending events down the node tree
+// The window's root node: responsible for propogating draw
+// calls to every other node and also responding to window changes
 // CANNOT be the child of another node
 
 class GraphicsSingleton;
 
-class GLRootNode : public GLNode
+class GLWindowNode : public GLNode
 {
-    GLRootNode();
+    GLWindowNode();
 
 public:
 
-    static GLRootNode* create();
+    static GLWindowNode* create();
 
 protected:
 

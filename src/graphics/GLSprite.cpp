@@ -6,7 +6,7 @@
 
 #include "utility/Graphics.h"
 
-GLSprite::GLSprite(GLNode* parent, const GLTexture* texture, sf::Vector2f position)
+GLSprite::GLSprite(GLNode* parent, const GLTextureBase* texture, sf::Vector2f position)
     : GLNode{parent}
 {
     this->texture = texture;
@@ -20,7 +20,7 @@ void GLSprite::init()
     setup_GL();
 }
 
-GLSprite* GLSprite::create(GLNode* parent, const GLTexture* texture, sf::Vector2f position)
+GLSprite* GLSprite::create(GLNode* parent, const GLTextureBase* texture, sf::Vector2f position)
 {
     GLSprite* instance = new GLSprite(parent, texture, position);
     instance->init();
@@ -34,7 +34,6 @@ void GLSprite::on_window_resized()
 
 void GLSprite::draw()
 {
-    sf::RenderWindow& window = Graphics().get_window();
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
 
@@ -70,8 +69,6 @@ sf::Vector2f GLSprite::get_half_size()
 
 void GLSprite::setup_GL()
 {
-    Graphics().window_set_active(true);
-
     shader_program = Graphics().link_shader(BuiltinShader::V_TEX_RECT, BuiltinShader::F_TEX_RECT);
     
     GLfloat vertices[] = {
@@ -97,8 +94,6 @@ void GLSprite::setup_GL()
     glBindVertexArray(0);
 
     update_model_matrix();
-    
-    Graphics().window_set_active(false);
 }
 
 void GLSprite::update_model_matrix()

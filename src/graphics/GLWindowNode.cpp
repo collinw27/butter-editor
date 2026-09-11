@@ -1,17 +1,18 @@
-#include "graphics/GLRootNode.h"
+#include "graphics/GLWindowNode.h"
 
 #include "utility/Graphics.h"
 
-GLRootNode::GLRootNode() : GLNode{nullptr}
+GLWindowNode::GLWindowNode()
+    : GLNode{nullptr}
 {
     is_root_node = true;
     sf::Vector2u window_size = Graphics().get_window().getSize();
     scale = sf::Vector2f(1.f / window_size.x, 1.f / window_size.y);
 }
 
-GLRootNode* GLRootNode::create()
+GLWindowNode* GLWindowNode::create()
 {
-    GLRootNode* instance = new GLRootNode();
+    GLWindowNode* instance = new GLWindowNode();
     instance->init();
     return instance;
 }
@@ -21,7 +22,7 @@ GLRootNode* GLRootNode::create()
 // This is useful for GUI elements, but it can also be overridden by
 // scaling another object if undesirable
 
-void GLRootNode::on_window_resized()
+void GLWindowNode::on_window_resized()
 {
     sf::Vector2u window_size = Graphics().get_window().getSize();
     set_scale(sf::Vector2f(1.f / window_size.x, 1.f / window_size.y));

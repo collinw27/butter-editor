@@ -8,7 +8,8 @@
 
 #include "utility/FileManager.h"
 #include "utility/core.h"
-#include "graphics/GLRootNode.h"
+#include "graphics/GLWindowNode.h"
+#include "graphics/GLFrameBuffer.h"
 #include "graphics/GLFont.h"
 
 GraphicsSingleton* GraphicsSingleton::singleton_object = nullptr;
@@ -54,6 +55,7 @@ void GraphicsSingleton::init(sf::VideoMode mode, std::string title, uint32_t sty
     if (window != nullptr)
         throw ButterException("Cannot create second window");
     window = new sf::RenderWindow(mode, title, style);
+    std::ignore = window->setActive(true);
     
     glViewport(0, 0, WINDOW_W, WINDOW_H);
     on_window_resized(nullptr);
@@ -85,20 +87,55 @@ void GraphicsSingleton::init(sf::VideoMode mode, std::string title, uint32_t sty
     }
 }
 
-void GraphicsSingleton::display(GLRootNode* root)
+void GraphicsSingleton::display(GLWindowNode* root)
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, window->getSize().x, window->getSize().y);
-    Graphics().window_set_active(true);
     if (root != nullptr && root->is_visible())
+    {
+        display_in_progress = true;
+
+        glDisable(GL_DEPTH_TEST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(clear_color.r / 255.f, clear_color.g / 255.f, clear_color.b / 255.f, clear_color.a / 255.f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, window->getSize().x, window->getSize().y);
         root->draw();
-    glBindVertexArray(0);
-    glUseProgram(0);
-    Graphics().window_set_active(false);
-    window->display();
+
+        glBindVertexArray(0);
+        glUseProgram(0);
+        window->display();
+    }
+    display_in_progress = false;
 }
 
-void GraphicsSingleton::on_window_resized(GLRootNode* root)
+void GraphicsSingleton::render_framebuffer(GLFrameBuffer* framebuffer)
+{
+    // This function should not be called while `display()` is in progress
+    // Thus, don't call this function from any `draw()` functions
+
+    if (display_in_progress)
+        throw ButterException("Cannot render framebuffer while rendering window.");
+
+    if (framebuffer != nullptr && framebuffer->is_visible())
+    {
+        std::ignore = window->setActive(false);
+        std::ignore = framebuffer->sf_texture.setActive(true);
+        
+        glEnable(GL_DEPTH_TEST);
+        glClearColor(0.0, 1.0, 0.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, framebuffer->sf_texture.getSize().x, framebuffer->sf_texture.getSize().y);
+
+        framebuffer->draw();
+
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+        std::ignore = framebuffer->sf_texture.setActive(false);
+        std::ignore = window->setActive(true);
+    }
+}
+
+void GraphicsSingleton::on_window_resized(GLWindowNode* root)
 {
     world_to_screen_matrix = glm::scale(glm::mat4(1), glm::vec3(window->getSize().x, window->getSize().y, 1.f));
     if (root != nullptr)
@@ -110,26 +147,30 @@ sf::RenderWindow& GraphicsSingleton::get_window()
     return *window;
 }
 
-// Keeps track of consecutive calls
-// This way, if a function enabled the window while it's
-// already enabled, the window stays enable after the
-// function is finished
-// IMPORTANT: calls to this function should come in pairs
-
-void GraphicsSingleton::window_set_active(bool active)
+void GraphicsSingleton::framebuffer_set_active(GLFrameBuffer* framebuffer, bool active)
 {
-    if (window_active_state == 0 && !active)
-        return;
-    if (active && window_active_state == 0)
-        std::ignore = window->setActive(true);
-    else if (!active && window_active_state == 1)
+    // Most OpenGL operations operate within a context
+    // Framebuffers use their own context, thus, anything that returns a handle
+    // must be called after switching to the framebuffer context
+    // This function is responsible for doing that
+    // When inactive, it switches back to the default window context
+
+    if (!framebuffer->is_active && active)
+    {
         std::ignore = window->setActive(false);
-    window_active_state += (active) ? 1 : -1;
+        std::ignore = framebuffer->sf_texture.setActive(true);
+    }
+    else if (framebuffer->is_active && !active)
+    {
+        std::ignore = framebuffer->sf_texture.setActive(false);
+        std::ignore = window->setActive(true);
+    }
+    framebuffer->is_active = true;
 }
 
 void GraphicsSingleton::set_clear_color(sf::Color color)
 {
-    glClearColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
+    clear_color = color;
 }
 
 GLFont* GraphicsSingleton::main_font()

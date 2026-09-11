@@ -17,7 +17,8 @@ constexpr int WINDOW_H = 720;
 // This MUST be initialized after FileManager
 
 class GraphicsSingleton;
-class GLRootNode;
+class GLWindowNode;
+class GLFrameBuffer;
 class GLFont;
 
 GraphicsSingleton& Graphics();
@@ -42,9 +43,11 @@ class GraphicsSingleton
     static GraphicsSingleton* singleton_object;
 
     sf::RenderWindow* window = nullptr;
+    sf::Color clear_color = sf::Color::Black;
     std::vector<std::string> builtin_shaders {};
     std::stack<sf::IntRect> scissors {};
     unsigned int window_active_state = 0u;
+    bool display_in_progress = false;
 
     GLFont* main_font_obj;
     GLFont* mono_font_obj;
@@ -61,11 +64,12 @@ public:
     ~GraphicsSingleton();
 
     void init(sf::VideoMode mode, std::string title, uint32_t style);
-    void display(GLRootNode* root);
+    void display(GLWindowNode* root);
+    void render_framebuffer(GLFrameBuffer* framebuffer);
 
     sf::RenderWindow& get_window();
-    void window_set_active(bool active);
-    void on_window_resized(GLRootNode* root);
+    void framebuffer_set_active(GLFrameBuffer* framebuffer, bool active);
+    void on_window_resized(GLWindowNode* root);
     void set_clear_color(sf::Color color);
     
     GLFont* main_font();

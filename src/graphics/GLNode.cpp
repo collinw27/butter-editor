@@ -92,6 +92,16 @@ GLNode* GLNode::get_parent()
     return parent;
 }
 
+GLNode* GLNode::get_root()
+{
+    if (is_root_node)
+        return this;
+    else if (parent != nullptr)
+        return parent->get_root();
+    else
+        throw ButterException("Invalid root node");
+}
+
 const std::vector<GLNode*> GLNode::get_children()
 {
     return children;

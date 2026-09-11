@@ -45,7 +45,7 @@ Editor::Editor()
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));
     window->setFramerateLimit(150);
-    root.reset(GLRootNode::create());
+    root.reset(GLWindowNode::create());
     clock = sf::Clock();
     clock.start();
 

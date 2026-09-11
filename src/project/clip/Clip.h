@@ -4,7 +4,7 @@
 #include <fstream>
 #include "utility/core.h"
 #include "project/types.h"
-#include "graphics/GLTexture.h"
+#include "graphics/texture/GLTexture.h"
 
 // Quick note on conventions:
 // Often times, a clip will need to interface with a media object

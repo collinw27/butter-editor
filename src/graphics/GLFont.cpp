@@ -23,8 +23,6 @@ GLFont::~GLFont()
 
 void GLFont::load_char_map(unsigned int char_size)
 {
-    Graphics().window_set_active(true);
-
     // Ensure this size hasn't been cached yet
 
     if (loaded_chars.find(char_size) != loaded_chars.end())
@@ -79,8 +77,6 @@ void GLFont::load_char_map(unsigned int char_size)
     // Now that the char map is populated, cache it for this font size
 
     loaded_chars.insert({char_size, char_map});
-    
-    Graphics().window_set_active(false);
 }
 
 std::map<char, FontChar>& GLFont::get_char_map(unsigned int char_size)

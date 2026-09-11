@@ -47,7 +47,7 @@ public:
 private:
 
     sf::RenderWindow* window;
-    std::unique_ptr<GLRootNode> root;
+    std::unique_ptr<GLWindowNode> root;
 
     // `visible_modules` holds the address of the module variable
     // This allows the actual module each variable references to be

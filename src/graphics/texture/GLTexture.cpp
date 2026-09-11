@@ -1,4 +1,4 @@
-#include "graphics/GLTexture.h"
+#include "graphics/texture/GLTexture.h"
 
 #include "utility/core.h"
 #include "utility/Graphics.h"
@@ -29,8 +29,6 @@ GLTexture::GLTexture(const GLTexture& source)
 
 void GLTexture::finish_setup()
 {
-    Graphics().window_set_active(true);
-
     // Generate texture
 
     size = tex_image.getSize();
@@ -60,10 +58,7 @@ void GLTexture::finish_setup()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-    Graphics().window_set_active(false);
 }
-
-GLTexture::~GLTexture() {}
 
 GLuint GLTexture::get_texture_ID() const
 {
@@ -79,10 +74,8 @@ void GLTexture::set_linear_filter(bool value)
 {
     do_linear_filter = value;
     
-    Graphics().window_set_active(true);
     glBindTexture(GL_TEXTURE_2D, texture_ID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, do_linear_filter ? GL_LINEAR : GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, do_linear_filter ? GL_LINEAR : GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
-    Graphics().window_set_active(false);
 }

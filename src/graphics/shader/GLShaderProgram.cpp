@@ -7,8 +7,6 @@ GLShaderProgram::GLShaderProgram(BuiltinShader vertex_shader, BuiltinShader frag
 
 GLuint GLShaderProgram::link_shader(BuiltinShader vertex_shader, BuiltinShader fragment_shader)
 {
-    Graphics().window_set_active(true);
     GLuint output = Graphics().link_shader(vertex_shader, fragment_shader);
-    Graphics().window_set_active(false);
     return output;
 }

@@ -4,7 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include "utility/core.h"
 #include "project/types.h"
-#include "graphics/GLTexture.h"
+#include "graphics/texture/GLTexture.h"
 
 class MediaItem
 {

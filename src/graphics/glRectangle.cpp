@@ -37,7 +37,6 @@ void GLRectangle::on_window_resized()
 
 void GLRectangle::draw()
 {
-    sf::RenderWindow& window = Graphics().get_window();
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
 
@@ -80,8 +79,6 @@ void GLRectangle::set_fill_color(sf::Color color)
 
 void GLRectangle::setup_GL()
 {
-    Graphics().window_set_active(true);
-
     shader_program = Graphics().link_shader(BuiltinShader::V_RECT, BuiltinShader::F_RECT);
 
     // The corner is on the origin to make scaling easy
@@ -110,8 +107,6 @@ void GLRectangle::setup_GL()
 
     update_model_matrix();
     set_fill_color(fill_color);
-    
-    Graphics().window_set_active(false);
 }
 
 void GLRectangle::update_model_matrix()

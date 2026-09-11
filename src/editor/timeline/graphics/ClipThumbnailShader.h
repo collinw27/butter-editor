@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <SFML/Graphics.hpp>
-#include "graphics/GLTexture.h"
+#include "graphics/texture/GLTexture.h"
 #include "graphics/shader/GLShaderProgram.h"
 
 class ClipThumbnailShader : public GLShaderProgram

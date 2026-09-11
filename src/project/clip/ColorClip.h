@@ -6,7 +6,7 @@
 #include <memory>
 #include <fstream>
 #include <SFML/Graphics.hpp>
-#include "graphics/GLTexture.h"
+#include "graphics/texture/GLTexture.h"
 
 class ColorClip : public Clip
 {

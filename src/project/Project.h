@@ -14,7 +14,7 @@
 #include "project/types.h"
 #include "project/clip/Clip.h"
 #include "project/media/MediaItem.h"
-#include "graphics/GLTexture.h"
+#include "graphics/texture/GLTexture.h"
 
 // All project loading logic is within this class instead of FileManager
 // This does require duplicating some logic, but this strategy is much quicker

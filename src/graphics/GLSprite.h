@@ -5,11 +5,11 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 #include "graphics/GLNode.h"
-#include "graphics/GLTexture.h"
+#include "graphics/texture/GLTextureBase.h"
 
 class GLSprite : public GLNode
 {
-    const GLTexture* texture;
+    const GLTextureBase* texture;
     
     // Sprites use size the same way rectangles do
     // The difference is that size cannot be modified externally and
@@ -26,12 +26,12 @@ class GLSprite : public GLNode
 
 protected:
     
-    GLSprite(GLNode* parent, const GLTexture* texture, sf::Vector2f position);
+    GLSprite(GLNode* parent, const GLTextureBase* texture, sf::Vector2f position);
     virtual void init() override;
 
 public:
 
-    static GLSprite* create(GLNode* parent, const GLTexture* texture, sf::Vector2f position = {0, 0});
+    static GLSprite* create(GLNode* parent, const GLTextureBase* texture, sf::Vector2f position = {0, 0});
 
 protected:
 
