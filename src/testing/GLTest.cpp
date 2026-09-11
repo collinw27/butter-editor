@@ -44,7 +44,7 @@ int main()
     GLSprite* framebuffer_spr = GLSprite::create(root, framebuffer_tex, sf::Vector2f(100, 100));
     
     Graphics().framebuffer_set_active(framebuffer, true);
-    GLRectangle* test_rect = GLRectangle::create(framebuffer, sf::Vector2f(0, 0), sf::Vector2f(50, 50));
+    GLRectangle* test_rect = GLRectangle::create(nullptr, sf::Vector2f(0, 0), sf::Vector2f(50, 50));
     test_rect->set_fill_color(sf::Color::Magenta);
     Graphics().framebuffer_set_active(framebuffer, false);
 
@@ -61,8 +61,10 @@ int main()
                 Graphics().on_window_resized(root);
         }
 
-        test_rect->set_position(sf::Vector2f(25, 20 + 15 * sin(elapsed * 10.f)));
-        framebuffer_spr->set_scale(sf::Vector2f(1, 1) * float(1 + 0.5 * sin(elapsed * 4.1f)));
+        if (elapsed >= 2 && !test_rect->get_parent())
+            framebuffer->add_child(test_rect);
+        // test_rect->set_position(sf::Vector2f(25, 20 + 15 * sin(elapsed * 10.f)));
+        // framebuffer_spr->set_scale(sf::Vector2f(1, 1) * float(1 + 0.5 * sin(elapsed * 4.1f)));
         
         Graphics().render_framebuffer(framebuffer);
         Graphics().display(root);

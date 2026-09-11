@@ -92,6 +92,7 @@ void GraphicsSingleton::display(GLWindowNode* root)
     if (root != nullptr && root->is_visible())
     {
         display_in_progress = true;
+        window->resetGLStates();
 
         glDisable(GL_DEPTH_TEST);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -117,11 +118,14 @@ void GraphicsSingleton::render_framebuffer(GLFrameBuffer* framebuffer)
 
     if (framebuffer != nullptr && framebuffer->is_visible())
     {
-        std::ignore = window->setActive(false);
-        std::ignore = framebuffer->sf_texture.setActive(true);
+        framebuffer->sf_texture.resetGLStates();
+        bool success = framebuffer->sf_texture.setActive(true);
+        if (!success)
+            throw ButterException("Could not switch to framebuffer.");
         
         glEnable(GL_DEPTH_TEST);
-        glClearColor(0.0, 1.0, 0.0, 1.0);
+        sf::Color clear_col = framebuffer->clear_color;
+        glClearColor(clear_col.r / 255.f, clear_col.g / 255.f, clear_col.b / 255.f, clear_col.a / 255.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, framebuffer->sf_texture.getSize().x, framebuffer->sf_texture.getSize().y);
 
@@ -130,7 +134,6 @@ void GraphicsSingleton::render_framebuffer(GLFrameBuffer* framebuffer)
         glBindVertexArray(0);
         glUseProgram(0);
 
-        std::ignore = framebuffer->sf_texture.setActive(false);
         std::ignore = window->setActive(true);
     }
 }
@@ -157,12 +160,10 @@ void GraphicsSingleton::framebuffer_set_active(GLFrameBuffer* framebuffer, bool 
 
     if (!framebuffer->is_active && active)
     {
-        std::ignore = window->setActive(false);
         std::ignore = framebuffer->sf_texture.setActive(true);
     }
     else if (framebuffer->is_active && !active)
     {
-        std::ignore = framebuffer->sf_texture.setActive(false);
         std::ignore = window->setActive(true);
     }
     framebuffer->is_active = true;

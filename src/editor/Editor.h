@@ -7,6 +7,7 @@
 
 #include "utility/Input.h"
 #include "graphics/nodes.h"
+#include "graphics/GLFrameBuffer.h"
 #include "editor/core/EditorModule.h"
 #include "editor/core/FlexTab.h"
 #include "command/CommandParser.h"
@@ -14,6 +15,7 @@
 
 #include "editor/command_bar/CommandBar.h"
 #include "editor/core/mouse/DragMouseEvent.h"
+#include "editor/preview/PreviewModule.h"
 #include "editor/timeline/TimelineModule.h"
 #include "editor/log/LogModule.h"
 #include "editor/media/MediaModule.h"
@@ -65,7 +67,7 @@ private:
     // Flex modules can be toggled between each other using
     // a list of tabs that appear over it
 
-    EditorModule* preview_module = nullptr;
+    PreviewModule* preview_module = nullptr;
     EditorModule* flex_module = nullptr;
     TimelineModule* timeline_module = nullptr;
     LogModule* log_module = nullptr;
@@ -87,6 +89,11 @@ private:
     std::unique_ptr<GLText> menu_bar_text;
     sf::Vector2i mouse_position;
     bool using_terminal = false;
+
+    // All frames are rendered onto the `render_buffer` buffer
+    // This is used by preview module, export pipeline, etc.
+
+    std::unique_ptr<GLFrameBuffer> render_buffer;
 
     // For now, the editor is divided into 3 windows
     // This may have more customization in the far future, but for now,
@@ -143,6 +150,8 @@ public:
 
     Project* get_project();
     LockedProject* get_locked_project();
+
+    GLFrameBuffer* get_render_buffer();
 
     // Often times, an event in one module will need to cause an update in another
     // Also, modules that reflect some aspect of the project data will need

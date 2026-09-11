@@ -15,6 +15,7 @@ class GLFrameBuffer : public GLNode
     sf::RenderTexture sf_texture;
     GLBufferTexture* gl_texture;
     bool is_active = false;
+    sf::Color clear_color = sf::Color::Black;
 
 protected:
     
@@ -32,6 +33,7 @@ public:
 
     const GLBufferTexture* get_texture();
     sf::Vector2f get_size();
+    void set_clear_color(sf::Color new_color);
 
     // Public-accessible methods call the protected versions
     // on all children in the node tree

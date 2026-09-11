@@ -555,6 +555,26 @@ void Project::save()
     file.close();
 }
 
+void Project::write_frame(GLFrameBuffer* render_buffer, VideoTime time)
+{
+    // Find the clip at the given time (if applicable)
+
+    render_buffer->free_children();
+    // Graphics().framebuffer_set_active(render_buffer, true);
+    // auto leaked_memory = GLRectangle::create(render_buffer, sf::Vector2f(), sf::Vector2f(20, 20));
+    // leaked_memory->set_fill_color(sf::Color::Red);
+    // Graphics().framebuffer_set_active(render_buffer, false);
+
+    Graphics().framebuffer_set_active(render_buffer, true);
+    auto clip_it = get_iter_at_time(time);
+    if (clip_it != clip_vec.end())
+    {
+        Clip* clip = clip_it->get();
+        clip->write_frame(render_buffer, time);
+    }
+    Graphics().framebuffer_set_active(render_buffer, false);
+}
+
 void Project::export_video(std::filesystem::path filepath)
 {
     // Accessing thread safe data, use a mutex

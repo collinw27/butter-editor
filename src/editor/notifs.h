@@ -13,8 +13,11 @@ namespace NOTIF_TIMELINE
         CLIP_BOUNDS_CHANGED,
         // Args: (id_s* clip_id)
 
-        CLIP_DELETED
+        CLIP_DELETED,
         // Args: (id_s* clip_id)
+
+        PLAYHEAD_MOVED
+        // Args: ()
     };
 }
 

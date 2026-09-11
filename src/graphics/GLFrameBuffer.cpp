@@ -37,3 +37,8 @@ sf::Vector2f GLFrameBuffer::get_size()
 {
     return size;
 }
+
+void GLFrameBuffer::set_clear_color(sf::Color new_color)
+{
+    clear_color = new_color;
+}

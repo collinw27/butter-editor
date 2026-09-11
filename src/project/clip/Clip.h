@@ -5,6 +5,7 @@
 #include "utility/core.h"
 #include "project/types.h"
 #include "graphics/texture/GLTexture.h"
+#include "graphics/GLFrameBuffer.h"
 
 // Quick note on conventions:
 // Often times, a clip will need to interface with a media object
@@ -39,6 +40,11 @@ public:
     virtual ClipType get_clip_type() = 0;
     virtual const GLTexture* get_thumbnail() = 0;
     virtual void save(std::ofstream& file);
+    
+    // All functions that override `write_frame` assume the buffer's
+    // OpenGL context has already been activated
+    
+    virtual void write_frame(GLFrameBuffer* buffer, VideoTime time) = 0;
 };
 
 #endif

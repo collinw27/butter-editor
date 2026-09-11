@@ -95,6 +95,7 @@ void Editor::run()
             if (event->is<sf::Event::Closed>())
             {
                 window->close();
+                return;
             }
             else if (const auto* resized = event->getIf<sf::Event::Resized>())
             {
@@ -309,7 +310,9 @@ void Editor::run()
         debug_module->refresh_info(debug_info.str());
 
         // Display the root, which will propogate to all other GLNode children
-
+        // Render buffer must also be updated
+        
+        Graphics().render_framebuffer(render_buffer.get());
         Graphics().display(root.get());
     }
 }
@@ -384,6 +387,11 @@ LockedProject* Editor::get_locked_project()
     return locked_project;
 }
 
+GLFrameBuffer* Editor::get_render_buffer()
+{
+    return render_buffer.get();
+}
+
 // The arguments are stored as a sequence of void*
 // Although a little unsafe, this is still fine in theory since all notification types
 // should have a well-defined sequence of argument types
@@ -400,6 +408,20 @@ void Editor::notify_modules(int notif_class, int notif_type, size_t num_args, vo
 
     // The Editor can also react to notifications
 
+    if (notif_class == NOTIF_TIMELINE::ID)
+    {
+        // Preview frame is something that should be globally accessible
+        // Thus, it makes sense for it to be controlled at the top level
+
+        if (notif_type == NOTIF_TIMELINE::PLAYHEAD_MOVED)
+        {
+            if (project != nullptr && render_buffer)
+            {
+                VideoTime playhead_time = timeline_module->get_playhead_time();
+                project->write_frame(render_buffer.get(), playhead_time);
+            }
+        }
+    }
     if (notif_class == NOTIF_PROJECT_INFO::ID)
     {
         if (notif_type == NOTIF_PROJECT_INFO::LENGTH_CHANGED)
@@ -438,17 +460,18 @@ void Editor::load_project(Project* new_project)
     flex_tabs.clear();
     flex_module = nullptr;
     focused_module = nullptr;
+    render_buffer.release();
 
     // Module setup
 
-    preview_module = new EditorModule(*this);
+    preview_module = new PreviewModule(*this);
     timeline_module = new TimelineModule(*this);
     command_bar = new CommandBar(*this);
     log_module = new LogModule(*this);
     media_module = new MediaModule(*this);
     project_module = new ProjectModule(*this);
     debug_module = new DebugModule(*this);
-    visible_modules.insert(visible_modules.end(), {&preview_module, &flex_module, (EditorModule**) &timeline_module});
+    visible_modules.insert(visible_modules.end(), {(EditorModule**) &preview_module, &flex_module, (EditorModule**) &timeline_module});
     all_modules.insert(all_modules.end(), {
         preview_module,
         timeline_module,
@@ -481,6 +504,11 @@ void Editor::load_project(Project* new_project)
         root->add_child(tab->get_module().get_node());
     temp_menu_bar.reset(GLContainer::create(root.get(), sf::Vector2f(), sf::Vector2f()));
     menu_bar_text.reset(GLText::create(temp_menu_bar.get(), Graphics().main_font(), 0u, "File   Edit   Settings   Export"));
+
+    // Render buffer setup
+
+    render_buffer.reset(GLFrameBuffer::create(project->get_resolution()));
+    preview_module->set_video_output(render_buffer->get_texture());
 
     // Other project setup
 

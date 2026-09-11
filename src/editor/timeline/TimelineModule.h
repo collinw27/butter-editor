@@ -120,6 +120,8 @@ public:
 
     void select_all();
     void deselect_all();
+
+    VideoTime get_playhead_time();
     
     virtual void on_update() override;
     virtual void on_mouse_press(sf::Vector2i position, bool focused, InputButton button) override;

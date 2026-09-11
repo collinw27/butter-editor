@@ -245,24 +245,28 @@ void TimelineModule::playhead_forward(VideoTime time)
 {
     playhead_time = clamp(playhead_time + time, 0, scroll_max);
     update_playhead();
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::PLAYHEAD_MOVED, 0, nullptr);
 }
 
 void TimelineModule::playhead_backward(VideoTime time)
 {
     playhead_time = clamp(playhead_time - time, 0, scroll_max);
     update_playhead();
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::PLAYHEAD_MOVED, 0, nullptr);
 }
 
 void TimelineModule::playhead_to_start()
 {
     playhead_time = 0;
     update_playhead();
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::PLAYHEAD_MOVED, 0, nullptr);
 }
 
 void TimelineModule::playhead_to_end()
 {
     playhead_time = scroll_max;
     update_playhead();
+    editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::PLAYHEAD_MOVED, 0, nullptr);
 }
 
 // Scrolls the timeline so the playhead position is in
@@ -296,6 +300,11 @@ void TimelineModule::deselect_all()
     {
         deselect_clip(clip.second);
     }
+}
+
+VideoTime TimelineModule::get_playhead_time()
+{
+    return playhead_time;
 }
 
 void TimelineModule::on_update()
@@ -358,6 +367,7 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
                 editor.set_drag_event(std::unique_ptr<DragPlayhead>(new DragPlayhead(this)));
                 editor.set_cursor(sf::Cursor::Type::SizeHorizontal);
                 playhead_time = std::max<VideoTime>(x_to_time(position.x), 0);
+                editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::PLAYHEAD_MOVED, 0, nullptr);
                 update_playhead();
             }
 
@@ -461,6 +471,7 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
             // Translate the clicked position to the time
             
             playhead_time = std::max<VideoTime>(x_to_time(position.x), 0);
+            editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::PLAYHEAD_MOVED, 0, nullptr);
             update_playhead();
         }
 
