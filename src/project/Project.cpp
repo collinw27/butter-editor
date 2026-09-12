@@ -469,11 +469,12 @@ void Project::delete_clip(id_s clip_id)
     auto it = get_iter_from_id(clip_id);
     if (it == clip_vec.end())
         throw ButterException("Cannot find clip");
-    clip_map.erase(clip_map.find((*it)->id));
-    clip_vec.erase(it);
 
     void* notif_args[1] = {(void*) &clip_id};
     editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_DELETED, 1, notif_args);
+    
+    clip_map.erase(clip_map.find((*it)->id));
+    clip_vec.erase(it);
 }
 
 // These methods have no error checking for nonexistent clips!

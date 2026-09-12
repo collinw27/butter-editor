@@ -679,6 +679,11 @@ void TimelineModule::on_notif(int notif_class, int notif_type, size_t num_args, 
         {
             id_s clip_id = *((id_s*) arg_ptrs[0]);
             Project* project = editor.get_project();
+            if (project->get_clip_at_time(playhead_time) == clip_id)
+            {
+                project->clip_enter_frame(clip_id, editor.get_render_buffer());
+                visible_clip = clip_id;
+            }
             add_clip(project, clip_id);
         }
         break;
@@ -697,6 +702,12 @@ void TimelineModule::on_notif(int notif_class, int notif_type, size_t num_args, 
 
             id_s clip_id = *((id_s*) arg_ptrs[0]);
             TimelineClip* deleted_clip = clip_mem.get_clip(clip_id);
+            if (visible_clip == clip_id)
+            {
+                Project* project = editor.get_project();
+                project->clip_exit_frame(clip_id, editor.get_render_buffer());
+                visible_clip = ID_NULL;
+            }
             clip_mem.remove_clip(deleted_clip);
         }
         break;

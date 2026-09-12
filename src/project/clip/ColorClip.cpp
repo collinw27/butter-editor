@@ -41,7 +41,7 @@ sf::Color ColorClip::get_color()
 
 void ColorClip::enter_frame(GLFrameBuffer* buffer)
 {
-    render_rect.reset(GLRectangle::create(buffer, sf::Vector2f(0, 0), sf::Vector2f(100, 100)));
+    render_rect.reset(GLRectangle::create(buffer, sf::Vector2f(0, 0), sf::Vector2f(1999, 1999)));
     render_rect->set_fill_color(color);
 }
 
