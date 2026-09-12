@@ -351,7 +351,7 @@ void Editor::cancel_drag_event()
     if (drag_mouse_event != nullptr)
     {
         drag_mouse_event->delete_node();
-        drag_mouse_event.release();
+        drag_mouse_event.reset(nullptr);
     }
 }
 
@@ -406,22 +406,6 @@ void Editor::notify_modules(int notif_class, int notif_type, size_t num_args, vo
             module->on_notif(notif_class, notif_type, num_args, arg_ptrs);
     }
 
-    // The Editor can also react to notifications
-
-    if (notif_class == NOTIF_TIMELINE::ID)
-    {
-        // Preview frame is something that should be globally accessible
-        // Thus, it makes sense for it to be controlled at the top level
-
-        if (notif_type == NOTIF_TIMELINE::PLAYHEAD_MOVED)
-        {
-            if (project != nullptr && render_buffer)
-            {
-                VideoTime playhead_time = timeline_module->get_playhead_time();
-                project->write_frame(render_buffer.get(), playhead_time);
-            }
-        }
-    }
     if (notif_class == NOTIF_PROJECT_INFO::ID)
     {
         if (notif_type == NOTIF_PROJECT_INFO::LENGTH_CHANGED)
@@ -460,7 +444,7 @@ void Editor::load_project(Project* new_project)
     flex_tabs.clear();
     flex_module = nullptr;
     focused_module = nullptr;
-    render_buffer.release();
+    render_buffer.reset(nullptr);
 
     // Module setup
 
@@ -518,7 +502,7 @@ void Editor::load_project(Project* new_project)
 
     // Reset mouse events
 
-    drag_mouse_event.release();
+    drag_mouse_event.reset(nullptr);
 
     // Now that nodes are setup, properly set their sizes
     
@@ -680,11 +664,8 @@ void Editor::on_mouse_release(InputButton button)
         if (drag_mouse_event != nullptr && mouse_overlaps)
             (*module)->on_mouse_drop(mouse_position - module_bounds.position, drag_mouse_event.get());
     }
-
-    // A little confusing, but the call to release() is freeing the pointer,
-    // not simulating a mouse release :)
     
-    drag_mouse_event.release();
+    drag_mouse_event.reset(nullptr);
 }
 
 sf::Vector2i Editor::get_mouse_position()

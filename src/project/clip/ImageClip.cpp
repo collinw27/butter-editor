@@ -18,11 +18,6 @@ const GLTexture* ImageClip::get_thumbnail()
     return source->get_thumbnail();
 }
 
-void ImageClip::write_frame(GLFrameBuffer* buffer, VideoTime time)
-{
-    
-}
-
 void ImageClip::save(std::ofstream& file)
 {
     file << source->id << " ";

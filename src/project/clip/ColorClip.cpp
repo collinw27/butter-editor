@@ -2,7 +2,6 @@
 
 #include "utility/core.h"
 #include "project/types.h"
-#include "graphics/GLRectangle.h"
 
 ColorClip::ColorClip(id_s id, VideoTime start_time, VideoTime length, sf::Color color)
     : Clip(start_time, length, id)
@@ -30,15 +29,6 @@ const GLTexture* ColorClip::get_thumbnail()
     return thumbnail_tex.get();
 }
 
-void ColorClip::write_frame(GLFrameBuffer* buffer, VideoTime time)
-{
-    // This leaks memory!
-    // Proper cleanup functions will be added soon
-
-    GLRectangle* rect = GLRectangle::create(buffer, sf::Vector2f(0, 0), sf::Vector2f(100, 100));
-    rect->set_fill_color(color);
-}
-
 void ColorClip::save(std::ofstream& file)
 {
     file << color_to_hex(color) << " ";
@@ -47,4 +37,20 @@ void ColorClip::save(std::ofstream& file)
 sf::Color ColorClip::get_color()
 {
     return color;
+}
+
+void ColorClip::enter_frame(GLFrameBuffer* buffer)
+{
+    render_rect.reset(GLRectangle::create(buffer, sf::Vector2f(0, 0), sf::Vector2f(100, 100)));
+    render_rect->set_fill_color(color);
+}
+
+void ColorClip::exit_frame(GLFrameBuffer* buffer)
+{
+    render_rect.reset(nullptr);
+}
+
+void ColorClip::update_frame(GLFrameBuffer* buffer, VideoTime time)
+{
+    
 }

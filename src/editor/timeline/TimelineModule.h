@@ -20,6 +20,8 @@ class TimelineModule : public EditorModule
     float zoom_amount;
     int clips_y;
     int playhead_time = 0;
+    int prev_playhead_time = 0;
+    id_s visible_clip = ID_NULL;
     
     std::unique_ptr<GLNode> clips_anchor;
     std::unique_ptr<GLNode> clips_scaler;

@@ -69,7 +69,7 @@ void TimelineClip::deselect()
     {
         is_selected = false;
         border->orphan();
-        border.release();
+        border.reset(nullptr);
     }
 }
 

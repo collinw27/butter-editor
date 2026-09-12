@@ -41,10 +41,18 @@ public:
     virtual const GLTexture* get_thumbnail() = 0;
     virtual void save(std::ofstream& file);
     
-    // All functions that override `write_frame` assume the buffer's
-    // OpenGL context has already been activated
+    // All frame function assume the buffer's OpenGL context has already been activated
+    // To avoid re-creating objects that persist between changed frames, frame rendering
+    // logic is broken up into 3 functions:
+    // `enter_frame()`: Creates the nodes that are needed for the draw function
+    // `exit_frame()`: Deletes any existing nodes when this clip is no longer visible
+    // `update_frame()`: Configures the nodes to the correct display (also called after `enter_frame()`)
+    // It's possible that clip types will be created in the future that more complex logic,
+    // but these can be addressed with a `change_frame(prev_time, time)` function
     
-    virtual void write_frame(GLFrameBuffer* buffer, VideoTime time) = 0;
+    virtual void enter_frame(GLFrameBuffer* buffer) {}
+    virtual void exit_frame(GLFrameBuffer* buffer) {}
+    virtual void update_frame(GLFrameBuffer* buffer, VideoTime time) {}
 };
 
 #endif

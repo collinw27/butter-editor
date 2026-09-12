@@ -19,7 +19,6 @@ public:
     
     virtual ClipType get_clip_type() override;
     virtual const GLTexture* get_thumbnail() override;
-    virtual void write_frame(GLFrameBuffer* buffer, VideoTime time) override;
     virtual void save(std::ofstream& file) override;
 };
 

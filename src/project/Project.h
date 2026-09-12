@@ -169,7 +169,9 @@ public:
     // Output
     
     void save();
-    void write_frame(GLFrameBuffer* render_buffer, VideoTime time);
+    void clip_enter_frame(id_s clip_id, GLFrameBuffer* buffer);
+    void clip_exit_frame(id_s clip_id, GLFrameBuffer* buffer);
+    void clip_update_frame(id_s clip_id, GLFrameBuffer* buffer, VideoTime time);
     void export_video(std::filesystem::path filepath);
 
     // Misc

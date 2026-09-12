@@ -9,6 +9,7 @@
 #include "utility/FileManager.h"
 #include "editor/Editor.h"
 #include "editor/notifs.h"
+#include "graphics/GLFrameBuffer.h"
 
 #include "editor/core/mouse/DragScroll.h"
 #include "editor/core/mouse/DragDirectScroll.h"
@@ -874,8 +875,33 @@ void TimelineModule::update_scroll_color(bool hovering, bool dragging)
     scroll_bar->set_fill_color(dragging ? Editor::C_SCROLL_DRAG : (hovering ? Editor::C_SCROLL_HOVER : Editor::C_SCROLL_STILL));
 }
 
+// `update_playhead()` is responsible for syncing the visuals when the
+// playhead time is updated
+// When the time itself has changed since the last update, it's also necessary
+// to change the state of the rendered output
+
 void TimelineModule::update_playhead()
 {
+    if (prev_playhead_time != playhead_time)
+    {
+        prev_playhead_time = playhead_time;
+        Project* project = editor.get_project();
+
+        GLFrameBuffer* render_buffer = editor.get_render_buffer();
+        Graphics().framebuffer_set_active(render_buffer, true);
+
+        id_s new_clip = project->get_clip_at_time(playhead_time);
+        if (visible_clip != ID_NULL && visible_clip != new_clip)
+            project->clip_exit_frame(visible_clip, render_buffer);
+        if (new_clip != ID_NULL && visible_clip != new_clip)
+            project->clip_enter_frame(new_clip, render_buffer);
+        if (new_clip != ID_NULL)
+            project->clip_update_frame(new_clip, render_buffer, playhead_time);
+        visible_clip = new_clip;
+
+        Graphics().framebuffer_set_active(render_buffer, false);
+    }
+
     playhead->set_position(sf::Vector2f(playhead_time, ruler->get_size().y + 2));
     playhead->set_scale(sf::Vector2f(1.0 / clips_scaler->get_scale().x, 1.0));
 }
