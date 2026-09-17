@@ -20,6 +20,7 @@ public:
     
     virtual MediaType get_media_type();
     virtual const GLTexture* get_thumbnail() override;
+    virtual const GLTexture* get_texture();
     virtual void save(std::ofstream& file) override;
 };
 

@@ -35,7 +35,16 @@ MediaType ImageMedia::get_media_type()
     return MediaType::IMAGE;
 }
 
+// Right now, `get_thumbnail()` and `get_texture()` function identically
+// A separation is still maintained since they are conceptually different,
+// and it's possible one will be changed in the future independently of the other
+
 const GLTexture* ImageMedia::get_thumbnail()
+{
+    return image_tex.get();
+}
+
+const GLTexture* ImageMedia::get_texture()
 {
     return image_tex.get();
 }

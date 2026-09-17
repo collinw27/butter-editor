@@ -16,10 +16,7 @@ class FileManagerSingleton
     static FileManagerSingleton* singleton_object;
 
     std::filesystem::path res_root_dir;
-    std::filesystem::path data_root_dir;    
-
-    sf::Font main_font;
-    sf::Font mono_font;
+    std::filesystem::path data_root_dir;
 
     UserSettings user_settings;
 

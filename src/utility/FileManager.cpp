@@ -31,11 +31,6 @@ FileManagerSingleton::FileManagerSingleton()
     std::getline(data_file, data_filepath);
     data_root_dir = data_filepath;
 
-    if (!main_font.openFromFile(res_root_dir/"font/Lato-Regular.ttf"))
-        throw ButterException("Could not locate Lato-Regular.ttf!");
-    if (!mono_font.openFromFile(res_root_dir/"font/Consolas.ttf"))
-        throw ButterException("Could not locate Consolas.ttf!");
-
     load_user_settings();
 }
 

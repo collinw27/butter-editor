@@ -9,6 +9,11 @@
 
 class GraphicsSingleton;
 
+// Important note:
+// This framebuffer DOES have its own context, but within SFML,
+// all contexts share their shareable resources with each other
+// (See https://www.sfml-dev.org/tutorials/3.0/window/opengl/#managing-multiple-opengl-windows)
+
 class GLFrameBuffer : public GLNode
 {
     sf::Vector2f size;
