@@ -10,7 +10,6 @@
 enum {
     CMD_LOG,
     CMD_UI_SCALE,
-    CMD_TYPE_TEST,
     CMD_NEW,
     CMD_SAVE,
     CMD_SAVE_AS,
@@ -39,13 +38,6 @@ void Editor::initialize_commands()
     );
     command_parser.define_command(command_parser.new_command("ui_scale", (int) CMD_UI_SCALE)
         .add_parameter("value", CommandParser::ParamType::INT)
-    );
-    command_parser.define_command(command_parser.new_command("type_test", (int) CMD_TYPE_TEST)
-        .add_parameter("int_value", CommandParser::ParamType::INT)
-        .add_parameter("uint_value", CommandParser::ParamType::U_INT)
-        .add_parameter("string_value", CommandParser::ParamType::STRING)
-        .add_parameter("float_value", CommandParser::ParamType::FLOAT)
-        .add_parameter("bool_value", CommandParser::ParamType::BOOL)
     );
     command_parser.define_command(command_parser.new_command("new", (int) CMD_NEW));
     command_parser.define_command(command_parser.new_command("save", (int) CMD_SAVE));
@@ -98,11 +90,6 @@ std::string Editor::execute_command(CommandResult command)
         user_settings.ui_scale_index = ui_scale_index;
         FileManager().update_user_settings(user_settings);
         return "Set UI scale to " + std::to_string(ui_scale_index) + ".";
-    }
-    case CMD_TYPE_TEST:
-    {
-        command_parser.validate_range(command.get_float(3), 0.0, 99999.0);
-        break;
     }
     case CMD_NEW:
     {
