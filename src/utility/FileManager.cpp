@@ -18,18 +18,46 @@ FileManagerSingleton::FileManagerSingleton()
     FileManagerSingleton::singleton_object = this;
     
     std::ifstream res_file{"respath.txt"};
-    if (!res_file.is_open())
-        throw ButterException("Could not locate respath.txt!");
     std::string res_filepath;
-    std::getline(res_file, res_filepath);
+    if (res_file.is_open())
+    {
+        std::getline(res_file, res_filepath);
+    }
+    else
+    {
+        std::ofstream new_file{"respath.txt"};
+        res_filepath = "../../res/";
+        new_file << res_filepath;
+        new_file.close();
+    }
     res_root_dir = res_filepath;
     
     std::ifstream data_file{"datapath.txt"};
-    if (!data_file.is_open())
-        throw ButterException("Could not locate datapath.txt!");
     std::string data_filepath;
-    std::getline(data_file, data_filepath);
+    if (data_file.is_open())
+    {
+        std::getline(data_file, data_filepath);
+    }
+    else
+    {
+        std::ofstream new_file{"datapath.txt"};
+        data_filepath = "../../data/";
+        new_file << data_filepath;
+        new_file.close();
+    }
     data_root_dir = data_filepath;
+
+    // Quick sanity check, prints user-friendly error if `res` directory doesn't exist
+    // Empty `data` folder is not a problem, simply create a new folder
+
+    if (!std::filesystem::exists(res_root_dir))
+    {
+        throw ButterException("Cannot locate `res` directory. (check `respath.txt`)");
+    }
+    if (!std::filesystem::exists(data_root_dir))
+    {
+        std::filesystem::create_directory(data_root_dir);
+    }
 
     load_user_settings();
 }

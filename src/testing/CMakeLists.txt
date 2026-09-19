@@ -2,7 +2,7 @@
 # GLTest
 # Used for testing custom OpenGL objects
 
-add_executable(GLTest GLTest.cpp ${butter_SRC} ${butter_LINK})
+add_executable(GLTest GLTest.cpp ${butter_SRC})
 target_link_libraries(GLTest PRIVATE common)
 
 add_subdirectory("gtest")

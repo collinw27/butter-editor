@@ -6,7 +6,12 @@ This is a hobby project still in the development stage, so there is currently no
 
 ### Getting started:
 
-All dependences used in this project are free to distribute, so they are all packaged under `lib/`. The default `CMakeLists` should be configured to build the main Butter executable for Windows (Linux compatibility coming soon!) Also, feel free to peruse the source code in `src/`!
+All dependences used in this project are free to distribute, so they are all packaged under `lib/`. The default `CMakeLists` should be configured to build the main Butter executable for Windows (Linux compatibility coming soon!) GCC 14.2.0 is recommended for compiling.
+
+When the program is run, it searches for the `res/` directory using the `respath.txt` file in the executable directory. The default path should match where `res/` was installed, but it's possible that the install configuration doesn't match what was expected. In this case, simply edit the `respath.txt` file to point to the correct absolute path. In the future, this will be fixed with an auto-installer.
+
+Finally, feel free to peruse the source code in `src/`!
+
 
 ### Using the program:
 
