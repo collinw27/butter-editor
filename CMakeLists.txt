@@ -20,14 +20,13 @@ set(PROJECT_DIR "${PROJECT_SOURCE_DIR}")
 # The library file is provided as part of SFML and linked by name.
 # ------------------------------------------------------------------
 
-set(SFML_DIR    "${PROJECT_DIR}/lib/SFML")
-set(GLEW_DIR    "${PROJECT_DIR}/lib/GLEW")
-set(GLM_DIR     "${PROJECT_DIR}/lib/GLM")
-set(SUBPROC_DIR "${PROJECT_DIR}/lib/Subprocess")
+set(SFML_DIR "${PROJECT_DIR}/lib/SFML")
+set(GLEW_DIR "${PROJECT_DIR}/lib/GLEW")
+set(GLM_DIR "${PROJECT_DIR}/lib/GLM")
 set(FREETYPE_DIR "${PROJECT_DIR}/lib/FreeType")
-
-set(SFML_SUFFIX     "$<$<CONFIG:Debug>:-d>")
+set(SFML_SUFFIX "$<$<CONFIG:Debug>:-d>")
 set(FREETYPE_SUFFIX "$<$<CONFIG:Debug>:d>")
+set(SUBPROC_DIR "${PROJECT_DIR}/lib/Subprocess")
 
 # ------------------------------------------------------------------
 # Statically link Subprocess library
@@ -45,29 +44,62 @@ target_compile_features(subprocess PUBLIC cxx_std_17)
 add_library(common INTERFACE)
 target_compile_features(common INTERFACE cxx_std_17)
 
-target_include_directories(common INTERFACE
-    "${PROJECT_DIR}/src"
-    "${SFML_DIR}/include"
-    "${GLEW_DIR}/include"
-    "${GLM_DIR}"
-    "${FREETYPE_DIR}/include"
-)
+if(WIN32)
 
-target_link_directories(common INTERFACE
-    "${SFML_DIR}/lib"
-    "${GLEW_DIR}/lib"
-)
+    target_include_directories(common INTERFACE
+        "${PROJECT_DIR}/src"
+        "${SFML_DIR}/include"
+        "${GLEW_DIR}/include"
+        "${GLM_DIR}"
+        "${FREETYPE_DIR}/include"
+    )
 
-target_link_libraries(common INTERFACE
-    "sfml-graphics${SFML_SUFFIX}"
-    "sfml-window${SFML_SUFFIX}"
-    "sfml-system${SFML_SUFFIX}"
-    "freetype${FREETYPE_SUFFIX}"
-    "${GLEW_DIR}/lib/glew32.lib"
-    subprocess
-    opengl32
-    gdi32
-)
+    target_link_directories(common INTERFACE
+        "${SFML_DIR}/lib"
+        "${GLEW_DIR}/lib"
+    )
+
+    target_link_libraries(common INTERFACE
+        "sfml-graphics${SFML_SUFFIX}"
+        "sfml-window${SFML_SUFFIX}"
+        "sfml-system${SFML_SUFFIX}"
+        "freetype${FREETYPE_SUFFIX}"
+        glew32
+        subprocess
+        opengl32
+        gdi32
+    )
+
+elseif(UNIX)
+
+    target_include_directories(common INTERFACE
+        "${PROJECT_DIR}/src"
+        "${SFML_DIR}/include"
+        "${GLEW_DIR}/include"
+        "${GLM_DIR}"
+        "${FREETYPE_DIR}/include"
+    )
+
+    target_link_directories(common INTERFACE
+        "${SFML_DIR}/lib/linux"
+        "${GLEW_DIR}/lib/linux"
+    )
+
+    target_link_libraries(common INTERFACE
+        "sfml-graphics"
+        "sfml-window"
+        "sfml-system"
+        "freetype"
+        GLEW
+        subprocess
+        GL
+    )
+
+else()
+
+    message(FATAL_ERROR "Invalid system, must be WIN32 or UNIX compatible")
+
+endif()
 
 # ------------------------------------------------------------------
 # Sources
@@ -110,9 +142,11 @@ if(BUTTER_DLLS)
     )
 endif()
 
-
 # ------------------------------------------------------------------
 # Testing directory is also responsible for building executables
 # ------------------------------------------------------------------
 
-add_subdirectory(src/testing)
+option(BUTTER_BUILD_TESTING "Build the testing executables" ON)
+if(BUTTER_BUILD_TESTING)
+    add_subdirectory(src/testing)
+endif()
