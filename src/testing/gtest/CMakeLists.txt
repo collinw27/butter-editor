@@ -1,5 +1,7 @@
 
-# GoogleTest linked with FetchContent as per Google's specification
+# ------------------------------------------------------------------
+#                          GoogleTest
+# ------------------------------------------------------------------
 
 include(FetchContent)
 FetchContent_Declare(

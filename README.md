@@ -4,9 +4,32 @@
 
 This is a hobby project still in the development stage, so there is currently no release build. This means that bugs or missing features are possible, but the program should still function correctly in almost all cases.
 
-### Getting started:
+### Building the project:
 
-All dependences used in this project are free to distribute, so they are all packaged under `lib/`. The default `CMakeLists` should be configured to build the main Butter executable for Windows (Linux compatibility coming soon!) GCC 14.2.0 is recommended for compiling.
+This project is currently available for both **Windows** and **Linux!**
+- **CMake 3.28** is required to build this project (higher versions are fine, but *CMake 4* may cause problems).
+- **GCC 14** is recommended for compiling, but other compilers should work fine as well.
+
+Any dependencies this project needs should be automatically managed by CMake. Header-only libraries can be found in `lib/`, whereas `FetchContent` is used for libraries that need to be linked.
+DLL files should also be managed by CMake, but if needed, the relevant files can be found in `lib/bin/` and copied to the executable directory.
+
+If building on Linux, SFML may require the following packages (this list can be found on [SFML's CMake page](https://github.com/SFML/cmake-sfml-project/blob/master/README.md)).
+```
+sudo apt install \
+    libxrandr-dev \
+    libxcursor-dev \
+    libxi-dev \
+    libudev-dev \
+    libfreetype-dev \
+    libflac-dev \
+    libvorbis-dev \
+    libgl1-mesa-dev \
+    libegl1-mesa-dev \
+    libfreetype-dev \
+    libharfbuzz-dev \
+    libmbedtls-dev \
+    libssh2-1-dev
+```
 
 When the program is run, it searches for the `res/` directory using the `respath.txt` file in the executable directory. The default path should match where `res/` was installed, but it's possible that the install configuration doesn't match what was expected. In this case, simply edit the `respath.txt` file to point to the correct absolute path. In the future, this will be fixed with an auto-installer.
 
