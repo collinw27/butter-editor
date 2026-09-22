@@ -80,17 +80,27 @@ elseif(UNIX)
         "${FREETYPE_DIR}/include"
     )
 
-    target_link_directories(common INTERFACE
-        "${SFML_DIR}/lib/linux"
-        "${GLEW_DIR}/lib/linux"
-    )
+    include(FetchContent)
+    FetchContent_Declare(SFML
+        GIT_REPOSITORY https://github.com/SFML/SFML.git
+        GIT_TAG 3.0.x
+        GIT_SHALLOW ON
+        EXCLUDE_FROM_ALL
+        SYSTEM)
+    FetchContent_MakeAvailable(SFML)
+
+    FetchContent_Declare(glew
+        GIT_REPOSITORY https://github.com/Perlmint/glew-cmake.git
+        GIT_TAG        glew-cmake-2.2.0
+        GIT_SHALLOW    ON
+        SYSTEM)
+    FetchContent_MakeAvailable(glew)
 
     target_link_libraries(common INTERFACE
-        "sfml-graphics"
-        "sfml-window"
-        "sfml-system"
-        "freetype"
-        GLEW
+        SFML::Graphics
+        SFML::Window
+        SFML::System
+        libglew_static
         subprocess
         GL
     )
@@ -126,6 +136,7 @@ file(GLOB butter_SRC CONFIGURE_DEPENDS
 # ------------------------------------------------------------------
 
 add_executable(Butter src/main.cpp ${butter_SRC})
+set_target_properties(Butter PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(Butter PRIVATE common)
 
 # ------------------------------------------------------------------

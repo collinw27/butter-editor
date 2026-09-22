@@ -4,6 +4,8 @@
 #include "utility/Graphics.h"
 #include "editor/Editor.h"
 
+#include "utility/Logger.h"
+
 DebugModule::DebugModule(Editor& editor)
     : EditorModule(editor)
 {
