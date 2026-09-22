@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 
 #include "editor/Editor.h"
 #include "editor/notifs.h"

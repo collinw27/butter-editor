@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.28)
 project(ButterProject LANGUAGES CXX)
 
-# Default to Debug for single-config generators (Makefiles, Ninja).
-# Multi-config generators (Visual Studio) ignore CMAKE_BUILD_TYPE.
+# ------------------------------------------------------------------
+# Default to Debug for single-config generators (Makefiles, Ninja)
+# Multi-config generators (Visual Studio) ignore CMAKE_BUILD_TYPE
+# ------------------------------------------------------------------
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 endif()
@@ -17,17 +20,12 @@ set(PROJECT_DIR "${PROJECT_SOURCE_DIR}")
 # Dependencies
 # All necessary libraries are currently included in the lib/ folder.
 # Freetype: Only the include path is used.
-# The library file is provided as part of SFML and linked by name.
+# The library is provided as part of SFML.
 # ------------------------------------------------------------------
 
-set(SFML_DIR    "${PROJECT_DIR}/lib/SFML")
-set(GLEW_DIR    "${PROJECT_DIR}/lib/GLEW")
-set(GLM_DIR     "${PROJECT_DIR}/lib/GLM")
-set(SUBPROC_DIR "${PROJECT_DIR}/lib/Subprocess")
+set(GLM_DIR "${PROJECT_DIR}/lib/GLM")
 set(FREETYPE_DIR "${PROJECT_DIR}/lib/FreeType")
-
-set(SFML_SUFFIX     "$<$<CONFIG:Debug>:-d>")
-set(FREETYPE_SUFFIX "$<$<CONFIG:Debug>:d>")
+set(SUBPROC_DIR "${PROJECT_DIR}/lib/Subprocess")
 
 # ------------------------------------------------------------------
 # Statically link Subprocess library
@@ -47,27 +45,62 @@ target_compile_features(common INTERFACE cxx_std_17)
 
 target_include_directories(common INTERFACE
     "${PROJECT_DIR}/src"
-    "${SFML_DIR}/include"
-    "${GLEW_DIR}/include"
     "${GLM_DIR}"
     "${FREETYPE_DIR}/include"
 )
 
-target_link_directories(common INTERFACE
-    "${SFML_DIR}/lib"
-    "${GLEW_DIR}/lib"
-)
+# ------------------------------------------------------------------
+# FetchContent is used to easily build libraries with CMake
+# ------------------------------------------------------------------
+
+include(FetchContent)
+
+set(SFML_BUILD_NETWORK OFF)
+FetchContent_Declare(SFML
+    GIT_REPOSITORY https://github.com/SFML/SFML.git
+    GIT_TAG 3.0.1
+    GIT_SHALLOW ON
+    EXCLUDE_FROM_ALL
+    SYSTEM)
+FetchContent_MakeAvailable(SFML)
+
+FetchContent_Declare(glew
+    GIT_REPOSITORY https://github.com/Perlmint/glew-cmake.git
+    GIT_TAG glew-cmake-2.2.0
+    GIT_SHALLOW ON
+    SYSTEM)
+FetchContent_MakeAvailable(glew)
 
 target_link_libraries(common INTERFACE
-    "sfml-graphics${SFML_SUFFIX}"
-    "sfml-window${SFML_SUFFIX}"
-    "sfml-system${SFML_SUFFIX}"
-    "freetype${FREETYPE_SUFFIX}"
-    "${GLEW_DIR}/lib/glew32.lib"
+    SFML::Graphics
+    SFML::Window
+    SFML::System
+    libglew_static
     subprocess
-    opengl32
-    gdi32
 )
+
+# ------------------------------------------------------------------
+# Link with libraries installed by platform's graphics driver
+# ------------------------------------------------------------------
+
+if(WIN32)
+
+    target_link_libraries(common INTERFACE
+        opengl32
+        gdi32
+    )
+
+elseif(UNIX AND NOT APPLE)
+
+    target_link_libraries(common INTERFACE
+        GL
+    )
+
+else()
+
+    message(FATAL_ERROR "Invalid system, must be WIN32 or UNIX compatible")
+
+endif()
 
 # ------------------------------------------------------------------
 # Sources
@@ -91,28 +124,19 @@ file(GLOB butter_SRC CONFIGURE_DEPENDS
 
 # ------------------------------------------------------------------
 # Main executable
+# DLLs should no longer be needed in the executable directory
+# If you do need them, they can be found in `lib/bin/`
 # ------------------------------------------------------------------
 
 add_executable(Butter src/main.cpp ${butter_SRC})
+set_target_properties(Butter PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(Butter PRIVATE common)
-
-# ------------------------------------------------------------------
-# Copy DLLs into executable directory (expected in `lib/bin/`)
-# ------------------------------------------------------------------
-
-file(GLOB BUTTER_DLLS CONFIGURE_DEPENDS "${PROJECT_DIR}/lib/bin/*.dll")
-if(BUTTER_DLLS)
-    add_custom_command(TARGET Butter POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${BUTTER_DLLS}
-            "$<TARGET_FILE_DIR:Butter>"
-        VERBATIM
-    )
-endif()
-
 
 # ------------------------------------------------------------------
 # Testing directory is also responsible for building executables
 # ------------------------------------------------------------------
 
-add_subdirectory(src/testing)
+option(BUTTER_BUILD_TESTING "Build the testing executables" OFF)
+if(BUTTER_BUILD_TESTING)
+    add_subdirectory(src/testing)
+endif()
