@@ -28,6 +28,7 @@ protected:
 public:
 
     static GLShaderRectangle* create(GLNode* parent, GLShaderProgram* program, sf::Vector2f position = {0, 0}, sf::Vector2f size = {1, 1});
+    virtual ~GLShaderRectangle();
 
 protected:
 

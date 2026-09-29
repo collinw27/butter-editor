@@ -83,7 +83,7 @@ public:
     glm::mat4 world_to_screen();
     sf::Vector2f screen_to_world(sf::Vector2f vec);
 
-    void check_gl_errors();
+    void check_gl_errors(bool throw_exception);
     FT_Library& ft_lib();
 
     unsigned int push_scissor(sf::IntRect bounds);

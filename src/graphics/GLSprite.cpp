@@ -4,7 +4,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
+#include "utility/core.h"
 #include "utility/Graphics.h"
+#include "utility/Logger.h"
 
 GLSprite::GLSprite(GLNode* parent, const GLTextureBase* texture, sf::Vector2f position)
     : GLNode{parent}
@@ -25,6 +27,21 @@ GLSprite* GLSprite::create(GLNode* parent, const GLTextureBase* texture, sf::Vec
     GLSprite* instance = new GLSprite(parent, texture, position);
     instance->init();
     return instance;
+}
+
+GLSprite::~GLSprite()
+{
+    if (glIsProgram(shader_program) == GL_TRUE)
+    {
+        glDeleteProgram(shader_program);
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &vertex_VBO);
+        glDeleteBuffers(1, &index_VBO);
+    }
+    else
+    {
+        Logger().log("Could not free shader program: " + std::to_string(shader_program));
+    }
 }
 
 void GLSprite::on_window_resized()

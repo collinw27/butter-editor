@@ -8,6 +8,7 @@
 
 #include "utility/FileManager.h"
 #include "utility/core.h"
+#include "utility/Logger.h"
 #include "graphics/GLWindowNode.h"
 #include "graphics/GLFrameBuffer.h"
 #include "graphics/GLFont.h"
@@ -239,7 +240,7 @@ GLuint GraphicsSingleton::link_shader(BuiltinShader vertex_id, BuiltinShader fra
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
-    Graphics().check_gl_errors();
+    Graphics().check_gl_errors(true);
 
     return shader_program;
 }
@@ -268,7 +269,7 @@ sf::Vector2f GraphicsSingleton::screen_to_world(sf::Vector2f vec)
     return vec.componentWiseMul(sf::Vector2f(1.f / window->getSize().x, 1.f / window->getSize().y));
 }
 
-void GraphicsSingleton::check_gl_errors()
+void GraphicsSingleton::check_gl_errors(bool throw_exception)
 {
     GLenum error_code = glGetError();
     if (error_code != GL_NO_ERROR)
@@ -286,7 +287,10 @@ void GraphicsSingleton::check_gl_errors()
             case GL_OUT_OF_MEMORY:                 error = "OUT_OF_MEMORY"; break;
             case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
         }
-        throw ButterException("OpenGL error: " + error);
+        if (throw_exception)
+            throw ButterException("OpenGL error: " + error);
+        else
+            Logger().log("OpenGL error: " + error);
     }
 }
 

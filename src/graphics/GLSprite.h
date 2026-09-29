@@ -32,6 +32,7 @@ protected:
 public:
 
     static GLSprite* create(GLNode* parent, const GLTextureBase* texture, sf::Vector2f position = {0, 0});
+    virtual ~GLSprite();
 
 protected:
 

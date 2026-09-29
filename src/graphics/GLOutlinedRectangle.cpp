@@ -8,6 +8,7 @@
 
 #include "utility/core.h"
 #include "utility/Graphics.h"
+#include "utility/Logger.h"
 
 GLOutlinedRectangle::GLOutlinedRectangle(GLNode* parent, sf::Vector2f position, sf::Vector2f size)
     : GLNode{parent}
@@ -32,6 +33,21 @@ GLOutlinedRectangle* GLOutlinedRectangle::create(GLNode* parent, sf::Vector2f po
     GLOutlinedRectangle* instance = new GLOutlinedRectangle(parent, position, size);
     instance->init();
     return instance;
+}
+
+GLOutlinedRectangle::~GLOutlinedRectangle()
+{
+    if (glIsProgram(shader_program) == GL_TRUE)
+    {
+        glDeleteProgram(shader_program);
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &vertex_VBO);
+        glDeleteBuffers(1, &index_VBO);
+    }
+    else
+    {
+        Logger().log("Could not free shader program: " + std::to_string(shader_program));
+    }
 }
 
 void GLOutlinedRectangle::on_window_resized()
@@ -65,6 +81,7 @@ void GLOutlinedRectangle::draw()
     glUniform2fv(loc, 1, glm::value_ptr(u_outline_width));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glUseProgram(0);
 
     GLNode::draw();
 }

@@ -32,6 +32,7 @@ protected:
 public:
 
     static GLRectangle* create(GLNode* parent, sf::Vector2f position = {0, 0}, sf::Vector2f size = {1, 1});
+    virtual ~GLRectangle();
 
 protected:
 

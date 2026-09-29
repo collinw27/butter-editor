@@ -25,7 +25,7 @@ class MediaModule : public EditorModule
 {
     std::vector<MediaData> media_vec;
     std::unique_ptr<GLRectangle> highlight_rect;
-    float unit_height;
+    float unit_height = 0;
 
 public:
 

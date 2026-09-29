@@ -5,6 +5,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include "utility/core.h"
 #include "utility/Graphics.h"
+#include "utility/Logger.h"
 #include "graphics/GLFont.h"
 
 GLText::GLText(GLNode* parent, GLFont* font, unsigned int char_size, std::string str)
@@ -25,11 +26,6 @@ void GLText::init()
     setup_GL();
 }
 
-GLText::~GLText()
-{
-    reset_formatting();
-}
-
 GLText* GLText::create(GLNode* parent, GLFont* font, unsigned int char_size, std::string str)
 {
     GLText* instance = new GLText(parent, font, char_size, str);
@@ -42,6 +38,22 @@ GLText* GLText::create(GLNode* parent, GLFont* font)
     GLText* instance = new GLText(parent, font, 0u, "");
     instance->init();
     return instance;
+}
+
+GLText::~GLText()
+{
+    reset_formatting();
+    if (glIsProgram(shader_program) == GL_TRUE)
+    {
+        glDeleteProgram(shader_program);
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &vertex_VBO);
+        glDeleteBuffers(1, &index_VBO);
+    }
+    else
+    {
+        Logger().log("Could not free shader program: " + std::to_string(shader_program));
+    }
 }
 
 void GLText::on_window_resized()

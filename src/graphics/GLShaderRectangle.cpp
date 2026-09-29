@@ -6,6 +6,7 @@
 
 #include "utility/core.h"
 #include "utility/Graphics.h"
+#include "utility/Logger.h"
 
 GLShaderRectangle::GLShaderRectangle(GLNode* parent, GLShaderProgram* program, sf::Vector2f position, sf::Vector2f size)
     : GLNode{parent}
@@ -29,6 +30,21 @@ GLShaderRectangle* GLShaderRectangle::create(GLNode* parent, GLShaderProgram* pr
     GLShaderRectangle* instance = new GLShaderRectangle(parent, program, position, size);
     instance->init();
     return instance;
+}
+
+GLShaderRectangle::~GLShaderRectangle()
+{   
+    if (glIsProgram(shader_program->shader_program) == GL_TRUE)
+    {
+        glDeleteProgram(shader_program->shader_program);
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &vertex_VBO);
+        glDeleteBuffers(1, &index_VBO);
+    }
+    else
+    {
+        Logger().log("Could not free shader program: " + std::to_string(shader_program->shader_program));
+    }
 }
 
 void GLShaderRectangle::on_window_resized()
