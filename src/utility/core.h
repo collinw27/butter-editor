@@ -17,6 +17,17 @@ using id_s = uint32_t; // Standard id type, can't be id_t because of collsion wi
 constexpr id_s ID_NULL = 0;
 constexpr id_s ID_START = 1;
 
+// Enums
+
+enum class LogLevel
+{
+    NONE = 0,
+    ERR = 1, // Some macro is preventing ERROR from working :/
+    WARNING = 2,
+    INFO = 3,
+    ALL = 4
+};
+
 // Doesn't validate that a < b
 
 template<typename T>

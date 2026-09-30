@@ -40,10 +40,6 @@ GLRectangle::~GLRectangle()
         glDeleteBuffers(1, &vertex_VBO);
         glDeleteBuffers(1, &index_VBO);
     }
-    else
-    {
-        Logger().log("Could not free shader program: " + std::to_string(shader_program));
-    }
 }
 
 void GLRectangle::on_window_resized()

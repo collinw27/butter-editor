@@ -128,17 +128,47 @@ void FileManagerSingleton::load_user_settings()
         {
             user_settings.ui_scale_index = file_read_int(line.second, -5, 10);
         }
+        else if (line.first == "log_method")
+        {
+            if (line.second == "console")
+            {
+                user_settings.log_to_console = true;
+                user_settings.log_to_file = false;
+            }
+            else if (line.second == "file")
+            {
+                user_settings.log_to_console = false;
+                user_settings.log_to_file = true;
+            }
+            else if (line.second == "both")
+            {
+                user_settings.log_to_console = true;
+                user_settings.log_to_file = true;
+            }
+            else
+            {
+                user_settings.log_to_console = false;
+                user_settings.log_to_file = false;
+            }
+        }
+        else if (line.first == "log_level")
+        {
+            user_settings.log_level = file_read_int(line.second, (int) LogLevel::NONE, (int) LogLevel::ALL);
+        }
     }
 }
 
 std::pair<std::string, std::string> FileManagerSingleton::file_read_data_line(std::ifstream& file)
 {
     // Must match format "name: some other data"
+    // Space after colon can be ignored
 
     std::pair<std::string, std::string> output;
     std::getline(file, output.first, ':');
     if (output.first.length() == 0)
         throw ButterException("Invalid file data (empty key)");
+    if ((char) file.peek() == ' ')
+        file.ignore(1);
     std::getline(file, output.second);
     if (output.second.length() == 0)
         throw ButterException("Invalid file data (empty value)");

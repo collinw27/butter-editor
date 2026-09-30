@@ -42,6 +42,7 @@ void LogModule::apply_ui_scale()
 void LogModule::push_command(std::string command)
 {
     history.insert(history.begin(), command);
+    Logger().log(command, LogLevel::INFO);
     while (history.size() > MAX_HISTORY)
         history.pop_back();
     error = std::nullopt;
@@ -51,6 +52,7 @@ void LogModule::push_command(std::string command)
 void LogModule::push_error(std::string error)
 {
     this->error = error;
+    Logger().log(error, LogLevel::INFO);
     render_text();
 }
 

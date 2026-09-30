@@ -37,10 +37,20 @@ const sf::Color Editor::C_SCROLL_DRAG {255, 255, 255, 180};
 
 Editor::Editor()
 {
+    // Start by configuring logger
+
+    Logger().set_log_level((LogLevel) FileManager().get_user_settings().log_level);
+    Logger().set_console_output(FileManager().get_user_settings().log_to_console);
+    Logger().set_file_output(FileManager().get_user_settings().log_to_file);
+    if (FileManager().get_user_settings().log_to_file)
+        Logger().print_startup_message();
+
     // SFML setup
     
+    Logger().log("Initializing window...", LogLevel::ALL);
     Graphics().init(sf::VideoMode({1280, 720}), "Butter Video Editor", sf::Style::Close | sf::Style::Resize | sf::Style::Titlebar);
     Graphics().set_clear_color(Editor::C_BG_EMPTY);
+    Logger().log("Initializing window... Finsihed!", LogLevel::ALL);
     window = &Graphics().get_window();
     window_size = sf::Vector2i(window->getSize());
     window->setMinimumSize(sf::Vector2u(300, 200));
@@ -68,10 +78,13 @@ Editor::Editor()
     // is where most initialization happens
 
     load_project(new Project(*this));
+    Logger().log("Created default project.", LogLevel::ALL);
 }
 
 Editor::~Editor()
 {
+    Logger().log("Freeing editor resources...", LogLevel::ALL);
+
     delete preview_module;
     delete timeline_module;
     delete log_module;
@@ -79,6 +92,10 @@ Editor::~Editor()
     delete project_module;
     delete debug_module;
     delete command_bar;
+    
+    Logger().log("Closing window...", LogLevel::ALL);
+
+    window->close();
 }
 
 void Editor::run()
@@ -94,7 +111,6 @@ void Editor::run()
         {
             if (event->is<sf::Event::Closed>())
             {
-                window->close();
                 return;
             }
             else if (const auto* resized = event->getIf<sf::Event::Resized>())
@@ -417,6 +433,8 @@ void Editor::notify_modules(int notif_class, int notif_type, size_t num_args, vo
 
 void Editor::load_project(Project* new_project)
 {
+    Logger().log("Loading project...", LogLevel::ALL);
+
     project = new_project;
     locked_project = (LockedProject*) project;
     exporting = false;
@@ -425,10 +443,14 @@ void Editor::load_project(Project* new_project)
     // This by itself doesn't free the memory
     // The memory is instead freed when the respective smart pointers are
     // freed during module deletion and similar events
+    
+    Logger().log("Deallocating editor graphics data...", LogLevel::ALL);
 
     root->free_children();
 
     // Make sure any leftover data is reset first
+    
+    Logger().log("Deallocating editor module data...", LogLevel::ALL);
 
     delete preview_module;
     delete timeline_module;
@@ -437,6 +459,8 @@ void Editor::load_project(Project* new_project)
     delete project_module;
     delete debug_module;
     delete command_bar;
+    
+    Logger().log("Deallocating miscellaneous data...", LogLevel::ALL);
 
     using_terminal = false;
     all_modules.clear();
@@ -447,6 +471,8 @@ void Editor::load_project(Project* new_project)
     render_buffer.reset(nullptr);
 
     // Module setup
+    
+    Logger().log("Initializing new modules...", LogLevel::ALL);
 
     preview_module = new PreviewModule(*this);
     timeline_module = new TimelineModule(*this);
@@ -467,6 +493,8 @@ void Editor::load_project(Project* new_project)
 
     // Flex module setup
     // Like the modules themselves, tab parameters are set during `resize_modules()`
+    
+    Logger().log("Initializing other editor objects...", LogLevel::ALL);
 
     current_flex_tab = 0;
     flex_tabs.push_back(std::unique_ptr<FlexTab>(new FlexTab(*this, log_module, "Log")));
@@ -490,11 +518,15 @@ void Editor::load_project(Project* new_project)
     menu_bar_text.reset(GLText::create(temp_menu_bar.get(), Graphics().main_font(), 0u, "File   Edit   Settings   Export"));
 
     // Render buffer setup
+    
+    Logger().log("Initializing GL renderbuffer...", LogLevel::ALL);
 
     render_buffer.reset(GLFrameBuffer::create(project->get_resolution()));
     preview_module->set_video_output(render_buffer->get_texture());
 
     // Other project setup
+    
+    Logger().log("Finishing up...", LogLevel::ALL);
 
     project_module->refresh_info();
     command_bar->set_status_name(project->get_name());
@@ -508,6 +540,7 @@ void Editor::load_project(Project* new_project)
     
     resize_modules();
 
+    Logger().log("Loaded project!", LogLevel::ALL);
     queued_project = nullptr;
 }
 

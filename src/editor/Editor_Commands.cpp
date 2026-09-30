@@ -6,6 +6,7 @@
 #include "project/exceptions.h"
 #include "utility/FileManager.h"
 #include "utility/file_formats/UserSettings.h"
+#include "utility/Logger.h"
 
 enum {
     CMD_LOG,
@@ -94,8 +95,6 @@ std::string Editor::execute_command(CommandResult command)
     case CMD_NEW:
     {
         block_if_exporting(project);
-        if (project != nullptr)
-            delete project;
         queued_project = new Project(*this);
         return "Created new project.";
     }
@@ -121,12 +120,10 @@ std::string Editor::execute_command(CommandResult command)
         block_if_exporting(project);
         if (!Project::exists(command.get_string(0)))
             throw ExecuteException("Nonexistent project \"" + command.get_string(0) + "\".");
-        if (project != nullptr)
-            delete project;
         try
         {
             queued_project = new Project(*this, command.get_string(0));
-            return "Loaded project \"" + project->get_name() + "\".";
+            return "Loaded project \"" + queued_project->get_name() + "\".";
         }
         catch (ProjectLoadException error)
         {
@@ -136,24 +133,6 @@ std::string Editor::execute_command(CommandResult command)
     case CMD_CREATE_CLIP:
     {
         return "This command is temporarily disabled.";
-        /*
-        block_if_exporting(project);
-        int c_index = -1;
-        std::string provided_name = command.get_string(2);
-        std::vector<std::string> c_names = {"red", "orange", "yellow", "green", "blue", "purple"};
-        for (int i = 0; i < c_names.size(); ++i)
-        {
-            if (provided_name == c_names.at(i) || (provided_name.length() == 1 && provided_name.at(0) == c_names.at(i).at(0)))
-                c_index = i;
-        }
-        if (c_index == -1)
-            throw ExecuteException("Invalid color");
-        std::vector<std::string> colors = {"#ff5959", "#ffa75e", "#ffec5e", "#63ff73", "#73beff", "#e678ff"};
-        if (command.get_int(1) <= 0)
-            throw ExecuteException("Clip length must be positive.");
-        bool successful = project->add_color_clip(command.get_int(0), command.get_int(1), hex_to_color(colors.at(c_index)));
-        return successful ? "Created clip." : "Could not create clip.";
-        */
     }
     case CMD_EXPORT:
     {

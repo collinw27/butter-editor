@@ -1,5 +1,7 @@
 .vscode/
 build/
+build/
+build_linux/
 ffmpeg/
 data/
 other/

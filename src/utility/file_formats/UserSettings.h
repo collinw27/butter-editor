@@ -8,6 +8,9 @@
 struct UserSettings
 {
     int ui_scale_index = 0;
+    bool log_to_file = true;
+    bool log_to_console = false;
+    int log_level;
 };
 
 #endif
