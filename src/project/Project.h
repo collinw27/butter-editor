@@ -85,6 +85,7 @@ class Project
 
     bool is_locked = false;
     bool export_finished = true;
+    bool export_should_terminate = false;
     int export_progress = 0;
     std::mutex basic_mutex;
 
@@ -158,6 +159,7 @@ public:
     void clip_exit_frame(id_s clip_id, GLFrameBuffer* buffer);
     void clip_update_frame(id_s clip_id, GLFrameBuffer* buffer, VideoTime time);
     void Export_video(std::filesystem::path filepath);
+    void cancel_export();
     bool is_exporting();
     int get_export_percentage();
 

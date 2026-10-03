@@ -481,7 +481,10 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
 
             if (clip_mem.get_selected_clips().empty())
                 editor.cancel_drag_event();
-            else
+
+            // The clips cannot be extende if the project is locked
+
+            else if (!project->locked())
             {
                 // Calculate the amount the mouse has dragged
                 // This depends on the extension direction
@@ -639,8 +642,9 @@ void TimelineModule::on_mouse_drop(sf::Vector2i position, DragMouseEvent* drag_e
     if (auto drag_media_event = dynamic_cast<DragMedia*>(drag_event))
     {
         // The media drop should use the same parameters as the ghost clip
+        // It should also only be added if the project is not locked
 
-        if (drag_media_event->valid)
+        if (drag_media_event->valid && !project->locked())
         {
             MediaType media_type = project->get_media_type(drag_media_event->media_id);
             switch (media_type)
@@ -819,7 +823,8 @@ void TimelineModule::deselect_clip(TimelineClip* clip)
 
 void TimelineModule::delete_clip(TimelineClip* clip)
 {
-    project->Delete_clip(clip->clip_id);
+    if (!project->locked())
+        project->Delete_clip(clip->clip_id);
 }
 
 // `update_scroll()` and `update_zoom()` are split into two different functions

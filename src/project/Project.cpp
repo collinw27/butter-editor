@@ -610,6 +610,7 @@ void Project::Export_video(std::filesystem::path filepath)
     // Reset export task
 
     export_finished = false;
+    export_should_terminate = false;
     export_progress = 0;
     lock.unlock();
 
@@ -644,6 +645,18 @@ void Project::Export_video(std::filesystem::path filepath)
 
     export_task.thread = std::thread(&Project::export_async, this);
     export_task.thread.detach();
+}
+
+// Important: The thread will not be cancelled after this function
+// finishes executing. It simply signals the thread to terminate, and
+// the thread's termination/cleanup will occur after it finishes
+// exporting its current frame
+
+void Project::cancel_export()
+{
+    std::lock_guard<std::mutex> lock {basic_mutex};
+    if (!export_finished)
+        export_should_terminate = true;
 }
 
 bool Project::is_exporting()
@@ -832,6 +845,20 @@ void Project::export_async()
 
         lock.lock();
         export_progress = (int) std::floor(f / ((float) export_task.final_frame) * 100.0);
+
+        // Terminate if signaled to cancel prematurely
+
+        if (export_should_terminate)
+        {
+            export_finished = true;
+            export_task.ffmpeg_pipe.close_cin();
+            export_task.ffmpeg_pipe.close();
+            delete[] export_task.export_buffer;
+            Graphics().framebuffer_set_active_for_thread(export_task.render_buffer.get(), false);
+            Logger().log("Canceled export", LogLevel::INFO);
+            return;
+        }
+        
         lock.unlock();
     }
     

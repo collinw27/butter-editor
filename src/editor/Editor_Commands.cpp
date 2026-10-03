@@ -17,6 +17,7 @@ enum {
     CMD_LOAD,
     CMD_CREATE_CLIP,
     CMD_EXPORT,
+    CMD_CANCEL_EXPORT,
     CMD_SELECT_ALL,
     CMD_DESELECT,
     CMD_NEW_COLOR_MEDIA,
@@ -56,6 +57,7 @@ void Editor::initialize_commands()
     command_parser.define_command(command_parser.new_command("export", (int) CMD_EXPORT)
         .add_parameter("filepath", CommandParser::ParamType::STRING)
     );
+    command_parser.define_command(command_parser.new_command("cancel_export", (int) CMD_CANCEL_EXPORT));
     command_parser.define_command(command_parser.new_command("select_all", (int) CMD_SELECT_ALL));
     command_parser.define_command(command_parser.new_command("deselect", (int) CMD_DESELECT));
     command_parser.define_command(command_parser.new_command("new_color_media", (int) CMD_NEW_COLOR_MEDIA)
@@ -153,6 +155,18 @@ std::string Editor::execute_command(CommandResult command)
         project->lock();
         return "Now beginning export task.";
     }
+    case CMD_CANCEL_EXPORT:
+    {
+        if (!exporting)
+            return "Not currently exporting.";
+
+        // Cancelling happens asynchronously, and the Editor class
+        // will finish the cancellation when it receives the signal
+        // that the thread has finished
+
+        project->cancel_export();
+        return "Now cancelling export";
+    };
     case CMD_SELECT_ALL:
     {
         timeline_module->select_all();
