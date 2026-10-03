@@ -10,6 +10,8 @@
 MediaModule::MediaModule(Editor& editor)
     : EditorModule{editor}
 {
+    project = editor.get_project();
+
     highlight_rect = std::unique_ptr<GLRectangle>(GLRectangle::create(container.get()));
     highlight_rect->set_fill_color(Editor::C_HIGHLIGHT);
     highlight_rect->set_visible(false);
@@ -23,12 +25,11 @@ MediaModule::MediaModule(Editor& editor)
 void MediaModule::reload()
 {
     media_vec.clear();
-    Project* project = editor.get_project();
 
     for (int i = 0; i < project->get_media_total(); ++i)
     {
         id_s media_id = project->get_media_at_index(i);
-        add_item(project, media_id);
+        add_item(media_id);
     }
 
     render_items();
@@ -55,7 +56,6 @@ void MediaModule::on_mouse_press(sf::Vector2i position, bool focused, InputButto
         // There's a more efficient way to resolve this than using a for loop,
         // but it's fine for the time being
 
-        Project* project = editor.get_project();
         for (int i = 0; i < media_vec.size(); ++i)
         {
             if (get_item_bounds(i).contains(position))
@@ -95,7 +95,7 @@ void MediaModule::on_notif(int notif_class, int notif_type, size_t num_args, voi
         case NOTIF_MEDIA::MEDIA_CREATED:
         {
             id_s media_id = *((id_s*) arg_ptrs[0]);
-            add_item(editor.get_project(), media_id);
+            add_item(media_id);
             render_items();
         }
         break;
@@ -103,7 +103,7 @@ void MediaModule::on_notif(int notif_class, int notif_type, size_t num_args, voi
     }
 }
 
-void MediaModule::add_item(Project* project, id_s media_id)
+void MediaModule::add_item(id_s media_id)
 {
     const GLTexture* thumbnail_tex = project->get_media_thumbnail(media_id);
     GLSprite* thumbnail_node = GLSprite::create(container.get(), thumbnail_tex);

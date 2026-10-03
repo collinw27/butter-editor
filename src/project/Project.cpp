@@ -19,30 +19,11 @@
 #include "project/media/ImageMedia.h"
 #include "project/clip/ImageClip.h"
 
-void export_async();
-
-LockedProject::LockedProject(Editor& editor) :
-    editor{editor},
-    basic_mutex{}
-{}
-
-LockedProject::~LockedProject() {}
-
-bool LockedProject::is_exporting()
-{
-    std::lock_guard<std::mutex> lock {basic_mutex};
-    return !export_finished;
-}
-
-int LockedProject::get_export_percentage()
-{
-    std::lock_guard<std::mutex> lock {basic_mutex};
-    return export_finished ? 100 : export_progress;
-}
-
-Project::Project(Editor& editor) : LockedProject{editor}
+Project::Project(Editor& editor) :
+    editor{editor}, basic_mutex{}
 {
     name = std::nullopt;
+    is_locked = false;
 
     // Use default project parameters
 
@@ -51,14 +32,16 @@ Project::Project(Editor& editor) : LockedProject{editor}
 
     // The standard project comes with 3 colors (for now)
 
-    add_color_media("Red", sf::Color::Red);
-    add_color_media("Green", sf::Color::Green);
-    add_color_media("Blue", sf::Color::Blue);
+    Add_color_media("Red", sf::Color::Red);
+    Add_color_media("Green", sf::Color::Green);
+    Add_color_media("Blue", sf::Color::Blue);
 }
 
-Project::Project(Editor& editor, std::string name) : LockedProject{editor}
+Project::Project(Editor& editor, std::string name) :
+    editor{editor}, basic_mutex{}
 {
     this->name = name;
+    is_locked = false;
     
     std::ifstream file {FileManager().get_data_path("projects/" + this->name.value() + ".proj")};
     proj_assert(file.is_open(), "Could not find project");
@@ -176,8 +159,9 @@ std::string Project::get_name()
     return name.has_value() ? name.value() : "Untitled project";
 }
 
-void Project::set_name(std::string name)
+void Project::Set_name(std::string name)
 {
+    assert_unlocked();
     this->name = name;
 }
 
@@ -219,8 +203,10 @@ MediaType Project::get_media_type(id_s media_id)
     return (*it)->get_media_type();
 }
 
-id_s Project::add_color_media(std::string display_name, sf::Color color)
+id_s Project::Add_color_media(std::string display_name, sf::Color color)
 {
+    assert_unlocked();
+
     ColorMedia* new_media = new ColorMedia(++next_media_id, display_name, color);
     media_vec.push_back(std::unique_ptr<MediaItem>(new_media));
     media_map.insert({new_media->id, new_media});
@@ -231,8 +217,10 @@ id_s Project::add_color_media(std::string display_name, sf::Color color)
     return media_id;
 }
 
-id_s Project::add_image_media(std::string display_name, std::string filepath)
+id_s Project::Add_image_media(std::string display_name, std::string filepath)
 {
+    assert_unlocked();
+
     ImageMedia* new_media = new ImageMedia(++next_media_id, display_name, filepath);
     media_vec.push_back(std::unique_ptr<MediaItem>(new_media));
     media_map.insert({new_media->id, new_media});
@@ -394,33 +382,38 @@ VideoTime Project::get_chain_ahead(VideoTime time)
 // Returns whether the operation was successful
 // It can fail if there's no space to insert the clip
 
-id_s Project::add_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
+id_s Project::Add_color_clip(VideoTime start_time, VideoTime length, sf::Color color)
 {
+    assert_unlocked();
     ColorClip* new_clip = new ColorClip(++next_clip_id, start_time, length, color);
-    return add_generic_clip(start_time, length, new_clip);
+    return Add_generic_clip(start_time, length, new_clip);
 }
 
-id_s Project::add_color_clip(VideoTime start_time, VideoTime length, id_s media_id)
+id_s Project::Add_color_clip(VideoTime start_time, VideoTime length, id_s media_id)
 {
+    assert_unlocked();
     auto a = get_media_iter(media_id)->get();
     ColorMedia* media = dynamic_cast<ColorMedia*>(get_media_iter(media_id)->get());
     if (media == nullptr)
         throw ButterException("Attempted to create color clip with incorrect media type");
     ColorClip* new_clip = new ColorClip(++next_clip_id, start_time, length, media->get_color());
-    return add_generic_clip(start_time, length, new_clip);
+    return Add_generic_clip(start_time, length, new_clip);
 }
 
-id_s Project::add_image_clip(VideoTime start_time, VideoTime length, id_s media_id)
+id_s Project::Add_image_clip(VideoTime start_time, VideoTime length, id_s media_id)
 {
+    assert_unlocked();
     ImageMedia* media = dynamic_cast<ImageMedia*>(get_media_iter(media_id)->get());
     if (media == nullptr)
         throw ButterException("Attempted to create image clip with incorrect media type");
     ImageClip* new_clip = new ImageClip(++next_clip_id, start_time, length, media);
-    return add_generic_clip(start_time, length, new_clip);
+    return Add_generic_clip(start_time, length, new_clip);
 }
 
-void Project::set_clip_start(id_s clip_id, VideoTime start)
+void Project::Set_clip_start(id_s clip_id, VideoTime start)
 {
+    assert_unlocked();
+
     // This method exits prematurely if this clip will cut into its neighbor
     // or if it will result in a clip with length 0
 
@@ -443,8 +436,10 @@ void Project::set_clip_start(id_s clip_id, VideoTime start)
     editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED, 1, notif_args);
 }
 
-void Project::set_clip_end(id_s clip_id, VideoTime end)
+void Project::Set_clip_end(id_s clip_id, VideoTime end)
 {
+    assert_unlocked();
+
     // This method exits prematurely if this clip will cut into its neighbor,
     // or if it will result in a clip with length 0
 
@@ -465,8 +460,10 @@ void Project::set_clip_end(id_s clip_id, VideoTime end)
     editor.notify_modules(NOTIF_TIMELINE::ID, NOTIF_TIMELINE::CLIP_BOUNDS_CHANGED, 1, notif_args);
 }
 
-void Project::delete_clip(id_s clip_id)
+void Project::Delete_clip(id_s clip_id)
 {
+    assert_unlocked();
+
     auto it = get_iter_from_id(clip_id);
     if (it == clip_vec.end())
         throw ButterException("Cannot find clip");
@@ -505,6 +502,21 @@ sf::Color Project::get_clip_bg_color(id_s clip_id)
         return sf::Color(107, 107, 107);
     else
         return sf::Color(57, 85, 179);
+}
+
+bool Project::locked()
+{
+    return is_locked;
+}
+
+void Project::lock()
+{
+    is_locked = true;
+}
+
+void Project::unlock()
+{
+    is_locked = false;
 }
 
 void Project::save()
@@ -578,8 +590,10 @@ void Project::clip_update_frame(id_s clip_id, GLFrameBuffer* buffer, VideoTime t
         it->get()->update_frame(buffer, time);
 }
 
-void Project::export_video(std::filesystem::path filepath)
+void Project::Export_video(std::filesystem::path filepath)
 {
+    assert_unlocked();
+
     // Accessing thread safe data, use a mutex
     // (Probably not necessary, but let's be safe)
 
@@ -621,13 +635,27 @@ void Project::export_video(std::filesystem::path filepath)
     }).cin(subprocess::PipeOption::pipe).popen();
 
     export_task.buffer_size = 3 * resolution.x * resolution.y;
-    export_task.buffer = new uint8_t[export_task.buffer_size];
+    export_task.export_buffer = new uint8_t[export_task.buffer_size];
     export_task.final_frame = std::max<VideoTime>(get_project_length(), 1);
+    export_task.render_buffer.reset(GLFrameBuffer::create(resolution));
+    export_task.current_clips.clear();
     
     // Open thread using predefined function
 
     export_task.thread = std::thread(&Project::export_async, this);
     export_task.thread.detach();
+}
+
+bool Project::is_exporting()
+{
+    std::lock_guard<std::mutex> lock {basic_mutex};
+    return !export_finished;
+}
+
+int Project::get_export_percentage()
+{
+    std::lock_guard<std::mutex> lock {basic_mutex};
+    return export_finished ? 100 : export_progress;
 }
 
 bool Project::exists(std::string name)
@@ -699,8 +727,10 @@ std::vector<std::unique_ptr<Clip>>::iterator Project::get_iter_at_time(VideoTime
     return clip_vec.end();
 }
 
-id_s Project::add_generic_clip(VideoTime start_time, VideoTime length, Clip* new_clip)
+id_s Project::Add_generic_clip(VideoTime start_time, VideoTime length, Clip* new_clip)
 {
+    assert_unlocked();
+
     // Find the first position it can slot in before something
     // If this doesn't exist, insert it at the end
 
@@ -753,6 +783,12 @@ void Project::proj_assert(bool condition, std::string fail_msg)
         throw ProjectLoadException(fail_msg);
 }
 
+void Project::assert_unlocked()
+{
+    if (is_locked)
+        throw ButterException("Attempted to modify read-only project");
+}
+
 void Project::write_frame_rgb24(VideoTime time, std::uint8_t* buffer)
 {
     // For now, the entire frame is just one color
@@ -778,12 +814,19 @@ void Project::write_frame_rgb24(VideoTime time, std::uint8_t* buffer)
 void Project::export_async()
 {
     // Write frames in specified format
+
+    Logger().log("Created export thread.", LogLevel::ALL);
+
+    Graphics().framebuffer_set_active_for_thread(export_task.render_buffer.get(), true);
+    Logger().log("Acquired OpenGL context.", LogLevel::ALL);
     
     std::unique_lock<std::mutex> lock {basic_mutex, std::defer_lock};
     for (int f = 0; f < export_task.final_frame; ++f)
     {
-        write_frame_rgb24(f, export_task.buffer);
-        std::size_t result = subprocess::pipe_write(export_task.ffmpeg_pipe.cin, export_task.buffer, export_task.buffer_size);
+        // write_frame_rgb24(f, export_task.buffer);
+        // std::size_t result = subprocess::pipe_write(export_task.ffmpeg_pipe.cin, export_task.buffer, export_task.buffer_size);
+
+        std::this_thread::sleep_for(std::chrono::duration<int,std::milli>(100));
 
         // Lock while writing to thread-safe members
 
@@ -791,6 +834,8 @@ void Project::export_async()
         export_progress = (int) std::floor(f / ((float) export_task.final_frame) * 100.0);
         lock.unlock();
     }
+    
+    Logger().log("Concluding export...", LogLevel::ALL);
 
     // Close pipe & conclude export
 
@@ -798,6 +843,9 @@ void Project::export_async()
     export_finished = true;
     export_task.ffmpeg_pipe.close_cin();
     export_task.ffmpeg_pipe.close();
-    delete[] export_task.buffer;
+    delete[] export_task.export_buffer;
     lock.unlock();
+    
+    Graphics().framebuffer_set_active_for_thread(export_task.render_buffer.get(), false);
+    Logger().log("Finished export.", LogLevel::INFO);
 }

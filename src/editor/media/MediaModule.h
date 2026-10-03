@@ -23,6 +23,7 @@ struct MediaData
 
 class MediaModule : public EditorModule
 {
+    Project* project;
     std::vector<MediaData> media_vec;
     std::unique_ptr<GLRectangle> highlight_rect;
     float unit_height = 0;
@@ -42,7 +43,7 @@ public:
 
 private:
 
-    void add_item(Project* project, id_s media_id);
+    void add_item(id_s media_id);
     void render_items();
     sf::IntRect get_item_bounds(int index);
 };

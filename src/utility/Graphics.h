@@ -69,6 +69,7 @@ public:
 
     sf::RenderWindow& get_window();
     void framebuffer_set_active(GLFrameBuffer* framebuffer, bool active);
+    void framebuffer_set_active_for_thread(GLFrameBuffer* framebuffer, bool active);
     void on_window_resized(GLWindowNode* root);
     void set_clear_color(sf::Color color);
     

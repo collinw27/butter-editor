@@ -121,6 +121,8 @@ TimelineClip* ClipMem::get_hovered_clip()
 TimelineModule::TimelineModule(Editor& editor)
     : EditorModule(editor)
 {
+    project = editor.get_project();
+
     // Ruler appears below any clips
     // The main reason is so the start padding can be layered over it,
     // while allowing the clips to be layered over the padding
@@ -169,10 +171,6 @@ void TimelineModule::reload()
     // Clear pre-existing clips
 
     clip_mem.clear_all();
-
-    // Project must exist
-
-    Project* project = get_project();
     
     for (int i = 0; i < project->get_clip_total(); ++i)
     {
@@ -408,7 +406,6 @@ void TimelineModule::on_mouse_press(sf::Vector2i position, bool focused, InputBu
                         // The limit of the extension depends on the available gap in the timeline
                         // This can be 0
 
-                        Project* project = get_project();
                         bool forward = (extend_mode == ExtendMode::RIGHT);
                         if (forward)
                         {
@@ -496,15 +493,14 @@ void TimelineModule::on_mouse_move(sf::Vector2i position, bool focused, DragMous
                 time_diff = clamp(time_diff, -extend_event->max_trim, extend_event->max_extend);
 
                 TimelineClip* selected_clip = clip_mem.get_selected_clips().front();
-                Project* project = get_project();
                 if (extend_event->forward)
                 {
-                    project->set_clip_end(selected_clip->clip_id, extend_event->start_time + time_diff);
+                    project->Set_clip_end(selected_clip->clip_id, extend_event->start_time + time_diff);
                     selected_clip->render_selected(outline_layer.get());
                 }
                 else
                 {
-                    project->set_clip_start(selected_clip->clip_id, extend_event->start_time - time_diff);
+                    project->Set_clip_start(selected_clip->clip_id, extend_event->start_time - time_diff);
                     selected_clip->render_selected(outline_layer.get());
                 }
 
@@ -613,7 +609,6 @@ void TimelineModule::on_mouse_release(sf::Vector2i position, bool focused, Input
     {
         // When extending a clip, timeline updates are buffered until this point
 
-        Project* project = get_project();
         VideoTime old_scroll_max = scroll_max;
         scroll_max = std::max<VideoTime>(project->get_project_length(), 200);
         if (old_scroll_max != scroll_max)
@@ -647,18 +642,17 @@ void TimelineModule::on_mouse_drop(sf::Vector2i position, DragMouseEvent* drag_e
 
         if (drag_media_event->valid)
         {
-            Project* project = editor.get_project();
             MediaType media_type = project->get_media_type(drag_media_event->media_id);
             switch (media_type)
             {
             case MediaType::COLOR:
             {
-                project->add_color_clip(drag_media_event->start_time, drag_media_event->length, drag_media_event->media_id);
+                project->Add_color_clip(drag_media_event->start_time, drag_media_event->length, drag_media_event->media_id);
             }
             break;
             case MediaType::IMAGE:
             {
-                project->add_image_clip(drag_media_event->start_time, drag_media_event->length, drag_media_event->media_id);
+                project->Add_image_clip(drag_media_event->start_time, drag_media_event->length, drag_media_event->media_id);
             }
             break;
             default:
@@ -678,7 +672,6 @@ void TimelineModule::on_notif(int notif_class, int notif_type, size_t num_args, 
         case NOTIF_TIMELINE::CLIP_CREATED:
         {
             id_s clip_id = *((id_s*) arg_ptrs[0]);
-            Project* project = editor.get_project();
             if (project->get_clip_at_time(playhead_time) == clip_id)
             {
                 project->clip_enter_frame(clip_id, editor.get_render_buffer());
@@ -691,7 +684,6 @@ void TimelineModule::on_notif(int notif_class, int notif_type, size_t num_args, 
         {
             id_s clip_id = *((id_s*) arg_ptrs[0]);
             TimelineClip* clip = clip_mem.get_clip(clip_id);
-            Project* project = editor.get_project();
             clip->set_clip_start(project->get_clip_start(clip_id));
             clip->set_clip_length(project->get_clip_length(clip_id));
         }
@@ -704,7 +696,6 @@ void TimelineModule::on_notif(int notif_class, int notif_type, size_t num_args, 
             TimelineClip* deleted_clip = clip_mem.get_clip(clip_id);
             if (visible_clip == clip_id)
             {
-                Project* project = editor.get_project();
                 project->clip_exit_frame(clip_id, editor.get_render_buffer());
                 visible_clip = ID_NULL;
             }
@@ -713,14 +704,6 @@ void TimelineModule::on_notif(int notif_class, int notif_type, size_t num_args, 
         break;
         }
     }
-}
-
-Project* TimelineModule::get_project()
-{
-    Project* project = editor.get_project();
-    if (project == nullptr)
-        throw ButterException("Timeline method called on null/inaccessible project");
-    return project;
 }
 
 bool TimelineModule::is_position_in_scroll(sf::Vector2i relative_pos)
@@ -762,8 +745,6 @@ float TimelineModule::time_to_x(VideoTime time)
 
 std::tuple<VideoTime, VideoTime> TimelineModule::get_fitted_clip(VideoTime start_time, VideoTime length)
 {
-    Project* project = get_project();
-
     // (1) & (2) take place if the start position is free
 
     if (project->get_clip_at_time(start_time) == ID_NULL)
@@ -838,8 +819,7 @@ void TimelineModule::deselect_clip(TimelineClip* clip)
 
 void TimelineModule::delete_clip(TimelineClip* clip)
 {
-    Project* project = get_project();
-    project->delete_clip(clip->clip_id);
+    project->Delete_clip(clip->clip_id);
 }
 
 // `update_scroll()` and `update_zoom()` are split into two different functions
@@ -867,7 +847,6 @@ void TimelineModule::update_zoom()
     // (since having the zoom depend on framerate would be strange)
     // Every 1 second is 30 px wide on 1x zoom
 
-    Project* project = get_project();
     zoom_amount = std::pow(2.0, zoom_factor) * 30.0 / (float) project->get_framerate();
     clips_scaler->set_scale(sf::Vector2f(zoom_amount, 1.0));
     padding_rect->set_position(sf::Vector2f(time_to_x(0) - START_PADDING, 0));
@@ -896,7 +875,6 @@ void TimelineModule::update_playhead()
     if (prev_playhead_time != playhead_time)
     {
         prev_playhead_time = playhead_time;
-        Project* project = editor.get_project();
 
         GLFrameBuffer* render_buffer = editor.get_render_buffer();
         Graphics().framebuffer_set_active(render_buffer, true);

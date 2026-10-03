@@ -118,13 +118,9 @@ private:
     sf::Clock clock;
     float delta_time = 0.1f;
 
-    // Project
-    // See Project.h for explanation of project "locking"
-    // Project must be initialized before all modules
-    // `project` MUST NOT be stored persistently in any other classes!
+    // Project info
     // See `run()` for information about `queued_project`
 
-    LockedProject* locked_project = nullptr;
     Project* project = nullptr;
     Project* queued_project = nullptr;
 
@@ -149,7 +145,6 @@ public:
     std::string run_command(std::string command, bool throw_errors = false);
 
     Project* get_project();
-    LockedProject* get_locked_project();
 
     GLFrameBuffer* get_render_buffer();
 
@@ -175,9 +170,6 @@ private:
     void focus_module(EditorModule* module);
 
     void switch_flex_tab(unsigned int index);
-
-    void lock_project();
-    void unlock_project();
     
     void initialize_commands();
     std::string execute_command(CommandResult command);

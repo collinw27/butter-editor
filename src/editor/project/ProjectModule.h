@@ -5,9 +5,11 @@
 
 #include <string>
 #include "graphics/nodes.h"
+#include "project/Project.h"
 
 class ProjectModule : public EditorModule
 {
+    Project* project;
     std::unique_ptr<GLText> text;
 
 public:

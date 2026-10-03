@@ -299,16 +299,16 @@ void Editor::run()
 
         if (exporting)
         {
-            if (locked_project->is_exporting())
+            if (project->is_exporting())
             {
-                std::string export_string = "Exporting: " + std::to_string(locked_project->get_export_percentage()) + "%";
+                std::string export_string = "Exporting: " + std::to_string(project->get_export_percentage()) + "%";
                 command_bar->set_status_exporting(export_string);
             }
             else
             {
                 exporting = false;
                 command_bar->set_status_exporting("");
-                unlock_project();
+                project->unlock();
             }
         }
 
@@ -398,11 +398,6 @@ Project* Editor::get_project()
     return project;
 }
 
-LockedProject* Editor::get_locked_project()
-{
-    return locked_project;
-}
-
 GLFrameBuffer* Editor::get_render_buffer()
 {
     return render_buffer.get();
@@ -436,7 +431,6 @@ void Editor::load_project(Project* new_project)
     Logger().log("Loading project...", LogLevel::ALL);
 
     project = new_project;
-    locked_project = (LockedProject*) project;
     exporting = false;
 
     // All child nodes are first be orphaned
@@ -759,17 +753,4 @@ void Editor::switch_flex_tab(unsigned int index)
     flex_tabs.at(index)->set_selected(true);
     current_flex_tab = index;
     flex_module = &flex_tabs.at(index)->get_module();
-}
-
-void Editor::lock_project()
-{
-    project = nullptr;
-}
-
-void Editor::unlock_project()
-{
-    Project* downcast = dynamic_cast<Project*>(locked_project);
-    if (downcast == nullptr)
-        throw ButterException("Attempted to unlock invalid project");
-    project = downcast;
 }

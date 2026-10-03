@@ -167,7 +167,21 @@ void GraphicsSingleton::framebuffer_set_active(GLFrameBuffer* framebuffer, bool 
     {
         std::ignore = window->setActive(true);
     }
-    framebuffer->is_active = true;
+    framebuffer->is_active = active;
+}
+
+// This function should be called instead when not in main thread
+
+void GraphicsSingleton::framebuffer_set_active_for_thread(GLFrameBuffer* framebuffer, bool active)
+{
+    // Don't re-active the window context, since the main thread
+    // will prevent it from being activated twice
+
+    if (!framebuffer->is_active && active)
+    {
+        std::ignore = framebuffer->sf_texture.setActive(true);
+    }
+    framebuffer->is_active = active;
 }
 
 void GraphicsSingleton::set_clear_color(sf::Color color)

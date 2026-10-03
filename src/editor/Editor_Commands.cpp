@@ -109,7 +109,7 @@ std::string Editor::execute_command(CommandResult command)
     case CMD_SAVE_AS:
     {
         block_if_exporting(project);
-        project->set_name(command.get_string(0));
+        project->Set_name(command.get_string(0));
         command_bar->set_status_name(project->get_name());
         project->save();
         project_module->refresh_info();
@@ -148,9 +148,9 @@ std::string Editor::execute_command(CommandResult command)
                 throw ExecuteException("BUTTER_EXPORT_PATH not defined.");
             export_path = path;
         }
-        project->export_video(std::filesystem::path(export_path));
-        exporting = project->is_exporting();
-        lock_project();
+        project->Export_video(std::filesystem::path(export_path));
+        exporting = true;
+        project->lock();
         return "Now beginning export task.";
     }
     case CMD_SELECT_ALL:
@@ -172,7 +172,7 @@ std::string Editor::execute_command(CommandResult command)
         std::regex col_regex {"\\#[0-9A-Fa-f]{6}"};
         if (!std::regex_match(color_name, col_regex))
             throw ExecuteException("Invalid color");
-        project->add_color_media(media_name, hex_to_color(color_name));
+        project->Add_color_media(media_name, hex_to_color(color_name));
         return "Created media.";
     }
     case CMD_NEW_IMAGE_MEDIA:
@@ -181,7 +181,7 @@ std::string Editor::execute_command(CommandResult command)
 
         std::string media_name = command.get_string(0);
         std::string filepath = command.get_string(1);
-        project->add_image_media(media_name, filepath);
+        project->Add_image_media(media_name, filepath);
         return "Created media.";
     }
     }

@@ -12,6 +12,8 @@
 
 class TimelineModule : public EditorModule
 {
+    Project* project;
+
     float scroll_pct;
     VideoTime scroll_max;
     int scroll_span;
@@ -134,8 +136,6 @@ public:
     virtual void on_notif(int notif_class, int notif_type, size_t num_args, void** arg_ptrs) override;
 
 private:
-
-    Project* get_project();
 
     bool is_position_in_scroll(sf::Vector2i relative_pos);
     float x_to_time(int x);

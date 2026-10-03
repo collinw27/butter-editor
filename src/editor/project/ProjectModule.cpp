@@ -4,11 +4,12 @@
 #include "utility/Graphics.h"
 #include "editor/Editor.h"
 #include "editor/notifs.h"
-#include "project/Project.h"
 
 ProjectModule::ProjectModule(Editor& editor)
     : EditorModule(editor)
 {
+    project = editor.get_project();
+    
     text.reset(GLText::create(container.get(), Graphics().mono_font()));
     text->set_position(sf::Vector2f(8, 8));
 
@@ -33,7 +34,6 @@ void ProjectModule::on_notif(int notif_class, int notif_type, size_t num_args, v
 
 void ProjectModule::refresh_info()
 {
-    Project* project = editor.get_project();
     std::string info = "";
     info += "Name: " + project->get_name();
     info += "\nFPS: " + std::to_string(project->get_framerate());
